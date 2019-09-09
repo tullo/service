@@ -4,9 +4,11 @@
             {{range $index, $val := .Items}}
             	<div class="result-item">
                     <div style="clear:both; font-size:16px; margin-top: 10px">
-                        {{$val.Engine}} : <a target="_blank" href="{{$val.Link}}">{{$val.TitleHTML}}</a>
+                        {{$val.ID}} : {{$val.NameHTML}}
                     </div>
-                    <div style="clear:both; font-size:14px">{{$val.ContentHTML}}</div>
+                    <div style="clear:both; font-size:14px">
+                        {{$val.Cost}}, {{$val.Quantity}}, {{$val.Sold}}, {{$val.Revenue}}
+                    </div>
                 </div><!-- result-item -->
             {{end}}
     	</div><!-- col-md-12 -->

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 // These constants represent the different layouts in use.
@@ -15,33 +16,21 @@ const (
 	LAYOUT  = "Layout"
 )
 
-// Options ...
-type Options struct {
-	Term  string
-	CNN   bool
-	NYT   bool
-	BBC   bool
-	First bool
-}
-
 // Result ...
 type Result struct {
-	Engine  string
-	Title   string
-	Link    string
-	Content string
+	ID          string    // Unique identifier.
+	Name        string    // Display name of the product.
+	Cost        int       // Price for one item in cents.
+	Quantity    int       // Original number of items available.
+	Sold        int       // Aggregate field showing number of items sold.
+	Revenue     int       // Aggregate field showing total cost of sold items.
+	DateCreated time.Time // When the product was added.
+	DateUpdated time.Time // When the product record was last modified.
 }
 
-// TitleHTML fixes encoding issues. The templates expect this
-// method for rendering.
-func (r *Result) TitleHTML() template.HTML {
-	return template.HTML(r.Title)
-}
-
-// ContentHTML fixes encoding issues. The templates expect this
-// method for rendering.
-func (r *Result) ContentHTML() template.HTML {
-	return template.HTML(r.Content)
+// NameHTML fixes encoding issues.
+func (r *Result) NameHTML() template.HTML {
+	return template.HTML(r.Name)
 }
 
 // views contains a map of static templates for rendering views.

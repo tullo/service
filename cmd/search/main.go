@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/ardanlabs/conf"
 	"github.com/ardanlabs/service/cmd/search/handlers"
 	"github.com/ardanlabs/service/cmd/search/views"
-	"github.com/ardanlabs/service/internal/platform/conf"
 	"github.com/pkg/errors"
 )
 
@@ -48,9 +48,9 @@ func run() error {
 		}
 	}
 
-	if err := conf.Parse(os.Args[1:], "SALES", &cfg); err != nil {
+	if err := conf.Parse(os.Args[1:], "SEARCH", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
-			usage, err := conf.Usage("SALES", &cfg)
+			usage, err := conf.Usage("SEARCH", &cfg)
 			if err != nil {
 				return errors.Wrap(err, "generating config usage")
 			}
