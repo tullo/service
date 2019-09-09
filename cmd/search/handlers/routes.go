@@ -13,7 +13,7 @@ import (
 func API(shutdown chan os.Signal, log *log.Logger) http.Handler {
 
 	// Construct the web.App which holds all routes as well as common Middleware.
-	app := web.NewApp(shutdown, log, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics())
+	app := web.NewApp(shutdown, log, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
 	// Because our static directory is set as the root of the FileSystem,
 	// we need to strip off the /static/ prefix from the request path

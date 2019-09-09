@@ -46,6 +46,23 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 	return nil
 }
 
+// RespondHTML converts a Go value to JSON and sends it to the client.
+func RespondHTML(ctx context.Context, w http.ResponseWriter, data []byte, statusCode int) error {
+
+	// Set the content type and headers once we know marshaling has succeeded.
+	w.Header().Set("Content-Type", "application/html")
+
+	// Write the status code to the response.
+	w.WriteHeader(statusCode)
+
+	// Send the result back to the client.
+	if _, err := w.Write(data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // RespondError sends an error reponse back to the client.
 func RespondError(ctx context.Context, w http.ResponseWriter, err error) error {
 

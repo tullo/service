@@ -133,10 +133,10 @@ func rssSearch(ctx context.Context, log *log.Logger, term, engine, uri string) (
 	for _, item := range d.Channel.Items {
 		if strings.Contains(item.Search.Description, term) {
 			results = append(results, views.Result{
-				Engine:  engine,
-				Title:   item.Title,
-				Link:    item.Link,
-				Content: item.Description,
+				// Engine:  engine,
+				// Title:   item.Title,
+				// Link:    item.Link,
+				// Content: item.Description,
 			})
 		}
 	}
