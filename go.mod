@@ -15,6 +15,7 @@ require (
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.1.1
 	github.com/openzipkin/zipkin-go v0.1.6
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.0
 	github.com/stretchr/testify v1.3.0 // indirect
 	go.opencensus.io v0.21.0
