@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf"
-	"github.com/ardanlabs/service/cmd/search/handlers"
-	"github.com/ardanlabs/service/cmd/search/views"
+	"github.com/ardanlabs/service/cmd/search/internal/handlers"
+	"github.com/ardanlabs/service/cmd/search/internal/views"
 	"github.com/pkg/errors"
 )
 

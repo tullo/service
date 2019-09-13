@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-all: sales-api metrics
+all: sales-api search metrics
 
 keys:
 	GO111MODULE=on go run -mod=vendor ./cmd/sales-admin/main.go keygen private.pem
@@ -19,6 +19,16 @@ sales-api:
 		-f dockerfile.sales-api \
 		-t gcr.io/ardan-starter-kit/sales-api-amd64:1.0 \
 		--build-arg PACKAGE_NAME=sales-api \
+		--build-arg VCS_REF=`git rev-parse HEAD` \
+		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+		.
+	docker system prune -f
+
+search:
+	docker build \
+		-f dockerfile.search \
+		-t gcr.io/ardan-starter-kit/search-amd64:1.0 \
+		--build-arg PACKAGE_NAME=search \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
@@ -43,7 +53,7 @@ down:
 
 test:
 	cd "$$GOPATH/src/github.com/ardanlabs/service"
-	GO111MODULE=on go test -mod=vendor ./...
+	go test -mod=vendor ./...
 
 clean:
 	docker system prune -f

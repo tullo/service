@@ -38,6 +38,16 @@ services:
     ports:
       - 5432:5432
 
+  # This is a front end web application.
+  search:
+    container_name: search
+    networks:
+      - shared-network
+    image: gcr.io/ardan-starter-kit/search-amd64:1.0
+    ports:
+      - 5000:5000 # SEARCH API
+      - 6000:6000 # DEBUG API
+
   # This is the core CRUD based service.
   sales-api:
     container_name: sales-api

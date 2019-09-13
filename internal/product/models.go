@@ -1,6 +1,7 @@
 package product
 
 import (
+	"html/template"
 	"time"
 )
 
@@ -15,6 +16,11 @@ type Product struct {
 	UserID      string    `db:"user_id" json:"user_id"`           // ID of the user who created the product.
 	DateCreated time.Time `db:"date_created" json:"date_created"` // When the product was added.
 	DateUpdated time.Time `db:"date_updated" json:"date_updated"` // When the product record was last modified.
+}
+
+// NameHTML fixes encoding issues.
+func (p *Product) NameHTML() template.HTML {
+	return template.HTML(p.Name)
 }
 
 // NewProduct is what we require from clients when adding a Product.

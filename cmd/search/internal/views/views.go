@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"io/ioutil"
 	"os"
-	"time"
 )
 
 // These constants represent the different layouts in use.
@@ -16,31 +15,15 @@ const (
 	LAYOUT  = "Layout"
 )
 
-// Result ...
-type Result struct {
-	ID          string    // Unique identifier.
-	Name        string    // Display name of the product.
-	Cost        int       // Price for one item in cents.
-	Quantity    int       // Original number of items available.
-	Sold        int       // Aggregate field showing number of items sold.
-	Revenue     int       // Aggregate field showing total cost of sold items.
-	DateCreated time.Time // When the product was added.
-	DateUpdated time.Time // When the product record was last modified.
-}
-
-// NameHTML fixes encoding issues.
-func (r *Result) NameHTML() template.HTML {
-	return template.HTML(r.Name)
-}
-
 // views contains a map of static templates for rendering views.
 var views = make(map[string]*template.Template)
 
 // Render generates the HTML response for this route.
-func Render(fv map[string]interface{}, results interface{}) ([]byte, error) {
-	var markup bytes.Buffer
+func Render(results interface{}) ([]byte, error) {
+	fv := make(map[string]interface{})
 
 	// Generate the markup for the results template.
+	var markup bytes.Buffer
 	if results != nil {
 		vars := map[string]interface{}{"Items": results}
 		if err := views[RESULTS].Execute(&markup, vars); err != nil {
@@ -71,15 +54,15 @@ func Init() error {
 	// In order for the endpoint tests to run this needs to be
 	// physically located. Trying to avoid configuration for now.
 	pwd, _ := os.Getwd()
-	if err := loadTemplate(LAYOUT, pwd+"/views/basic_layout.html"); err != nil {
+	if err := loadTemplate(LAYOUT, pwd+"/internal/views/basic_layout.html"); err != nil {
 		return err
 	}
 
-	if err := loadTemplate(SEARCH, pwd+"/views/search.html"); err != nil {
+	if err := loadTemplate(SEARCH, pwd+"/internal/views/search.html"); err != nil {
 		return err
 	}
 
-	if err := loadTemplate(RESULTS, pwd+"/views/results.html"); err != nil {
+	if err := loadTemplate(RESULTS, pwd+"/internal/views/results.html"); err != nil {
 		return err
 	}
 	return nil

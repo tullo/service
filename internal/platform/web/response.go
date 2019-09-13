@@ -50,7 +50,7 @@ func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statu
 func RespondHTML(ctx context.Context, w http.ResponseWriter, data []byte, statusCode int) error {
 
 	// Set the content type and headers once we know marshaling has succeeded.
-	w.Header().Set("Content-Type", "application/html")
+	w.Header().Set("Content-Type", "text/html")
 
 	// Write the status code to the response.
 	w.WriteHeader(statusCode)
