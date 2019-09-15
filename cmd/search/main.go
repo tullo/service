@@ -12,10 +12,14 @@ import (
 	"syscall"
 	"time"
 
+	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/ardanlabs/conf"
 	"github.com/ardanlabs/service/cmd/search/internal/handlers"
 	"github.com/ardanlabs/service/cmd/search/internal/views"
+	openzipkin "github.com/openzipkin/zipkin-go"
+	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
+	"go.opencensus.io/trace"
 )
 
 // build is the git version of this program. It is set using build flags in the makefile.
@@ -45,6 +49,12 @@ func run() error {
 			ReadTimeout     time.Duration `conf:"default:5s"`
 			WriteTimeout    time.Duration `conf:"default:5s"`
 			ShutdownTimeout time.Duration `conf:"default:5s"`
+		}
+		Zipkin struct {
+			LocalEndpoint string  `conf:"default:0.0.0.0:5000"`
+			ReporterURI   string  `conf:"default:http://zipkin:9411/api/v2/spans"`
+			ServiceName   string  `conf:"default:search"`
+			Probability   float64 `conf:"default:0.05"`
 		}
 	}
 
@@ -84,6 +94,29 @@ func run() error {
 	go func() {
 		log.Printf("main : Debug Listening %s", cfg.Web.DebugHost)
 		log.Printf("main : Debug Listener closed : %v", http.ListenAndServe(cfg.Web.DebugHost, http.DefaultServeMux))
+	}()
+
+	// =========================================================================
+	// Start Tracing Support
+
+	log.Println("main : Started : Initializing zipkin tracing support")
+
+	localEndpoint, err := openzipkin.NewEndpoint("search", cfg.Zipkin.LocalEndpoint)
+	if err != nil {
+		return err
+	}
+
+	reporter := zipkinHTTP.NewReporter(cfg.Zipkin.ReporterURI)
+	ze := zipkin.NewExporter(reporter, localEndpoint)
+
+	trace.RegisterExporter(ze)
+	trace.ApplyConfig(trace.Config{
+		DefaultSampler: trace.ProbabilitySampler(cfg.Zipkin.Probability),
+	})
+
+	defer func() {
+		log.Printf("main : Tracing Stopping : %s", cfg.Zipkin.LocalEndpoint)
+		reporter.Close()
 	}()
 
 	// =========================================================================

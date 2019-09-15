@@ -10,6 +10,7 @@ import (
 	"github.com/ardanlabs/service/cmd/search/internal/views"
 	"github.com/ardanlabs/service/internal/platform/web"
 	"github.com/ardanlabs/service/internal/product"
+	"go.opencensus.io/trace"
 )
 
 // Search provides support for orchestration searches.
@@ -26,6 +27,8 @@ func NewSearch(log *log.Logger) *Search {
 
 // Query performs a search against the datastore.
 func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+	ctx, span := trace.StartSpan(ctx, "handlers.Search.Query")
+	defer span.End()
 
 	// Create a new request.
 	req, err := http.NewRequest("GET", "http://sales-api:3000/v1/products", nil)
