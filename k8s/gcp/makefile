@@ -4,6 +4,8 @@ export PROJECT = ardan-starter-kit
 CLUSTER = ardan-starter-cluster
 DATABASE = ardan-starter-db
 ZONE = us-central1-b
+VERSION = 1.0
+#PRIVATE_DB_IP = uncomment this & use value from 'make db-private-ip' -- see below
 
 config:
 	@echo Setting environment for $(PROJECT)
@@ -24,8 +26,8 @@ cluster:
 	@echo ======================================================================
 
 upload:
-	docker push gcr.io/$(PROJECT)/sales-api-amd64:1.0
-	docker push gcr.io/$(PROJECT)/metrics-amd64:1.0
+	docker push gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
+	docker push gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
 	@echo ======================================================================
 
 database:
@@ -69,10 +71,10 @@ delete:
 	kubectl delete deployment sales-api	
 	gcloud container clusters delete $(CLUSTER)
 	gcloud projects delete sales-api
-	gcloud container images delete gcr.io/$(PROJECT)/sales-api-amd64:1.0 --force-delete-tags
-	gcloud container images delete gcr.io/$(PROJECT)/metrics-amd64:1.0 --force-delete-tags
-	docker image remove gcr.io/sales-api/sales-api-amd64:1.0
-	docker image remove gcr.io/sales-api/metrics-amd64:1.0
+	gcloud container images delete gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --force-delete-tags
+	gcloud container images delete gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) --force-delete-tags
+	docker image remove gcr.io/sales-api/sales-api-amd64:$(VERSION)
+	docker image remove gcr.io/sales-api/metrics-amd64:$(VERSION)
 	@echo ======================================================================
 
 #===============================================================================
