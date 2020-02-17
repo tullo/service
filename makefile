@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 
 export PROJECT = ardan-starter-kit
+export REGISTRY_ACCOUNT = tullo
+export VERSION = 1.0
 
 all: keys sales-api metrics
 
@@ -19,21 +21,27 @@ seed: migrate
 sales-api:
 	docker build \
 		-f dockerfile.sales-api \
-		-t gcr.io/$(PROJECT)/sales-api-amd64:1.0 \
+		-t gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) \
 		--build-arg PACKAGE_NAME=sales-api \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
+	docker image tag \
+		gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) \
+		$(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION)
 
 metrics:
 	docker build \
 		-f dockerfile.metrics \
-		-t gcr.io/$(PROJECT)/metrics-amd64:1.0 \
+		-t gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) \
 		--build-arg PACKAGE_NAME=metrics \
 		--build-arg PACKAGE_PREFIX=sidecar/ \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
+	docker image tag \
+		gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) \
+		$(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION)
 
 up:
 	docker-compose up
