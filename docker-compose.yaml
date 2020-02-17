@@ -15,7 +15,7 @@ services:
     container_name: zipkin
     networks:
       - shared-network
-    image: openzipkin/zipkin:2.11
+    image: openzipkin/zipkin:2.19
     ports:
       - 9411:9411
 
@@ -34,9 +34,11 @@ services:
     container_name: sales_db
     networks:
       - shared-network
-    image: postgres:11.1-alpine
+    image: postgres:12-alpine
     ports:
       - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
 
   # This is the core CRUD based service.
   sales-api:
@@ -48,6 +50,7 @@ services:
       - 3000:3000 # CRUD API
       - 4000:4000 # DEBUG API
     environment:
+      - POSTGRES_PASSWORD=postgres
       - SALES_DB_HOST=db
       - SALES_DB_DISABLE_TLS=1 # This is only disabled for our development enviroment.
       # - GODEBUG=gctrace=1
