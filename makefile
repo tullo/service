@@ -48,11 +48,10 @@ clean:
 	docker system prune -f
 
 stop-all:
-	docker stop $(docker ps -aq)
+	docker container stop $$(docker container ls -q --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")
 
 remove-all:
-	docker rm $(docker ps -aq)
-
+	docker container rm $$(docker container ls -aq --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")
 deps-reset:
 	git checkout -- go.mod
 	go mod tidy
