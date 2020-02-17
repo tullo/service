@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 export PROJECT = ardan-starter-kit
 
-all: sales-api metrics
+all: keys sales-api metrics
 
 keys:
 	go run ./cmd/sales-admin/main.go keygen private.pem
