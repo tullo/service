@@ -1,23 +1,20 @@
-# Build the Go Binary.
-FROM golang:1.13 as build_metrics
+# Build the sidecar as Go binary.
+FROM golang:1.13 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
 
-# Create a location in the container for the source code. Using the
-# default GOPATH location.
+# Create a location in the image for the source code.
 RUN mkdir -p /service
+WORKDIR /service
 
 # Copy the module files first and then download the dependencies. If this
 # doesn't change, we won't need to do this again in future builds.
-# COPY go.* /service/
-# WORKDIR /service
-# RUN go mod download
-
-# Copy the source code into the container.
-WORKDIR /service
 COPY go.* ./
+RUN go mod download
+
+# Copy the source code into the image.
 COPY cmd cmd
 COPY internal internal
 COPY vendor vendor
@@ -28,19 +25,19 @@ WORKDIR /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -mod=vendor -ldflags "-X main.build=${VCS_REF}"
 
 
-# Run the Go Binary in Alpine.
+# Build production image with Go binary based on Alpine.
 FROM alpine:3.7
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
-COPY --from=build_metrics /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 WORKDIR /app
 CMD /app/main
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="${PACKAGE_NAME}" \
-      org.opencontainers.image.authors="William Kennedy <bill@ardanlabs.com>" \
-      org.opencontainers.image.source="https://github.com/ardanlabs/service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
+      org.opencontainers.image.authors="Andreas <tullo@pm.me>" \
+      org.opencontainers.image.source="https://github.com/tullo/service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
       org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.vendor="Ardan Labs"
+      org.opencontainers.image.vendor="Amstutz-IT"

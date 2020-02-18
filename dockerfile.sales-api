@@ -31,7 +31,7 @@ WORKDIR /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -mod=vendor -ldflags "-X main.build=${VCS_REF}"
 
 
-# Production image with Go binaries based on Alpine.
+# Build production image with Go binaries based on Alpine.
 FROM alpine:3.7
 ARG BUILD_DATE
 ARG VCS_REF
