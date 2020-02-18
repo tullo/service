@@ -1,8 +1,8 @@
 # Ultimate Service
 
-[![CircleCI](https://circleci.com/gh/ardanlabs/service.svg?style=svg)](https://circleci.com/gh/ardanlabs/service)
+[![CircleCI](https://circleci.com/gh/tullo/service.svg?style=svg)](https://circleci.com/gh/tullo/service)
 
-Copyright 2018, 2019, Ardan Labs  
+Copyright 2018, 2019, 2020 Ardan Labs  
 info@ardanlabs.com
 
 ## Licensing
