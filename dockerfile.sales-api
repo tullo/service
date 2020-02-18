@@ -1,30 +1,27 @@
 # Build the Go Binary.
-FROM golang:1.13 as build_sales-api
+FROM golang:1.13 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
 
-# Create a location in the container for the source code. Using the
-# default GOPATH location.
+# Create a location in the image for the source code.
 RUN mkdir -p /service
+WORKDIR /service
 
 # Copy the module files first and then download the dependencies. If this
 # doesn't change, we won't need to do this again in future builds.
-# COPY go.* /service/
-# WORKDIR /service
-# RUN go mod download
-
-# Copy the source code into the container.
-WORKDIR /service
-COPY private.pem private.pem
 COPY go.* ./
+RUN go mod download
+
+# Copy the source code into the image.
+COPY private.pem private.pem
 COPY cmd cmd
 COPY internal internal
 COPY vendor vendor
 
-# Build the admin tool so we can have it in the container. This should change
-# often so do this first.
+# Build the admin tool so we can have it in the image.
+# This should not change often so do this first.
 WORKDIR /service/cmd/${PACKAGE_PREFIX}sales-admin
 RUN go build -mod=vendor -ldflags "-X main.build=${VCS_REF}"
 
@@ -34,21 +31,21 @@ WORKDIR /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -mod=vendor -ldflags "-X main.build=${VCS_REF}"
 
 
-# Run the Go Binary in Alpine.
+# Production image with Go binaries based on Alpine.
 FROM alpine:3.7
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
-COPY --from=build_sales-api /service/private.pem /app/private.pem
-COPY --from=build_sales-api /service/cmd/${PACKAGE_PREFIX}sales-admin/sales-admin /app/admin
-COPY --from=build_sales-api /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+COPY --from=build_stage /service/private.pem /app/private.pem
+COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}sales-admin/sales-admin /app/admin
+COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 WORKDIR /app
 CMD /app/main
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="${PACKAGE_NAME}" \
-      org.opencontainers.image.authors="William Kennedy <bill@ardanlabs.com>" \
-      org.opencontainers.image.source="https://github.com/ardanlabs/service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
+      org.opencontainers.image.authors="Andreas <tullo@pm.me>" \
+      org.opencontainers.image.source="https://github.com/tullo/service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
       org.opencontainers.image.revision="${VCS_REF}" \
-      org.opencontainers.image.vendor="Ardan Labs"
+      org.opencontainers.image.vendor="Amstutz-IT"
