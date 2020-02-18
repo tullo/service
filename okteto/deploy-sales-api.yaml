@@ -50,8 +50,8 @@ spec:
           containerPort: 4000
         resources:
           limits:
-            cpu: 100m
-            memory: 100Mi
+            cpu: 300m
+            memory: 512Mi
       - name: metrics
         image: tullo/metrics-amd64:1.0
         env:
