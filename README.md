@@ -1,5 +1,6 @@
 # Ultimate Service
 
+![Go](https://github.com/tullo/service/workflows/Go/badge.svg?branch=master)
 [![CircleCI](https://circleci.com/gh/tullo/service.svg?style=svg)](https://circleci.com/gh/tullo/service)
 
 Copyright 2018, 2019, 2020 Ardan Labs  
