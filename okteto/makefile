@@ -15,7 +15,8 @@ config:
 deployment:
 	kubectl apply -f deploy-sales-api.yaml
 	@echo
-	kubectl logs -f deployment/sales-api --container sales-api
+	watch kubectl get pod,svc
+#	kubectl logs -f deployment/sales-api --container sales-api
 	@echo ======================================================================
 
 status:
