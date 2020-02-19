@@ -19,7 +19,7 @@
                go version
        - run:
            name: Download the DB image used in tests
-           command: docker pull postgres:11.1-alpine
+           command: docker pull postgres:12.2-alpine
        - run:
            name: Run tests
            command: 
