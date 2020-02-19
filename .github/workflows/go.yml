@@ -21,4 +21,6 @@ jobs:
         go mod download
 
     - name: Build
-      run: go build -v .
+      run: |
+        cd cmd/sales-admin
+        go build -v .
