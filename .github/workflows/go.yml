@@ -24,3 +24,7 @@ jobs:
       run: |
         cd cmd/sales-admin
         go build -v .
+        cd ../sales-admin
+        go build -v .
+        cd ../sidecar/metrics
+        go build -v .
