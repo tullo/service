@@ -20,7 +20,7 @@ jobs:
       run: |
         go mod download
 
-    - name: Build
+    - name: Run builds
       run: |
         cd cmd/sales-admin
         go build -v .
@@ -28,3 +28,8 @@ jobs:
         go build -v .
         cd ../sidecar/metrics
         go build -v .
+
+    - name: Run tests
+      run: |
+        docker pull postgres:12.2-alpine
+        go test -v ./...
