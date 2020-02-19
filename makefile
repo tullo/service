@@ -3,6 +3,7 @@ SHELL := /bin/bash
 export PROJECT = ardan-starter-kit
 export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
+export DOCKER_BUILDKIT = 1
 
 all: keys sales-api metrics
 
