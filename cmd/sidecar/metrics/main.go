@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf"
-	"github.com/ardanlabs/service/cmd/sidecar/metrics/internal/collector"
-	"github.com/ardanlabs/service/cmd/sidecar/metrics/internal/publisher"
-	"github.com/ardanlabs/service/cmd/sidecar/metrics/internal/publisher/expvar"
+	"github.com/tullo/service/cmd/sidecar/metrics/internal/collector"
+	"github.com/tullo/service/cmd/sidecar/metrics/internal/publisher"
+	"github.com/tullo/service/cmd/sidecar/metrics/internal/publisher/expvar"
 )
 
 func main() {

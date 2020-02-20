@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ardanlabs/service/internal/platform/auth"
-	"github.com/ardanlabs/service/internal/product"
-	"github.com/ardanlabs/service/internal/tests"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/product"
+	"github.com/tullo/service/internal/tests"
 )
 
 // TestProduct validates the full set of CRUD operations on Product values.

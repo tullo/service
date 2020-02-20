@@ -9,13 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ardanlabs/service/cmd/sales-api/internal/handlers"
-	"github.com/ardanlabs/service/internal/platform/auth"
-	"github.com/ardanlabs/service/internal/platform/web"
-	"github.com/ardanlabs/service/internal/tests"
-	"github.com/ardanlabs/service/internal/user"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/tullo/service/cmd/sales-api/internal/handlers"
+	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/platform/web"
+	"github.com/tullo/service/internal/tests"
+	"github.com/tullo/service/internal/user"
 )
 
 // TestUsers is the entry point for testing user management functions.

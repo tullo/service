@@ -14,11 +14,11 @@ import (
 
 	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/ardanlabs/conf"
-	"github.com/ardanlabs/service/cmd/search/internal/handlers"
-	"github.com/ardanlabs/service/cmd/search/internal/views"
 	openzipkin "github.com/openzipkin/zipkin-go"
 	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/cmd/search/internal/handlers"
+	"github.com/tullo/service/cmd/search/internal/views"
 	"go.opencensus.io/trace"
 )
 

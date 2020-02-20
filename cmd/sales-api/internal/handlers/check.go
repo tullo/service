@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ardanlabs/service/internal/platform/database"
-	"github.com/ardanlabs/service/internal/platform/web"
 	"github.com/jmoiron/sqlx"
+	"github.com/tullo/service/internal/platform/database"
+	"github.com/tullo/service/internal/platform/web"
 	"go.opencensus.io/trace"
 )
 

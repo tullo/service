@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ardanlabs/service/cmd/search/internal/views"
-	"github.com/ardanlabs/service/internal/platform/web"
-	"github.com/ardanlabs/service/internal/product"
+	"github.com/tullo/service/cmd/search/internal/views"
+	"github.com/tullo/service/internal/platform/web"
+	"github.com/tullo/service/internal/product"
 	"go.opencensus.io/trace"
 )
 

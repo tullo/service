@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ardanlabs/service/internal/mid"
-	"github.com/ardanlabs/service/internal/platform/web"
+	"github.com/tullo/service/internal/mid"
+	"github.com/tullo/service/internal/platform/web"
 )
 
 // API returns a handler for a set of routes.
