@@ -6,7 +6,7 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
 
-all: keys sales-api metrics
+all: keys sales-api search metrics
 
 keys:
 	go run ./cmd/sales-admin/main.go keygen private.pem
