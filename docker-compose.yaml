@@ -15,7 +15,7 @@ services:
     container_name: zipkin
     networks:
       - shared-network
-    image: openzipkin/zipkin:2.11
+    image: openzipkin/zipkin:2.19
     ports:
       - 9411:9411
 
@@ -24,7 +24,8 @@ services:
     container_name: metrics
     networks:
       - shared-network
-    image: gcr.io/ardan-starter-kit/metrics-amd64:1.0
+    #image: gcr.io/${PROJECT}/metrics-amd64:${VERSION}
+    image: ${REGISTRY_ACCOUNT}/metrics-amd64:${VERSION}
     ports:
       - 3001:3001 # EXPVAR API
       - 4001:4001 # DEBUG API
@@ -34,9 +35,11 @@ services:
     container_name: sales_db
     networks:
       - shared-network
-    image: postgres:11.1-alpine
+    image: postgres:12.2-alpine
     ports:
       - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
 
   # This is a front end web application.
   search:
@@ -45,19 +48,20 @@ services:
       - shared-network
     image: gcr.io/ardan-starter-kit/search-amd64:1.0
     ports:
-      - 5000:5000 # SEARCH API
+      - 5050:5000 # SEARCH API
       - 6000:6000 # DEBUG API
-
   # This is the core CRUD based service.
   sales-api:
     container_name: sales-api
     networks:
       - shared-network
-    image: gcr.io/ardan-starter-kit/sales-api-amd64:1.0
+    #image: gcr.io/${PROJECT}/sales-api-amd64:${VERSION}
+    image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
     ports:
       - 3000:3000 # CRUD API
       - 4000:4000 # DEBUG API
     environment:
+      - POSTGRES_PASSWORD=postgres
       - SALES_DB_HOST=db
       - SALES_DB_DISABLE_TLS=1 # This is only disabled for our development enviroment.
       # - GODEBUG=gctrace=1
