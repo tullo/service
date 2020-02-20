@@ -1,0 +1,25 @@
+/.git
+/*.exe
+/*.exe~
+/*.dll
+/*.so
+/*.dylib
+.circleci
+.gitignore
+docker-compose.yaml
+dockerfile.*
+postman
+
+# Test binary, built with go test -c
+/*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+/*.out
+
+# dlv binary
+/__debug_bin
+
+# go build artifacts
+/cmd/sales-admin/sales-admin
+/cmd/sales-api/sales-api
+/cmd/sidecar/metrics/metrics

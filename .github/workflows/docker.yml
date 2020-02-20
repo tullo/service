@@ -1,0 +1,41 @@
+name: Build and Deploy to Docker Hub
+
+on:
+  push:
+    branches: 
+      - master
+
+env:
+  PRIVATE_PEM: ${{ secrets.PRIVATE_PEM }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Create file
+      uses: finnp/create-file-action@master
+      env:
+        FILE_NAME: "private.pem"
+        FILE_DATA: "$PRIVATE_PEM"
+
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+    - name: Build & Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BUILD_DATE: ${{ steps.date.outputs.date }}
+        PACKAGE_NAME: sales-api
+        VCS_REF: ${{ github.sha }}
+      with:
+        name: tullo/sales-api-amd64
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: dockerfile.sales-api
+        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+        tags: latest,${{ env.VCS_REF }}
