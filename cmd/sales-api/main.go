@@ -16,7 +16,7 @@ import (
 
 	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/ardanlabs/conf"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	openzipkin "github.com/openzipkin/zipkin-go"
 	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
@@ -159,7 +159,7 @@ func run() error {
 
 	log.Println("main : Started : Initializing zipkin tracing support")
 
-	localEndpoint, err := openzipkin.NewEndpoint("sales-api", cfg.Zipkin.LocalEndpoint)
+	localEndpoint, err := openzipkin.NewEndpoint(cfg.Zipkin.ServiceName, cfg.Zipkin.LocalEndpoint)
 	if err != nil {
 		return err
 	}
@@ -204,7 +204,7 @@ func run() error {
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      handlers.API(shutdown, log, db, authenticator),
+		Handler:      handlers.API(build, shutdown, log, db, authenticator),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
@@ -225,7 +225,7 @@ func run() error {
 	// Blocking main and waiting for shutdown.
 	select {
 	case err := <-serverErrors:
-		return errors.Wrap(err, "starting server")
+		return errors.Wrap(err, "server error")
 
 	case sig := <-shutdown:
 		log.Printf("main : %v : Start shutdown", sig)
