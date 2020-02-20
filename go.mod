@@ -1,4 +1,4 @@
-module github.com/ardanlabs/service
+module github.com/tullo/service
 
 go 1.13
 
@@ -18,7 +18,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/pkg/errors v0.9.1
 	go.opencensus.io v0.22.3
-	golang.org/x/crypto v0.0.0-20200214034016-1d94cc7ab1c6
+	golang.org/x/crypto v0.0.0-20200219234226-1ad67e1f0ef4
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )

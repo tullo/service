@@ -3,8 +3,8 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/ardanlabs/service/internal/platform/auth"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/tullo/service/internal/platform/auth"
 )
 
 func TestAuthenticator(t *testing.T) {

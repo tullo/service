@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/ardanlabs/service/internal/mid"
-	"github.com/ardanlabs/service/internal/platform/auth" // Import is removed in final PR
-	"github.com/ardanlabs/service/internal/platform/web"
 	"github.com/jmoiron/sqlx"
+	"github.com/tullo/service/internal/mid"
+	"github.com/tullo/service/internal/platform/auth" // Import is removed in final PR
+	"github.com/tullo/service/internal/platform/web"
 )
 
 // API constructs an http.Handler with all application routes defined.

@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ardanlabs/service/internal/platform/auth"
-	"github.com/ardanlabs/service/internal/tests"
-	"github.com/ardanlabs/service/internal/user"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/tests"
+	"github.com/tullo/service/internal/user"
 )
 
 // TestUser validates the full set of CRUD operations on User values.

@@ -16,13 +16,13 @@ import (
 
 	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/ardanlabs/conf"
-	"github.com/ardanlabs/service/cmd/sales-api/internal/handlers"
-	"github.com/ardanlabs/service/internal/platform/auth"
-	"github.com/ardanlabs/service/internal/platform/database"
 	"github.com/dgrijalva/jwt-go"
 	openzipkin "github.com/openzipkin/zipkin-go"
 	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/cmd/sales-api/internal/handlers"
+	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/platform/database"
 	"go.opencensus.io/trace"
 )
 

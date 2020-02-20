@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf"
-	"github.com/ardanlabs/service/internal/platform/auth"
-	"github.com/ardanlabs/service/internal/platform/database"
-	"github.com/ardanlabs/service/internal/schema"
-	"github.com/ardanlabs/service/internal/user"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/platform/database"
+	"github.com/tullo/service/internal/schema"
+	"github.com/tullo/service/internal/user"
 )
 
 func main() {

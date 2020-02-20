@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/ardanlabs/service/internal/platform/web"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/platform/web"
 )
 
 // Panics recovers from panics and converts the panic to an error so it is
