@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    dev.okteto.com/container: zipkin
+  name: zipkin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      dev.okteto.com/container: zipkin
+  template:
+    metadata:
+      name: zipkin
+      labels:
+        dev.okteto.com/container: zipkin
+    spec:
+      containers:
+      - name: zipkin
+        image: openzipkin/zipkin:2.19
+        imagePullPolicy: Always
+        ports:
+        - name: zipkin
+          containerPort: 9411
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi

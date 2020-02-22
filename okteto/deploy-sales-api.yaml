@@ -18,15 +18,6 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-      - name: zipkin
-        image: openzipkin/zipkin:2.19
-        ports:
-        - name: zipkin
-          containerPort: 9411
-        resources:
-          limits:
-            cpu: 100m
-            memory: 256Mi
       - name: sales-api
         image: tullo/sales-api-amd64:1.0
         env:
@@ -43,6 +34,8 @@ spec:
               key: postgresql-password
         - name: SALES_DB_DISABLE_TLS
           value: "true"
+        - name: SALES_ZIPKIN_REPORTER_URI
+          value: http://zipkin:8080/api/v2/spans
         ports:
         - name: sales-api
           containerPort: 8080

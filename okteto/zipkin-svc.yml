@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    dev.okteto.com/auto-ingress: "true"
+  labels:
+    dev.okteto.com/container: zipkin
+  name: zipkin
+  namespace: tullo
+spec:
+  ports:
+  - name: zipkin
+    port: 8080
+    protocol: TCP
+    targetPort: 9411
+  selector:
+    dev.okteto.com/container: zipkin
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}

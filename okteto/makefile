@@ -12,8 +12,15 @@ config:
 	okteto namespace $(NAMESPACE)
 	@echo ======================================================================
 
+diff:
+	kubectl diff -f deploy-sales-api.yaml
+
+dry-run:
+	kubectl apply --dry-run -f deploy-sales-api.yaml -o yaml
+
 deployment:
 	kubectl apply -f deploy-sales-api.yaml
+	kubectl apply -f zipkin-deployment.yml -f zipkin-svc.yml
 	@echo
 	watch kubectl get pod,svc
 #	kubectl logs -f deployment/sales-api --container sales-api
