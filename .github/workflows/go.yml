@@ -1,5 +1,8 @@
 name: Go
-on: [push]
+on:
+  push:
+    branches: 
+      - tullo
 jobs:
 
   build:
@@ -22,14 +25,9 @@ jobs:
 
     - name: Run builds
       run: |
-        cd cmd/sales-admin
-        go build -v .
-        cd ../sales-admin
-        go build -v .
-        cd ../sidecar/metrics
-        go build -v .
+        go build -v ./...
 
     - name: Run tests
       run: |
         docker pull postgres:12.2-alpine
-        go test -v ./...
+        go test ./...
