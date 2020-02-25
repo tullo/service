@@ -1,18 +1,12 @@
-<div class="top">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1><i class="glyphicon glyphicon-search"></i> SEARCH FOR PRODUCTS</h1>
-                <form action="/search" method="post">
-                    <input class="form-control" name="term" type="text" value="{{.term}}"/>
-                    <input class="btn btn-default" type="submit" value="Search" style="font-size: 16px;"/>
-                </form>
-            </div><!-- col-md-12 -->
-        </div><!-- row -->
-    </div><!-- container -->
-    <div class="clearfix"></div>
-</div><!-- top -->
+<div class="container">
+    <h2 class="text-center">SEARCH FOR PRODUCTS</h2>
+    <form>
+    <label for="search-input">Product</label>
+    <input id="search-input" type="text" placeholder="Enter product name">
+    <input class="btn block-center" type="submit" value="Search" style="margin-top:1em">
+    </form>
+</div>
 
-<div class="results-wrapper">
+<div class="table-responsive">
 	{{.Results}}
 </div>

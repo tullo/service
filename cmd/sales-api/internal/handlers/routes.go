@@ -44,7 +44,7 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, au
 	}
 	app.Handle(http.MethodGet, "/v1/products", p.List)
 	app.Handle(http.MethodPost, "/v1/products", p.Create, mid.Authenticate(authenticator))
-	app.Handle(http.MethodGet, "/v1/products/{id}", p.Retrieve, mid.Authenticate(authenticator))
+	app.Handle(http.MethodGet, "/v1/products/{id}", p.Retrieve)
 	app.Handle(http.MethodPut, "/v1/products/{id}", p.Update, mid.Authenticate(authenticator))
 	app.Handle(http.MethodDelete, "/v1/products/{id}", p.Delete, mid.Authenticate(authenticator))
 

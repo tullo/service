@@ -51,7 +51,7 @@ func run() error {
 			ShutdownTimeout time.Duration `conf:"default:5s"`
 		}
 		Sales struct {
-			Endpoint string `conf:"default:http://0.0.0.0:3000"`
+			Endpoint string `conf:"default:http://0.0.0.0:3000/v1/products"`
 		}
 		Zipkin struct {
 			LocalEndpoint string  `conf:"default:0.0.0.0:5000"`

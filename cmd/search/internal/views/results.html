@@ -1,16 +1,25 @@
-<div class="container">
-	<div class="row">
-    	<div class="col-md-8 col-md-offset-2">
-            {{range $index, $val := .Items}}
-            	<div class="result-item">
-                    <div style="clear:both; font-size:16px; margin-top: 10px">
-                        {{$val.ID}} : {{$val.NameHTML}}
-                    </div>
-                    <div style="clear:both; font-size:14px">
-                        {{$val.Cost}}, {{$val.Quantity}}, {{$val.Sold}}, {{$val.Revenue}}
-                    </div>
-                </div><!-- result-item -->
-            {{end}}
-    	</div><!-- col-md-12 -->
-    </div><!-- row -->
-</div><!-- container -->
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Name</th>
+            <th scope="col">Cost</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Sold</th>
+            <th scope="col">Revenue</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{$host_url := .HOST}}
+        {{range $index, $val := .Items}}
+        <tr>
+            <th scope="row">{{$index | incr}}</th>
+            <td><a href="{{$host_url}}/{{$val.ID}}">{{$val.NameHTML}}</a></td>
+            <td>{{$val.Cost}}</td>
+            <td>{{$val.Quantity}}</td>
+            <td>{{$val.Sold}}</td>
+            <td>{{$val.Revenue}}</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>

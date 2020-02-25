@@ -33,16 +33,13 @@ func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	defer span.End()
 
 	// Create a new request.
-	req, err := http.NewRequest("GET", s.url+"/v1/products", nil)
+	req, err := http.NewRequest("GET", s.url, nil)
 	if err != nil {
 		return err
 	}
 
-	bearer := "Bearer " + "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.eyJyb2xlcyI6WyJBRE1JTiIsIlVTRVIiXSwiZXhwIjoxNTgyNjM4NTk5LCJpYXQiOjE1ODI2MzQ5OTksInN1YiI6IjVjZjM3MjY2LTM0NzMtNDAwNi05ODRmLTkzMjUxMjI2NzhiNyJ9.Rkp6MvYXOPIL04-lCACyGyIZqpP--XN59VqQSFktJDhe5WK5_wTDSpeBNeACNE1F6JRBQx30_CD3mMriF68MdqJy5Ui0YWl76stxUK1AnvHrGE9h0UTCswYyOCySX2o1alCPuzbtQGDI5OL4bfKtoAodlbbUVxP_UJRqo98xo3OPvRq7V3MK7yE-RDG0KdM1RAsYasw1O2uE3ESVEMRKXJIAFHBg843BK_Kv4m30WdILNfGjUX3tHgkBQM9pfWLOg4dGXY0nfIZZ-eseQAdUKw_jmuqt18TU5_jSjK7sqnhG93sHlJKHnnUqg8VywRrJwm0esOIPyZBmRuTUGYVaGg"
-	req.Header.Set("Authorization", bearer)
-
 	// Create a context with a timeout of 1 second.
-	ctx, cancel := context.WithTimeout(req.Context(), time.Second)
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
 
 	// Bind the new context into the request.
@@ -65,7 +62,7 @@ func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 
 	// Render the results as HTML.
-	markup, err := views.Render(products)
+	markup, err := views.Render(products, s.url)
 	if err != nil {
 		return err
 	}

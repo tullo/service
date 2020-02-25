@@ -19,13 +19,13 @@ const (
 var views = make(map[string]*template.Template)
 
 // Render generates the HTML response for this route.
-func Render(results interface{}) ([]byte, error) {
+func Render(results interface{}, host string) ([]byte, error) {
 	fv := make(map[string]interface{})
 
 	// Generate the markup for the results template.
 	var markup bytes.Buffer
 	if results != nil {
-		vars := map[string]interface{}{"Items": results}
+		vars := map[string]interface{}{"Items": results, "HOST": host}
 		if err := views[RESULTS].Execute(&markup, vars); err != nil {
 			return nil, fmt.Errorf("error processing results template : %v", err)
 		}
@@ -82,6 +82,13 @@ func loadTemplate(name string, path string) error {
 
 	// Create a template value for this code.
 	tmpl, err := template.New(name).Parse(string(data))
+	if name == RESULTS {
+		tmpl, err = template.New(name).Funcs(template.FuncMap{
+			"incr": func(idx int) int {
+				return idx + 1
+			},
+		}).Parse(string(data))
+	}
 	if err != nil {
 		return err
 	}
