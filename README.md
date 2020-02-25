@@ -27,4 +27,4 @@ limitations under the License.
 
 Please read the project wiki.
 
-<https://github.com/ardanlabs/service/wiki>
+<https://github.com/tullo/service/wiki>
