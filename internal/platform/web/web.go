@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dimfeld/httptreemux/v5"
+	"github.com/go-chi/chi"
 	"go.opencensus.io/plugin/ochttp"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
@@ -28,13 +28,13 @@ type Values struct {
 
 // A Handler is a type that handles an http request within our own little mini
 // framework.
-type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error
+type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
 // App is the entrypoint into our application and what configures our context
 // object for each of our http handlers. Feel free to add any configuration
 // data/logic on this App struct
 type App struct {
-	*httptreemux.TreeMux
+	mux      *chi.Mux
 	och      *ochttp.Handler
 	shutdown chan os.Signal
 	mw       []Middleware
@@ -43,7 +43,7 @@ type App struct {
 // NewApp creates an App value that handle a set of routes for the application.
 func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 	app := App{
-		TreeMux:  httptreemux.New(),
+		mux:      chi.NewRouter(),
 		shutdown: shutdown,
 		mw:       mw,
 	}
@@ -55,7 +55,7 @@ func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 	// parent if an client request includes the appropriate headers.
 	// https://w3c.github.io/trace-context/
 	app.och = &ochttp.Handler{
-		Handler:     app.TreeMux,
+		Handler:     app.mux,
 		Propagation: &tracecontext.HTTPFormat{},
 	}
 
@@ -79,7 +79,7 @@ func (a *App) Handle(verb, path string, handler Handler, mw ...Middleware) {
 	handler = wrapMiddleware(a.mw, handler)
 
 	// The function to execute for each request.
-	h := func(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	h := func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := trace.StartSpan(r.Context(), "internal.platform.web")
 		defer span.End()
 
@@ -92,14 +92,14 @@ func (a *App) Handle(verb, path string, handler Handler, mw ...Middleware) {
 		ctx = context.WithValue(ctx, KeyValues, &v)
 
 		// Call the wrapped handler functions.
-		if err := handler(ctx, w, r, params); err != nil {
+		if err := handler(ctx, w, r); err != nil {
 			a.SignalShutdown()
 			return
 		}
 	}
 
 	// Add this handler for the specified verb and route.
-	a.TreeMux.Handle(verb, path, h)
+	a.mux.MethodFunc(verb, path, h)
 }
 
 // ServeHTTP implements the http.Handler interface. It overrides the ServeHTTP

@@ -5,18 +5,26 @@ import (
 	"net/http"
 
 	"github.com/tullo/service/internal/platform/web"
+	"go.opencensus.io/trace"
 )
 
 // Check provides support for orchestration health checks.
-type Check struct{}
+type Check struct {
+	build string
+}
 
 // Health validates the service is healthy and ready to accept requests.
-func (c *Check) Health(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
-	status := struct {
-		Status string `json:"status"`
+func (c *Check) Health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	ctx, span := trace.StartSpan(ctx, "handlers.Check.Health")
+	defer span.End()
+
+	health := struct {
+		Version string `json:"version"`
+		Status  string `json:"status"`
 	}{
-		Status: "ok",
+		Status:  "ok",
+		Version: c.build,
 	}
 
-	return web.Respond(ctx, w, status, http.StatusOK)
+	return web.Respond(ctx, w, health, http.StatusOK)
 }

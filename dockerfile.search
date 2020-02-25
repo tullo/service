@@ -34,6 +34,7 @@ ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
 COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/internal/views/*.html /app/internal/views/
+COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/static /app/static
 WORKDIR /app
 CMD /app/main
 

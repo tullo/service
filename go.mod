@@ -8,6 +8,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dimfeld/httptreemux/v5 v5.0.2
 	github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
+	github.com/go-chi/chi v4.0.3+incompatible
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect

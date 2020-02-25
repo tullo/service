@@ -22,31 +22,34 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, au
 		build: build,
 		db:    db,
 	}
-	app.Handle("GET", "/v1/health", check.Health)
+	app.Handle(http.MethodGet, "/v1/health", check.Health)
 
 	// Register user management and authentication endpoints.
 	u := User{
 		db:            db,
 		authenticator: authenticator,
 	}
-	app.Handle("GET", "/v1/users", u.List, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
-	app.Handle("POST", "/v1/users", u.Create, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
-	app.Handle("GET", "/v1/users/:id", u.Retrieve, mid.Authenticate(authenticator))
-	app.Handle("PUT", "/v1/users/:id", u.Update, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
-	app.Handle("DELETE", "/v1/users/:id", u.Delete, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users", u.List, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodPost, "/v1/users", u.Create, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users/{id}", u.Retrieve, mid.Authenticate(authenticator))
+	app.Handle(http.MethodPut, "/v1/users/{id}", u.Update, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodDelete, "/v1/users/{id}", u.Delete, mid.Authenticate(authenticator), mid.HasRole(auth.RoleAdmin))
 
 	// This route is not authenticated
-	app.Handle("GET", "/v1/users/token", u.Token)
+	app.Handle(http.MethodGet, "/v1/users/token", u.Token)
 
 	// Register product and sale endpoints.
 	p := Product{
 		db: db,
 	}
-	app.Handle("GET", "/v1/products", p.List, mid.Authenticate(authenticator))
-	app.Handle("POST", "/v1/products", p.Create, mid.Authenticate(authenticator))
-	app.Handle("GET", "/v1/products/:id", p.Retrieve, mid.Authenticate(authenticator))
-	app.Handle("PUT", "/v1/products/:id", p.Update, mid.Authenticate(authenticator))
-	app.Handle("DELETE", "/v1/products/:id", p.Delete, mid.Authenticate(authenticator))
+	app.Handle(http.MethodGet, "/v1/products", p.List)
+	app.Handle(http.MethodPost, "/v1/products", p.Create, mid.Authenticate(authenticator))
+	app.Handle(http.MethodGet, "/v1/products/{id}", p.Retrieve, mid.Authenticate(authenticator))
+	app.Handle(http.MethodPut, "/v1/products/{id}", p.Update, mid.Authenticate(authenticator))
+	app.Handle(http.MethodDelete, "/v1/products/{id}", p.Delete, mid.Authenticate(authenticator))
+
+	app.Handle(http.MethodPost, "/v1/products/{id}/sales", p.AddSale, mid.Authenticate(authenticator))
+	app.Handle(http.MethodGet, "/v1/products/{id}/sales", p.ListSales, mid.Authenticate(authenticator))
 
 	return app
 }

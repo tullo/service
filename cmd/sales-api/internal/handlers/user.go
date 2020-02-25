@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/internal/platform/auth"
@@ -21,7 +22,7 @@ type User struct {
 }
 
 // List returns all the existing users in the system.
-func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.List")
 	defer span.End()
 
@@ -34,7 +35,7 @@ func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request,
 }
 
 // Retrieve returns the specified user from the system.
-func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Retrieve")
 	defer span.End()
 
@@ -43,7 +44,8 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return errors.New("claims missing from context")
 	}
 
-	usr, err := user.Retrieve(ctx, claims, u.db, params["id"])
+	id := chi.URLParam(r, "id")
+	usr, err := user.Retrieve(ctx, claims, u.db, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -53,7 +55,7 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "Id: %s", params["id"])
+			return errors.Wrapf(err, "Id: %s", id)
 		}
 	}
 
@@ -61,7 +63,7 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 }
 
 // Create inserts a new user into the system.
-func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Create")
 	defer span.End()
 
@@ -84,7 +86,7 @@ func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Reques
 }
 
 // Update updates the specified user in the system.
-func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Update")
 	defer span.End()
 
@@ -103,7 +105,8 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		return errors.Wrap(err, "")
 	}
 
-	err := user.Update(ctx, claims, u.db, params["id"], upd, v.Now)
+	id := chi.URLParam(r, "id")
+	err := user.Update(ctx, claims, u.db, id, upd, v.Now)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -113,7 +116,7 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "ID: %s  User: %+v", params["id"], &upd)
+			return errors.Wrapf(err, "ID: %s  User: %+v", id, &upd)
 		}
 	}
 
@@ -121,11 +124,12 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 }
 
 // Delete removes the specified user from the system.
-func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Delete")
 	defer span.End()
 
-	err := user.Delete(ctx, u.db, params["id"])
+	id := chi.URLParam(r, "id")
+	err := user.Delete(ctx, u.db, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -135,7 +139,7 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "Id: %s", params["id"])
+			return errors.Wrapf(err, "Id: %s", id)
 		}
 	}
 
@@ -144,7 +148,7 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // Token handles a request to authenticate a user. It expects a request using
 // Basic Auth with a user's email and password. It responds with a JWT.
-func (u *User) Token(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (u *User) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Token")
 	defer span.End()
 

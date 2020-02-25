@@ -16,27 +16,29 @@ import (
 // Search provides support for orchestration searches.
 type Search struct {
 	log *log.Logger
+	url string
 }
 
 // NewSearch constructs a Search for a given set of feeds.
-func NewSearch(log *log.Logger) *Search {
+func NewSearch(url string, log *log.Logger) *Search {
 	return &Search{
 		log: log,
+		url: url,
 	}
 }
 
 // Query performs a search against the datastore.
-func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Request, params map[string]string) error {
+func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.Search.Query")
 	defer span.End()
 
 	// Create a new request.
-	req, err := http.NewRequest("GET", "http://sales-api:3000/v1/products", nil)
+	req, err := http.NewRequest("GET", s.url+"/v1/products", nil)
 	if err != nil {
 		return err
 	}
 
-	bearer := "Bearer " + "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.eyJyb2xlcyI6WyJBRE1JTiIsIlVTRVIiXSwiZXhwIjoxNTY4MzM4NTQ5LCJpYXQiOjE1NjgzMzQ5NDksInN1YiI6IjVjZjM3MjY2LTM0NzMtNDAwNi05ODRmLTkzMjUxMjI2NzhiNyJ9.X3BkW54YN-ecc_xhfGeQi6tqLLn43sn7ejzRYFFMQ8T31-dEfA13XUMA7bST-ADzusVn8FZORiOfhHBKGtwFCMGN9ArkethUnNTEtdX72WimCkohLPBAoVg3DTKgNihqo4nVNzoB7B27CqlthyYBJs6fHBJIEsq-L4TsKL2a_97HabSR1gow5_5yQ7V48gA2Nn6V_ECqn76A5MEwq_DOXgTapLDoIStrr-X-Se2DVnSQfxxG3PmDCzhJqrhWFTNvSWi-ShL7zh7SmJNqWwMXQn5K2tAX_7wayl6ABhtX5UANs6oxRUsGC6UQjFwOwLkBe0GV_6pnWb7oXPz0rOsS3w"
+	bearer := "Bearer " + "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEiLCJ0eXAiOiJKV1QifQ.eyJyb2xlcyI6WyJBRE1JTiIsIlVTRVIiXSwiZXhwIjoxNTgyNjM4NTk5LCJpYXQiOjE1ODI2MzQ5OTksInN1YiI6IjVjZjM3MjY2LTM0NzMtNDAwNi05ODRmLTkzMjUxMjI2NzhiNyJ9.Rkp6MvYXOPIL04-lCACyGyIZqpP--XN59VqQSFktJDhe5WK5_wTDSpeBNeACNE1F6JRBQx30_CD3mMriF68MdqJy5Ui0YWl76stxUK1AnvHrGE9h0UTCswYyOCySX2o1alCPuzbtQGDI5OL4bfKtoAodlbbUVxP_UJRqo98xo3OPvRq7V3MK7yE-RDG0KdM1RAsYasw1O2uE3ESVEMRKXJIAFHBg843BK_Kv4m30WdILNfGjUX3tHgkBQM9pfWLOg4dGXY0nfIZZ-eseQAdUKw_jmuqt18TU5_jSjK7sqnhG93sHlJKHnnUqg8VywRrJwm0esOIPyZBmRuTUGYVaGg"
 	req.Header.Set("Authorization", bearer)
 
 	// Create a context with a timeout of 1 second.

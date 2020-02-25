@@ -50,6 +50,8 @@ services:
     ports:
       - 5050:5000 # SEARCH API
       - 6000:6000 # DEBUG API
+    environment: 
+      - SEARCH_SALES_ENDPOINT=http://sales-api:3000
   # This is the core CRUD based service.
   sales-api:
     container_name: sales-api

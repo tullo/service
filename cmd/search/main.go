@@ -50,6 +50,9 @@ func run() error {
 			WriteTimeout    time.Duration `conf:"default:5s"`
 			ShutdownTimeout time.Duration `conf:"default:5s"`
 		}
+		Sales struct {
+			Endpoint string `conf:"default:http://0.0.0.0:3000"`
+		}
 		Zipkin struct {
 			LocalEndpoint string  `conf:"default:0.0.0.0:5000"`
 			ReporterURI   string  `conf:"default:http://zipkin:9411/api/v2/spans"`
@@ -136,7 +139,7 @@ func run() error {
 
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      handlers.API(shutdown, log),
+		Handler:      handlers.API(build, cfg.Sales.Endpoint, shutdown, log),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
