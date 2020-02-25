@@ -8,6 +8,17 @@ export DOCKER_BUILDKIT = 1
 
 all: keys sales-api search metrics
 
+api-dev-run:
+	go run ./cmd/sales-api --db-disable-tls=1 --auth-private-key-file=private.pem
+
+health-check:
+	curl -v http://0.0.0.0:3000/v1/health | jq
+	@echo
+
+pprof:
+	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=8
+	@echo
+
 keys:
 	go run ./cmd/sales-admin/main.go keygen private.pem
 
