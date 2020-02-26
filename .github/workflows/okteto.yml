@@ -1,0 +1,40 @@
+name: Okteto
+on:
+  push:
+    branches: 
+      - tullo
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@master
+
+    - name: Create file
+      uses: finnp/create-file-action@master
+      env:
+        FILE_NAME: "private.pem"
+        FILE_DATA: ${{ secrets.PRIVATE_PEM }}
+
+    - name: Get Kubeconfig
+      uses: tullo/actions/namespace@tullo
+      id: namespace
+      with:
+        token: ${{ secrets.OKTETO_TOKEN }}
+        namespace: ${{ secrets.OKTETO_NS }}
+
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+    - name: Build
+      uses: tullo/actions/build@tullo
+      env:
+        BUILD_DATE: ${{ steps.date.outputs.date }}
+        PACKAGE_NAME: sales-api
+        VCS_REF: ${{ github.sha }}      
+      with:
+        file: dockerfile.sales-api
+        token: ${{ secrets.OKTETO_TOKEN }}
+        tag: registry.cloud.okteto.net/${{ secrets.OKTETO_NS }}/sales-api-amd64:${{ github.sha }}
+        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
