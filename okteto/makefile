@@ -19,7 +19,7 @@ dry-run:
 	kubectl apply --dry-run -f deploy-sales-api.yaml -o yaml
 
 deployment:
-	kubectl apply -f deploy-sales-api.yaml
+	kubectl apply -f deploy-sales-api.yaml -f deploy-search.yaml
 	kubectl apply -f zipkin-deployment.yml -f zipkin-svc.yml
 	@echo
 	watch kubectl get pod,svc
@@ -46,6 +46,37 @@ shell:
 	# ./admin --db-disable-tls=1 migrate
 	# ./admin --db-disable-tls=1 seed
 	@echo ======================================================================
+
+sales-api:
+	cd .. && \
+	okteto build \
+		-f dockerfile.sales-api \
+		-t registry.cloud.okteto.net/tullo/sales-api-amd64:$(VERSION) \
+		--build-arg PACKAGE_NAME=sales-api \
+		--build-arg VCS_REF=`git rev-parse HEAD` \
+		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+		.
+
+search:
+	cd .. && \
+	okteto build \
+		-f dockerfile.search \
+		-t registry.cloud.okteto.net/tullo/search-amd64:$(VERSION) \
+		--build-arg PACKAGE_NAME=search \
+		--build-arg VCS_REF=`git rev-parse HEAD` \
+		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+		.
+
+metrics:
+	cd .. && \
+	okteto build \
+		-f dockerfile.metrics \
+		-t registry.cloud.okteto.net/tullo/metrics-amd64:$(VERSION) \
+		--build-arg PACKAGE_NAME=metrics \
+		--build-arg PACKAGE_PREFIX=sidecar/ \
+		--build-arg VCS_REF=`git rev-parse HEAD` \
+		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+		.
 
 delete:
 	kubectl delete -f deploy-sales-api.yaml
