@@ -98,29 +98,17 @@ func NewStdout(log *log.Logger) *Stdout {
 
 // Publish publishers for writing to stdout.
 func (s *Stdout) Publish(data map[string]interface{}) {
-	rawJSON, err := json.Marshal(data)
-	if err != nil {
-		s.log.Println("Stdout : Marshal ERROR :", err)
-		return
-	}
-
-	var d map[string]interface{}
-	if err := json.Unmarshal(rawJSON, &d); err != nil {
-		s.log.Println("Stdout : Unmarshal ERROR :", err)
-		return
-	}
-
 	// Add heap value into the data set.
-	memStats, ok := (d["memstats"]).(map[string]interface{})
+	memStats, ok := data["memstats"].(map[string]interface{})
 	if ok {
-		d["heap"] = memStats["Alloc"]
+		data["heap"] = memStats["Alloc"]
 	}
 
 	// Remove unnecessary keys.
-	delete(d, "memstats")
-	delete(d, "cmdline")
+	delete(data, "memstats")
+	delete(data, "cmdline")
 
-	out, err := json.MarshalIndent(d, "", "    ")
+	out, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
 		return
 	}
