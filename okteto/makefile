@@ -83,3 +83,27 @@ delete:
 	docker image remove $(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION)
 	docker image remove $(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION)
 	@echo ======================================================================
+
+port-forward:
+	kubectl get pod -l service=sales-api
+	#kubectl get pod --show-labels
+	#kubectl port-forward sales-api-7b45cf9d76-68n8z 4040:4000
+
+debug:
+	@echo --- SALES-API
+#	kubectl describe deploy/sales-api
+#	kubectl describe rs/sales-api-7b45cf9d76
+#	kubectl describe pod sales-api-7b45cf9d76-68n8z
+#	kubectl get pod sales-api-7b45cf9d76-68n8z -o go-template="{{range .status.containerStatuses}}{{.lastState.terminated.exitCode}}{{end}}"
+#	kubectl logs deploy/sales-api -c metrics | less
+#	kubectl logs deploy/sales-api -c sales-api | less
+#	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c metrics | less
+#	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c sales-api | less
+#	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c sales-api --previous | less
+	@echo --- ZIPKIN
+#	kubectl describe deploy/zipkin
+#	kubectl describe rs/zipkin-767859464d
+#	kubectl describe pod/zipkin-767859464d-m29l9
+#	kubectl logs deploy/zipkin | less
+	@echo --- EVENTS
+#	kubectl get event -o custom-columns=NAME:.metadata.name | cut -d "." -f1

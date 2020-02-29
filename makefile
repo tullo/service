@@ -16,7 +16,16 @@ health-check:
 	@echo
 
 pprof:
-	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=8
+	go tool pprof http://localhost:4000/debug/pprof/heap
+#	firefox http://localhost:4000/debug/pprof
+#	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
+	@echo
+
+generate-load:
+	$(TOKEN = $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token'))
+#	@echo $(TOKEN)
+#	curl -s -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/products | jq
+	hey -c 10 -n 30000 -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/products
 	@echo
 
 keys:
@@ -96,7 +105,7 @@ deps-reset:
 
 deps-upgrade:
 	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
-	go get -t -d -v ./...
+	go get -u -t -d -v ./...
 
 deps-cleancache:
 	go clean -modcache
@@ -184,3 +193,8 @@ delete:
 #
 # Installing the K8s kubectl client. 
 # https://kubernetes.io/docs/tasks/tools/install-kubectl/
+
+# ==============================================================================
+# make debuging
+# make -n
+# make -np 2>&1 | less
