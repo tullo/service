@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tullo/service/cmd/sales-api/internal/handlers"
+	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
 	"github.com/tullo/service/internal/product"
 	"github.com/tullo/service/internal/tests"
@@ -33,13 +34,20 @@ func TestProducts(t *testing.T) {
 		userToken: test.Token("admin@example.com", "gophers"),
 	}
 
+	// ADMIN role
 	t.Run("postProduct400", tests.postProduct400)
 	t.Run("postProduct401", tests.postProduct401)
 	t.Run("getProduct404", tests.getProduct404)
 	t.Run("getProduct400", tests.getProduct400)
 	t.Run("deleteProductNotFound", tests.deleteProductNotFound)
 	t.Run("putProduct404", tests.putProduct404)
-	t.Run("crudProducts", tests.crudProduct)
+	t.Run("crudProductAdmin", tests.crudProductAdmin)
+
+	// USER role
+	tests.userToken = test.Token("user@example.com", "gophers")
+	t.Run("postProduct401", tests.postProduct401)
+	t.Run("putProduct404", tests.putProduct404)
+	t.Run("crudProductUser", tests.crudProductUser)
 }
 
 // ProductTests holds methods for each product subtest. This type allows
@@ -53,7 +61,7 @@ type ProductTests struct {
 // postProduct400 validates a product can't be created with the endpoint
 // unless a valid product document is submitted.
 func (pt *ProductTests) postProduct400(t *testing.T) {
-	r := httptest.NewRequest("POST", "/v1/products", strings.NewReader(`{}`))
+	r := httptest.NewRequest(http.MethodPost, "/v1/products", strings.NewReader(`{}`))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -114,7 +122,7 @@ func (pt *ProductTests) postProduct401(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/products", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/products", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	// Not setting an authorization header
@@ -137,7 +145,7 @@ func (pt *ProductTests) postProduct401(t *testing.T) {
 func (pt *ProductTests) getProduct400(t *testing.T) {
 	id := "12345"
 
-	r := httptest.NewRequest("GET", "/v1/products/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/products/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -169,7 +177,7 @@ func (pt *ProductTests) getProduct400(t *testing.T) {
 func (pt *ProductTests) getProduct404(t *testing.T) {
 	id := "a224a8d6-3f9e-4b11-9900-e81a25d80702"
 
-	r := httptest.NewRequest("GET", "/v1/products/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/products/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -201,7 +209,7 @@ func (pt *ProductTests) getProduct404(t *testing.T) {
 func (pt *ProductTests) deleteProductNotFound(t *testing.T) {
 	id := "112262f1-1a77-4374-9f22-39e575aa6348"
 
-	r := httptest.NewRequest("DELETE", "/v1/products/"+id, nil)
+	r := httptest.NewRequest(http.MethodDelete, "/v1/products/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -233,7 +241,7 @@ func (pt *ProductTests) putProduct404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("PUT", "/v1/products/"+id, bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPut, "/v1/products/"+id, bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -261,13 +269,25 @@ func (pt *ProductTests) putProduct404(t *testing.T) {
 	}
 }
 
-// crudProduct performs a complete test of CRUD against the api.
-func (pt *ProductTests) crudProduct(t *testing.T) {
+// crudProductAdmin performs a complete test of CRUD against the api.
+func (pt *ProductTests) crudProductAdmin(t *testing.T) {
 	p := pt.postProduct201(t)
 	defer pt.deleteProduct204(t, p.ID)
 
 	pt.getProduct200(t, p.ID)
 	pt.putProduct204(t, p.ID)
+
+	pt.postProductSale201(t, p.ID)
+	pt.getProductSales200(t, p.ID)
+}
+
+// crudProductUser performs tests for produtct creation and update
+// as well as creation of a sale.
+func (pt *ProductTests) crudProductUser(t *testing.T) {
+	p := pt.postProduct201(t)
+	pt.getProduct200(t, p.ID)
+	pt.putProduct204(t, p.ID)
+	pt.postProductSale403(t, p.ID)
 }
 
 // postProduct201 validates a product can be created with the endpoint.
@@ -283,7 +303,7 @@ func (pt *ProductTests) postProduct201(t *testing.T) product.Product {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/products", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/products", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -312,6 +332,8 @@ func (pt *ProductTests) postProduct201(t *testing.T) product.Product {
 			want.Name = "Comic Books"
 			want.Cost = 25
 			want.Quantity = 60
+			want.Revenue = 0
+			want.Sold = 0
 
 			if diff := cmp.Diff(want, p); diff != "" {
 				t.Fatalf("\t%s\tShould get the expected result. Diff:\n%s", tests.Failed, diff)
@@ -325,7 +347,7 @@ func (pt *ProductTests) postProduct201(t *testing.T) product.Product {
 
 // deleteProduct200 validates deleting a product that does exist.
 func (pt *ProductTests) deleteProduct204(t *testing.T, id string) {
-	r := httptest.NewRequest("DELETE", "/v1/products/"+id, nil)
+	r := httptest.NewRequest(http.MethodDelete, "/v1/products/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -346,7 +368,7 @@ func (pt *ProductTests) deleteProduct204(t *testing.T, id string) {
 
 // getProduct200 validates a product request for an existing id.
 func (pt *ProductTests) getProduct200(t *testing.T, id string) {
-	r := httptest.NewRequest("GET", "/v1/products/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/products/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -374,6 +396,8 @@ func (pt *ProductTests) getProduct200(t *testing.T, id string) {
 			want.Name = "Comic Books"
 			want.Cost = 25
 			want.Quantity = 60
+			want.Revenue = 0
+			want.Sold = 0
 
 			if diff := cmp.Diff(want, p); diff != "" {
 				t.Fatalf("\t%s\tShould get the expected result. Diff:\n%s", tests.Failed, diff)
@@ -386,7 +410,7 @@ func (pt *ProductTests) getProduct200(t *testing.T, id string) {
 // putProduct204 validates updating a product that does exist.
 func (pt *ProductTests) putProduct204(t *testing.T, id string) {
 	body := `{"name": "Graphic Novels", "cost": 100}`
-	r := httptest.NewRequest("PUT", "/v1/products/"+id, strings.NewReader(body))
+	r := httptest.NewRequest(http.MethodPut, "/v1/products/"+id, strings.NewReader(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -402,7 +426,7 @@ func (pt *ProductTests) putProduct204(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tShould receive a status code of 204 for the response.", tests.Success)
 
-			r = httptest.NewRequest("GET", "/v1/products/"+id, nil)
+			r = httptest.NewRequest(http.MethodGet, "/v1/products/"+id, nil)
 			w = httptest.NewRecorder()
 
 			r.Header.Set("Authorization", "Bearer "+pt.userToken)
@@ -423,6 +447,158 @@ func (pt *ProductTests) putProduct204(t *testing.T, id string) {
 				t.Fatalf("\t%s\tShould see an updated Name : got %q want %q", tests.Failed, ru.Name, "Graphic Novels")
 			}
 			t.Logf("\t%s\tShould see an updated Name.", tests.Success)
+		}
+	}
+}
+
+// postProductSale403 validates that creating sales
+// with role=USER is forbidden.
+func (pt *ProductTests) postProductSale403(t *testing.T, id string) {
+
+	ns := product.NewSale{
+		Quantity: 3,
+		Paid:     70,
+	}
+
+	body, err := json.Marshal(&ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r := httptest.NewRequest(http.MethodPost, "/v1/products/"+id+"/sales", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+
+	r.Header.Set("Authorization", "Bearer "+pt.userToken)
+
+	pt.app.ServeHTTP(w, r)
+
+	t.Log("Given the need to create product sales.")
+	{
+		t.Log("\tTest 0:\tWhen using the declared sales value.")
+		{
+			if w.Code != http.StatusForbidden {
+				t.Fatalf("\t%s\tShould NOT be able to add a new sale with role=%s. : %v", tests.Failed, auth.RoleUser, w.Code)
+			}
+			t.Logf("\t%s\tShould NOT be able to add a new sale with role=%s.", tests.Success, auth.RoleUser)
+
+			recv := w.Body.String()
+			resp := `{"error":"you are not authorized for that action"}`
+			if resp != recv {
+				t.Log("Got :", recv)
+				t.Log("Want:", resp)
+				t.Fatalf("\t%s\tShould get the expected result.", tests.Failed)
+			}
+			t.Logf("\t%s\tShould get the expected result.", tests.Success)
+		}
+	}
+}
+
+// postProductSale201 validates sales can be created with the endpoint.
+func (pt *ProductTests) postProductSale201(t *testing.T, id string) {
+
+	ns := product.NewSale{
+		Quantity: 3,
+		Paid:     70,
+	}
+
+	body, err := json.Marshal(&ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r := httptest.NewRequest(http.MethodPost, "/v1/products/"+id+"/sales", bytes.NewBuffer(body))
+	w := httptest.NewRecorder()
+
+	r.Header.Set("Authorization", "Bearer "+pt.userToken)
+
+	pt.app.ServeHTTP(w, r)
+
+	t.Log("Given the need to create product sales.")
+	{
+		t.Log("\tTest 0:\tWhen using the declared sales value.")
+		{
+			if w.Code != http.StatusCreated {
+				t.Fatalf("\t%s\tShould be able to add a new sale. : %v", tests.Failed, w.Code)
+			}
+			t.Logf("\t%s\tShould be able to add a new sale.", tests.Success)
+
+			var s product.Sale
+			if err := json.NewDecoder(w.Body).Decode(&s); err != nil {
+				t.Fatalf("\t%s\tShould be able to unmarshal the response : %v", tests.Failed, err)
+			}
+
+			// Define what we wanted to receive. We will just trust the generated
+			// fields like ID and Dates so we copy s.
+			want := s
+			want.ProductID = id
+			want.Quantity = ns.Quantity
+			want.Paid = ns.Paid
+
+			if diff := cmp.Diff(want, s); diff != "" {
+				t.Fatalf("\t%s\tShould get the expected result. Diff:\n%s", tests.Failed, diff)
+			}
+			t.Logf("\t%s\tShould get the expected result.", tests.Success)
+		}
+	}
+}
+
+// getProductSales200 validates sales request for a product.
+func (pt *ProductTests) getProductSales200(t *testing.T, id string) {
+	r := httptest.NewRequest(http.MethodGet, "/v1/products/"+id+"/sales", nil)
+	w := httptest.NewRecorder()
+
+	r.Header.Set("Authorization", "Bearer "+pt.userToken)
+
+	pt.app.ServeHTTP(w, r)
+
+	t.Log("Given the need to validate sales.")
+	{
+		t.Logf("\tTest 0:\tWhen using the product %s.", id)
+		{
+			if w.Code != http.StatusOK {
+				t.Fatalf("\t%s\tShould receive a status code of 200 for the response : %v", tests.Failed, w.Code)
+			}
+			t.Logf("\t%s\tShould receive a status code of 200 for the response.", tests.Success)
+
+			var sales []product.Sale
+			if err := json.NewDecoder(w.Body).Decode(&sales); err != nil {
+				t.Fatalf("\t%s\tShould be able to unmarshal the response : %v", tests.Failed, err)
+			}
+
+			if exp, got := 1, len(sales); exp != got {
+				t.Fatalf("\t%s\tShould get back [%v] sales for the product, got %v", tests.Failed, exp, got)
+			}
+			t.Logf("\t%s\tShould get back ONE sale for the product %v", tests.Success, sales[0])
+
+			// get the product and compare sales values
+			r := httptest.NewRequest(http.MethodGet, "/v1/products/"+id, nil)
+			w := httptest.NewRecorder()
+
+			r.Header.Set("Authorization", "Bearer "+pt.userToken)
+
+			pt.app.ServeHTTP(w, r)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("\t%s\tShould receive a status code of 200 for the response : %v", tests.Failed, w.Code)
+			}
+			t.Logf("\t%s\tShould receive a status code of 200 for the response.", tests.Success)
+
+			var p product.Product
+			if err := json.NewDecoder(w.Body).Decode(&p); err != nil {
+				t.Fatalf("\t%s\tShould be able to unmarshal the response : %v", tests.Failed, err)
+			}
+
+			// Define what we wanted to receive. We will just trust the generated
+			// fields like ID and Dates so we copy sales[0].
+			want := sales[0]
+			want.ProductID = p.ID
+			want.Quantity = p.Sold
+			want.Paid = p.Revenue
+
+			if diff := cmp.Diff(want, sales[0]); diff != "" {
+				t.Fatalf("\t%s\tShould get the expected result. Diff:\n%s", tests.Failed, diff)
+			}
+			t.Logf("\t%s\tShould get the expected result.", tests.Success)
 		}
 	}
 }

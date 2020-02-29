@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dimfeld/httptreemux/v5"
+	"github.com/go-chi/chi"
 )
 
-// Expvar provide our basic publishing.
+// Expvar provides our basic publishing.
 type Expvar struct {
 	log    *log.Logger
 	server http.Server
@@ -21,7 +21,7 @@ type Expvar struct {
 
 // New starts a service for consuming the raw expvar stats.
 func New(log *log.Logger, host string, route string, readTimeout, writeTimeout time.Duration) *Expvar {
-	mux := httptreemux.New()
+	mux := chi.NewRouter()
 	exp := Expvar{
 		log: log,
 		server: http.Server{
@@ -33,7 +33,7 @@ func New(log *log.Logger, host string, route string, readTimeout, writeTimeout t
 		},
 	}
 
-	mux.Handle("GET", route, exp.handler)
+	mux.MethodFunc(http.MethodGet, route, exp.handler)
 
 	go func() {
 		log.Println("expvar : API Listening", host)
@@ -73,7 +73,7 @@ func (exp *Expvar) Publish(data map[string]interface{}) {
 }
 
 // handler is what consumers call to get the raw stats.
-func (exp *Expvar) handler(w http.ResponseWriter, r *http.Request, params map[string]string) {
+func (exp *Expvar) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 

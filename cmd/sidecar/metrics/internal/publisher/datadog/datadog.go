@@ -141,7 +141,7 @@ func sendDatadog(d *Datadog, data []byte) error {
 	url := fmt.Sprintf("%s?api_key=%s", d.host, d.apiKey)
 	b := bytes.NewBuffer(data)
 
-	r, err := http.NewRequest("POST", url, b)
+	r, err := http.NewRequest(http.MethodPost, url, b)
 	if err != nil {
 		return err
 	}

@@ -48,7 +48,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 
 // Create adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated..
-func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (*Product, error) {
+func Create(ctx context.Context, db *sqlx.DB, claims auth.Claims, np NewProduct, now time.Time) (*Product, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.product.Create")
 	defer span.End()
 
@@ -57,7 +57,7 @@ func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, n
 		Name:        np.Name,
 		Cost:        np.Cost,
 		Quantity:    np.Quantity,
-		UserID:      user.Subject,
+		UserID:      claims.Subject,
 		DateCreated: now.UTC(),
 		DateUpdated: now.UTC(),
 	}
@@ -68,9 +68,7 @@ func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, n
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	_, err := db.ExecContext(ctx, q,
-		p.ID, p.UserID,
-		p.Name, p.Cost, p.Quantity,
-		p.DateCreated, p.DateUpdated)
+		p.ID, p.UserID, p.Name, p.Cost, p.Quantity, p.DateCreated, p.DateUpdated)
 	if err != nil {
 		return nil, errors.Wrap(err, "inserting product")
 	}
@@ -111,7 +109,7 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
 
 // Update modifies data about a Product. It will error if the specified ID is
 // invalid or does not reference an existing Product.
-func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, update UpdateProduct, now time.Time) error {
+func Update(ctx context.Context, db *sqlx.DB, claims auth.Claims, id string, update UpdateProduct, now time.Time) error {
 	ctx, span := trace.StartSpan(ctx, "internal.product.Update")
 	defer span.End()
 
@@ -123,7 +121,7 @@ func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, updat
 	// If you do not have the admin role ...
 	// and you are not the owner of this product ...
 	// then get outta here!
-	if !user.HasRole(auth.RoleAdmin) && p.UserID != user.Subject {
+	if !claims.HasRole(auth.RoleAdmin) && p.UserID != claims.Subject {
 		return ErrForbidden
 	}
 
@@ -144,10 +142,8 @@ func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, updat
 		"quantity" = $4,
 		"date_updated" = $5
 		WHERE product_id = $1`
-	_, err = db.ExecContext(ctx, q, id,
-		p.Name, p.Cost,
-		p.Quantity, p.DateUpdated,
-	)
+	_, err = db.ExecContext(ctx, q,
+		id, p.Name, p.Cost, p.Quantity, p.DateUpdated)
 	if err != nil {
 		return errors.Wrap(err, "updating product")
 	}

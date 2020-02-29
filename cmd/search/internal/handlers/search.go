@@ -33,7 +33,7 @@ func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	defer span.End()
 
 	// Create a new request.
-	req, err := http.NewRequest("GET", s.url, nil)
+	req, err := http.NewRequest(http.MethodGet, s.url, nil)
 	if err != nil {
 		return err
 	}

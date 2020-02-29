@@ -54,7 +54,7 @@ type UserTests struct {
 
 // getToken401 ensures an unknown user can't generate a token.
 func (ut *UserTests) getToken401(t *testing.T) {
-	r := httptest.NewRequest("GET", "/v1/users/token", nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/token", nil)
 	w := httptest.NewRecorder()
 
 	r.SetBasicAuth("unknown@example.com", "some-password")
@@ -76,7 +76,7 @@ func (ut *UserTests) getToken401(t *testing.T) {
 // getToken200
 func (ut *UserTests) getToken200(t *testing.T) {
 
-	r := httptest.NewRequest("GET", "/v1/users/token", nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/token", nil)
 	w := httptest.NewRecorder()
 
 	r.SetBasicAuth("admin@example.com", "gophers")
@@ -113,7 +113,7 @@ func (ut *UserTests) postUser400(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/users", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -169,7 +169,7 @@ func (ut *UserTests) postUser401(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/users", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.userToken)
@@ -196,7 +196,7 @@ func (ut *UserTests) postUser403(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/users", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	// Not setting the Authorization header
@@ -219,7 +219,7 @@ func (ut *UserTests) postUser403(t *testing.T) {
 func (ut *UserTests) getUser400(t *testing.T) {
 	id := "12345"
 
-	r := httptest.NewRequest("GET", "/v1/users/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -253,7 +253,7 @@ func (ut *UserTests) getUser403(t *testing.T) {
 	{
 		t.Logf("\tTest 0:\tWhen fetching the admin user as a regular user.")
 		{
-			r := httptest.NewRequest("GET", "/v1/users/"+tests.AdminID, nil)
+			r := httptest.NewRequest(http.MethodGet, "/v1/users/"+tests.AdminID, nil)
 			w := httptest.NewRecorder()
 
 			r.Header.Set("Authorization", "Bearer "+ut.userToken)
@@ -278,7 +278,7 @@ func (ut *UserTests) getUser403(t *testing.T) {
 		t.Logf("\tTest 1:\tWhen fetching the user as themselves.")
 		{
 
-			r := httptest.NewRequest("GET", "/v1/users/"+tests.UserID, nil)
+			r := httptest.NewRequest(http.MethodGet, "/v1/users/"+tests.UserID, nil)
 			w := httptest.NewRecorder()
 
 			r.Header.Set("Authorization", "Bearer "+ut.userToken)
@@ -296,7 +296,7 @@ func (ut *UserTests) getUser403(t *testing.T) {
 func (ut *UserTests) getUser404(t *testing.T) {
 	id := "c50a5d66-3c4d-453f-af3f-bc960ed1a503"
 
-	r := httptest.NewRequest("GET", "/v1/users/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -328,7 +328,7 @@ func (ut *UserTests) getUser404(t *testing.T) {
 func (ut *UserTests) deleteUserNotFound(t *testing.T) {
 	id := "a71f77b2-b1ae-4964-a847-f9eecba09d74"
 
-	r := httptest.NewRequest("DELETE", "/v1/users/"+id, nil)
+	r := httptest.NewRequest(http.MethodDelete, "/v1/users/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -360,7 +360,7 @@ func (ut *UserTests) putUser404(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("PUT", "/v1/users/"+id, bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPut, "/v1/users/"+id, bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -413,7 +413,7 @@ func (ut *UserTests) postUser201(t *testing.T) user.User {
 		t.Fatal(err)
 	}
 
-	r := httptest.NewRequest("POST", "/v1/users", bytes.NewBuffer(body))
+	r := httptest.NewRequest(http.MethodPost, "/v1/users", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -455,7 +455,7 @@ func (ut *UserTests) postUser201(t *testing.T) user.User {
 
 // deleteUser200 validates deleting a user that does exist.
 func (ut *UserTests) deleteUser204(t *testing.T, id string) {
-	r := httptest.NewRequest("DELETE", "/v1/users/"+id, nil)
+	r := httptest.NewRequest(http.MethodDelete, "/v1/users/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -476,7 +476,7 @@ func (ut *UserTests) deleteUser204(t *testing.T, id string) {
 
 // getUser200 validates a user request for an existing userid.
 func (ut *UserTests) getUser200(t *testing.T, id string) {
-	r := httptest.NewRequest("GET", "/v1/users/"+id, nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/"+id, nil)
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -517,7 +517,7 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 func (ut *UserTests) putUser204(t *testing.T, id string) {
 	body := `{"name": "Jacob Walker"}`
 
-	r := httptest.NewRequest("PUT", "/v1/users/"+id, strings.NewReader(body))
+	r := httptest.NewRequest(http.MethodPut, "/v1/users/"+id, strings.NewReader(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -533,7 +533,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tShould receive a status code of 204 for the response.", tests.Success)
 
-			r = httptest.NewRequest("GET", "/v1/users/"+id, nil)
+			r = httptest.NewRequest(http.MethodGet, "/v1/users/"+id, nil)
 			w = httptest.NewRecorder()
 
 			r.Header.Set("Authorization", "Bearer "+ut.adminToken)
@@ -567,7 +567,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 func (ut *UserTests) putUser403(t *testing.T, id string) {
 	body := `{"name": "Anna Walker"}`
 
-	r := httptest.NewRequest("PUT", "/v1/users/"+id, strings.NewReader(body))
+	r := httptest.NewRequest(http.MethodPut, "/v1/users/"+id, strings.NewReader(body))
 	w := httptest.NewRecorder()
 
 	r.Header.Set("Authorization", "Bearer "+ut.userToken)

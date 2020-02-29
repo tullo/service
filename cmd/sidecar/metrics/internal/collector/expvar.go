@@ -44,8 +44,9 @@ func New(host string) (*Expvar, error) {
 	return &exp, nil
 }
 
+// Collect fetches metrics from internal services using expvar
 func (exp *Expvar) Collect() (map[string]interface{}, error) {
-	req, err := http.NewRequest("GET", exp.host, nil)
+	req, err := http.NewRequest(http.MethodGet, exp.host, nil)
 	if err != nil {
 		return nil, err
 	}
