@@ -30,6 +30,11 @@ func (c *Check) Health(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		Version: c.build,
 	}
 
+	if "LivenessProbe" == r.Header.Get("X-Probe") {
+		health.Status = "ok"
+		return web.Respond(ctx, w, health, http.StatusOK)
+	}
+
 	// Check if the database is ready.
 	if err := database.StatusCheck(ctx, c.db); err != nil {
 
