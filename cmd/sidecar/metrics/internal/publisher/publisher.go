@@ -110,5 +110,5 @@ func (s *Stdout) Publish(data map[string]interface{}) {
 	if err != nil {
 		return
 	}
-	s.log.Println("Stdout :\n", string(out))
+	s.log.Println("STDOUT :\n", string(out))
 }

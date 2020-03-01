@@ -70,6 +70,8 @@ func (exp *Expvar) Publish(data map[string]interface{}) {
 		exp.data = data
 	}
 	exp.mu.Unlock()
+
+	exp.log.Printf("expvar.publish : saved stats")
 }
 
 // handler is what consumers call to get the raw stats.
