@@ -36,9 +36,13 @@ admin:
 
 migrate:
 	go run ./cmd/sales-admin/main.go --db-disable-tls=1 migrate
+migrate-compose:
+	docker-compose exec sales-api /app/admin migrate
 
 seed: migrate
 	go run ./cmd/sales-admin/main.go --db-disable-tls=1 seed
+seed-compose: migrate-compose
+	docker-compose exec sales-api /app/admin seed
 
 sales-api:
 	docker build \
