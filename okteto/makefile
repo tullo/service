@@ -24,7 +24,11 @@ deployment:
 	@echo
 	watch kubectl get pod,svc
 #	kubectl logs -f deployment/sales-api --container sales-api
-	@echo ======================================================================
+
+delete:
+	kubectl delete -f deploy-sales-api.yaml -f deploy-search.yaml
+	kubectl delete -f zipkin-deployment.yml -f zipkin-svc.yml
+	watch kubectl get pod,svc
 
 status:
 	kubectl config get-clusters
@@ -38,14 +42,12 @@ status:
 #	kubectl get all -l app=postgresql --show-labels
 	@echo
 	kubectl get svc/sales-api -o wide
-	@echo ======================================================================
 
 shell:
 	kubectl get pod -l service=sales-api
 	# kubectl exec -it <POD NAME> --container sales-api  -- /bin/sh
 	# ./admin --db-disable-tls=1 migrate
 	# ./admin --db-disable-tls=1 seed
-	@echo ======================================================================
 
 sales-api:
 	cd .. && \
@@ -78,12 +80,6 @@ metrics:
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
 
-delete:
-	kubectl delete -f deploy-sales-api.yaml
-	docker image remove $(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION)
-	docker image remove $(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION)
-	@echo ======================================================================
-
 port-forward:
 	kubectl get pod -l service=sales-api
 	#kubectl get pod --show-labels
@@ -96,7 +92,7 @@ debug:
 #	kubectl describe pod sales-api-7b45cf9d76-68n8z
 #	kubectl get pod sales-api-7b45cf9d76-68n8z -o go-template="{{range .status.containerStatuses}}{{.lastState.terminated.exitCode}}{{end}}"
 #	kubectl logs deploy/sales-api -c metrics | less
-#	kubectl logs deploy/sales-api -c sales-api | less
+#	kubectl logs deploy/sales-api -c sales-api --previous | less
 #	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c metrics | less
 #	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c sales-api | less
 #	kubectl logs pod/sales-api-7b45cf9d76-68n8z -c sales-api --previous | less
