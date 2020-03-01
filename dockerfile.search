@@ -36,7 +36,7 @@ COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_
 COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/internal/views/*.html /app/internal/views/
 COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/static /app/static
 WORKDIR /app
-CMD /app/main
+CMD ["/app/main"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="${PACKAGE_NAME}" \
