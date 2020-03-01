@@ -23,12 +23,10 @@ type Collector interface {
 
 // =============================================================================
 
-// Publisher defines a handler function that will be called
-// on each interval.
+// Publisher defines a handler function that will be called on each interval.
 type Publisher func(map[string]interface{})
 
-// Publish provides the ability to receive metrics
-// on an interval.
+// Publish provides the ability to receive metrics on an interval.
 type Publish struct {
 	log       *log.Logger
 	collector Collector

@@ -49,16 +49,15 @@ func New(log *log.Logger, apiKey string, host string) *Datadog {
 	return &d
 }
 
-// Publish handles the processing of metrics for deliver
-// to the DataDog.
+// Publish handles the processing of metrics for deliver to the DataDog.
 func (d *Datadog) Publish(data map[string]interface{}) {
-	doc, err := marshalDatadog(d.log, data)
+	doc, err := marshal(d.log, data)
 	if err != nil {
 		d.log.Println("datadog.publish :", err)
 		return
 	}
 
-	if err := sendDatadog(d, doc); err != nil {
+	if err := send(d, doc); err != nil {
 		d.log.Println("datadog.publish :", err)
 		return
 	}
@@ -66,8 +65,8 @@ func (d *Datadog) Publish(data map[string]interface{}) {
 	log.Println("datadog.publish : published :", string(doc))
 }
 
-// marshalDatadog converts the data map to datadog JSON document.
-func marshalDatadog(log *log.Logger, data map[string]interface{}) ([]byte, error) {
+// marshal converts the data map to datadog JSON document.
+func marshal(log *log.Logger, data map[string]interface{}) ([]byte, error) {
 	/*
 		{ "series" : [
 				{
@@ -136,8 +135,8 @@ func marshalDatadog(log *log.Logger, data map[string]interface{}) ([]byte, error
 	return out, nil
 }
 
-// sendDatadog sends data to the datadog servers.
-func sendDatadog(d *Datadog, data []byte) error {
+// send sends data to the datadog servers.
+func send(d *Datadog, data []byte) error {
 	url := fmt.Sprintf("%s?api_key=%s", d.host, d.apiKey)
 	b := bytes.NewBuffer(data)
 
@@ -145,6 +144,9 @@ func sendDatadog(d *Datadog, data []byte) error {
 	if err != nil {
 		return err
 	}
+
+	// prevent re-use of TCP connections between requests
+	r.Close = true
 
 	resp, err := d.client.Do(r)
 	if err != nil {
