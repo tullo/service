@@ -46,12 +46,15 @@ func New(host string) (*Expvar, error) {
 
 // Collect fetches metrics from internal services using expvar
 func (exp *Expvar) Collect() (map[string]interface{}, error) {
-	req, err := http.NewRequest(http.MethodGet, exp.host, nil)
+	r, err := http.NewRequest(http.MethodGet, exp.host, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := exp.client.Do(req)
+	// prevent re-use of TCP connections between requests
+	r.Close = true
+
+	resp, err := exp.client.Do(r)
 	if err != nil {
 		return nil, err
 	}
