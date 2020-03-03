@@ -104,7 +104,7 @@ func run() error {
 
 	log.Println("main : Started : Initializing zipkin tracing support")
 
-	localEndpoint, err := openzipkin.NewEndpoint("search", cfg.Zipkin.LocalEndpoint)
+	localEndpoint, err := openzipkin.NewEndpoint(cfg.Zipkin.ServiceName, cfg.Zipkin.LocalEndpoint)
 	if err != nil {
 		return err
 	}
