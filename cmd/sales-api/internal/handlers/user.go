@@ -10,6 +10,7 @@ import (
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
 	"github.com/tullo/service/internal/user"
+	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 )
 
@@ -23,7 +24,14 @@ type User struct {
 
 // List returns all the existing users in the system.
 func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.List")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.List", spanContext)
+	}
 	defer span.End()
 
 	users, err := user.List(ctx, u.db)
@@ -36,7 +44,14 @@ func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request)
 
 // Retrieve returns the specified user from the system.
 func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Retrieve")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Retrieve", spanContext)
+	}
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -64,7 +79,14 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 // Create inserts a new user into the system.
 func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Create")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Create", spanContext)
+	}
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -87,7 +109,14 @@ func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // Update updates the specified user in the system.
 func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Update")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Update", spanContext)
+	}
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -125,7 +154,14 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // Delete removes the specified user from the system.
 func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Delete")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Delete", spanContext)
+	}
 	defer span.End()
 
 	id := chi.URLParam(r, "id")
@@ -149,7 +185,14 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 // Token handles a request to authenticate a user. It expects a request using
 // Basic Auth with a user's email and password. It responds with a JWT.
 func (u *User) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Token")
+
+	// Get span context from incoming request
+	HTTPFormat := &tracecontext.HTTPFormat{}
+	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
+		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Token", spanContext)
+	}
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
