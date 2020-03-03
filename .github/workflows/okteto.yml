@@ -9,26 +9,18 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@master
-
-    - name: Create file
-      uses: finnp/create-file-action@master
-      env:
-        FILE_NAME: "private.pem"
-        FILE_DATA: ${{ secrets.PRIVATE_PEM }}
-
-    - name: Get Kubeconfig
-      uses: tullo/actions/namespace@tullo
-      id: namespace
-      with:
-        token: ${{ secrets.OKTETO_TOKEN }}
-        namespace: ${{ secrets.OKTETO_NS }}
+    
+    - name: Generate "private.pem"
+      run: |
+        openssl genrsa -out private.pem 2048
+        chmod +r private.pem
 
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-    - name: Build
-      uses: tullo/actions/build@tullo
+    - name: Build & Publish to Okteto registry
+      uses: tullo/actions/build@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
         PACKAGE_NAME: sales-api
@@ -36,5 +28,61 @@ jobs:
       with:
         file: dockerfile.sales-api
         token: ${{ secrets.OKTETO_TOKEN }}
-        tag: registry.cloud.okteto.net/${{ secrets.OKTETO_NS }}/sales-api-amd64:${{ github.sha }}
+        tag: registry.cloud.okteto.net/tullo/sales-api-amd64:${{ github.sha }}
         buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+
+    - name: Build & Publish to Okteto registry
+      uses: tullo/actions/build@master
+      env:
+        BUILD_DATE: ${{ steps.date.outputs.date }}
+        PACKAGE_NAME: search
+        VCS_REF: ${{ github.sha }}      
+      with:
+        file: dockerfile.search
+        token: ${{ secrets.OKTETO_TOKEN }}
+        tag: registry.cloud.okteto.net/tullo/search-amd64:${{ github.sha }}
+        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+
+    - name: Get Kubeconfig
+      uses: okteto/actions/namespace@v3
+      id: namespace
+      with:
+        token: ${{ secrets.OKTETO_TOKEN }}
+        namespace: ${{ secrets.OKTETO_NS }}
+
+    - name: Deploy and Wait
+      uses: okteto/actions/deploy@master
+      env:
+        KUBECONFIG: ${{ steps.namespace.outputs.kubeconfig }}
+      with:
+        namespace: ${{ secrets.OKTETO_NS }}
+        manifest: okteto/deploy-sales-api.yaml
+        tag: tullo/sales-api-amd64:${{ github.sha }}
+        waitOn: deployment/sales-api
+        registry: registry.cloud.okteto.net
+
+    - name: Remove kustomization.yaml 
+      run: |
+        rm kustomization.yaml
+        ls -l
+
+    - name: Deploy and Wait
+      uses: okteto/actions/deploy@master
+      env:
+        KUBECONFIG: ${{ steps.namespace.outputs.kubeconfig }}
+      with:
+        namespace: ${{ secrets.OKTETO_NS }}
+        manifest: okteto/deploy-search.yaml
+        tag: tullo/search-amd64:${{ github.sha }}
+        registry: registry.cloud.okteto.net
+
+    - name: Sleep for 10 seconds
+      uses: jakejarvis/wait-action@master
+      with:
+        time: '10s'
+
+    - name: Verify
+      uses: srt32/uptime@master
+      with:
+        url-to-hit: "https://sales-api-tullo.cloud.okteto.net/v1/health"
+        expected-statuses: "200"

@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: sales-api
-        image: registry.cloud.okteto.net/tullo/sales-api-amd64:1.0
+        image: tullo/sales-api-amd64:1.0
         env:
         - name: SALES_DB_HOST
           value: postgresql
