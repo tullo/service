@@ -1,6 +1,6 @@
 module github.com/tullo/service
 
-go 1.13
+go 1.14
 
 require (
 	contrib.go.opencensus.io/exporter/zipkin v0.1.1
@@ -19,7 +19,7 @@ require (
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/pkg/errors v0.9.1
 	go.opencensus.io v0.22.3
-	golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
+	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )

@@ -88,10 +88,10 @@ down:
 	docker-compose down
 
 test:
-	go test -mod=vendor ./... -count=1
-#	go test -v -mod=vendor ./... -count=1
-#	go test -v -mod=vendor -run TestProducts ./cmd/sales-api/tests/ -count=1
-#	go test -v -mod=vendor -run TestProducts/crudProductUser ./cmd/sales-api/tests/ -count=1
+	go test ./... -count=1
+#	go test -v ./... -count=1
+#	go test -v -run TestProducts ./cmd/sales-api/tests/ -count=1
+#	go test -v -run TestProducts/crudProductUser ./cmd/sales-api/tests/ -count=1
 
 clean:
 	docker system prune -f
