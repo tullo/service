@@ -119,9 +119,9 @@ func Update(ctx context.Context, db *sqlx.DB, claims auth.Claims, id string, upd
 	}
 
 	// If you do not have the admin role ...
-	// and you are not the owner of this product ...
+	// or you are not the owner of this product ...
 	// then get outta here!
-	if !claims.HasRole(auth.RoleAdmin) && p.UserID != claims.Subject {
+	if !(claims.HasRole(auth.RoleAdmin) || p.UserID == claims.Subject) {
 		return ErrForbidden
 	}
 
