@@ -10,7 +10,7 @@ github.com/dgrijalva/jwt-go
 # github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 ## explicit
 github.com/dimiro1/darwin
-# github.com/go-chi/chi v4.0.3+incompatible
+# github.com/go-chi/chi v4.1.0+incompatible
 ## explicit
 github.com/go-chi/chi
 # github.com/go-playground/locales v0.13.0
@@ -77,7 +77,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
+# golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
