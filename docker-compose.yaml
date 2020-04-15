@@ -46,7 +46,8 @@ services:
     container_name: search
     networks:
       - shared-network
-    image: gcr.io/ardan-starter-kit/search-amd64:1.0
+    #image: gcr.io/ardan-starter-kit/search-amd64:1.0
+    image: ${REGISTRY_ACCOUNT}/search-amd64:${VERSION}
     ports:
       - 5050:5000 # SEARCH API
       - 6000:6000 # DEBUG API
