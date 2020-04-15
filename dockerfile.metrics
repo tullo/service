@@ -1,5 +1,5 @@
 # Build the sidecar as Go binary.
-FROM golang:1.14 as build_stage
+FROM golang:1.14.2-alpine3.11 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
@@ -26,7 +26,7 @@ RUN go build
 
 
 # Build production image with Go binary based on Alpine.
-FROM alpine:3.7
+FROM alpine:3.11
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
