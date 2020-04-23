@@ -50,7 +50,8 @@ func TestSales(t *testing.T) {
 
 	{ // Add and list
 
-		t.Log("\tWhen handling product Sales.")
+		testID := 0
+		t.Logf("\tTest %d:\tWhen handling product Sales.", testID)
 
 		ns := product.NewSale{
 			Quantity: 3,
@@ -59,34 +60,34 @@ func TestSales(t *testing.T) {
 
 		s, err := product.AddSale(ctx, db, ns, puzzles.ID, now)
 		if err != nil {
-			t.Fatalf("adding sale: %s", err)
+			t.Fatalf("\t%s\tTest %d:\tShould be able to add a new sale: %s", tests.Failed, testID, err)
 		}
-		t.Logf("\t%s\tShould be able to add a new sale.", tests.Success)
+		t.Logf("\t%s\tTest %d:\tShould be able to add a new sale.", tests.Success, testID)
 
 		// Puzzles should show the 1 sale.
 		sales, err := product.ListSales(ctx, db, puzzles.ID)
 		if err != nil {
-			t.Fatalf("listing sales: %s", err)
+			t.Fatalf("\t%s\tTest %d:\tShould be able to list sales for a product: %s.", tests.Failed, testID, err)
 		}
-		t.Logf("\t%s\tShould be able to list sales for a product.", tests.Success)
+		t.Logf("\t%s\tTest %d:\tShould be able to list sales for a product.", tests.Success, testID)
 
 		if exp, got := 1, len(sales); exp != got {
-			t.Fatalf("expected sale list size %v, got %v", exp, got)
+			t.Fatalf("\t%s\tTest %d:\tExpected sale list size %v, got %v", tests.Failed, testID, exp, got)
 		}
-		t.Logf("\t%s\tShould get bach ONE sale for the product", tests.Success)
+		t.Logf("\t%s\tTest %d:\tShould get back ONE sale for the product", tests.Success, testID)
 
 		if exp, got := s.ID, sales[0].ID; exp != got {
-			t.Fatalf("expected first sale ID %v, got %v", exp, got)
+			t.Fatalf("\t%s\tTest %d:\tExpected first sale ID %v, got %v", tests.Failed, testID, exp, got)
 		}
 
 		// Toys should have 0 sales.
 		sales, err = product.ListSales(ctx, db, toys.ID)
 		if err != nil {
-			t.Fatalf("listing sales: %s", err)
+			t.Fatalf("\t%s\tTest %d:\tListing sales: %s", tests.Failed, testID, err)
 		}
 		if exp, got := 0, len(sales); exp != got {
-			t.Fatalf("expected sale list size %v, got %v", exp, got)
+			t.Fatalf("\t%s\tTest %d:\tExpected sale list size %v, got %v", tests.Failed, testID, exp, got)
 		}
-		t.Logf("\t%s\tShould get back NO sales.", tests.Success)
+		t.Logf("\t%s\tTest %d:\tShould get back NO sales.", tests.Success, testID)
 	}
 }
