@@ -110,7 +110,7 @@ func TestProduct(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete product.", tests.Success, testID)
 
-			saved, err = product.Retrieve(ctx, db, p.ID)
+			_, err = product.Retrieve(ctx, db, p.ID)
 			if errors.Cause(err) != product.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product : %s.", tests.Failed, testID, err)
 			}

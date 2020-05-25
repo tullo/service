@@ -54,7 +54,7 @@ func Init() error {
 	// In order for the endpoint tests to run this needs to be
 	// physically located. Trying to avoid configuration for now.
 	pwd, _ := os.Getwd()
-	if "/app" != pwd {
+	if pwd != "/app" {
 		pwd += "/cmd/search"
 	}
 	if err := loadTemplate(LAYOUT, pwd+"/internal/views/basic_layout.html"); err != nil {

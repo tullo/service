@@ -30,7 +30,7 @@ func (c *Check) Health(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		Version: c.build,
 	}
 
-	if "LivenessProbe" == r.Header.Get("X-Probe") {
+	if r.Header.Get("X-Probe") == "LivenessProbe" {
 		health.Status = "ok"
 		return web.Respond(ctx, w, health, http.StatusOK)
 	}

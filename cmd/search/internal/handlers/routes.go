@@ -17,7 +17,7 @@ func API(build, url string, shutdown chan os.Signal, log *log.Logger) http.Handl
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
 	pwd, _ := os.Getwd()
-	if "/app" != pwd {
+	if pwd != "/app" {
 		pwd += "/cmd/search"
 	}
 	static := pwd + "/static"
