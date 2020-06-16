@@ -3,7 +3,7 @@ name: Build and Deploy to Docker Hub
 on:
   push:
     branches: 
-      - tullo
+      - master
 
 env:
   PRIVATE_PEM: ${{ secrets.PRIVATE_PEM }}
