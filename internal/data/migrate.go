@@ -1,4 +1,4 @@
-package schema
+package data
 
 import (
 	"github.com/dimiro1/darwin"

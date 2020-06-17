@@ -1,16 +1,16 @@
-package product_test
+package tests
 
 import (
 	"context"
 	"testing"
 	"time"
 
+	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/tests"
-	"github.com/tullo/service/internal/product"
 )
 
-func TestSales(t *testing.T) {
+func Test_Sales(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
@@ -27,23 +27,23 @@ func TestSales(t *testing.T) {
 	)
 
 	// Create two products to work with.
-	newPuzzles := product.NewProduct{
+	newPuzzles := data.NewProduct{
 		Name:     "Puzzles",
 		Cost:     25,
 		Quantity: 6,
 	}
 
-	puzzles, err := product.Create(ctx, db, claims, newPuzzles, now)
+	puzzles, err := data.Create.Product(ctx, db, claims, newPuzzles, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
 
-	newToys := product.NewProduct{
+	newToys := data.NewProduct{
 		Name:     "Toys",
 		Cost:     40,
 		Quantity: 3,
 	}
-	toys, err := product.Create(ctx, db, claims, newToys, now)
+	toys, err := data.Create.Product(ctx, db, claims, newToys, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
@@ -53,19 +53,19 @@ func TestSales(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling product Sales.", testID)
 
-		ns := product.NewSale{
+		ns := data.NewSale{
 			Quantity: 3,
 			Paid:     70,
 		}
 
-		s, err := product.AddSale(ctx, db, ns, puzzles.ID, now)
+		s, err := data.Create.AddSale(ctx, db, ns, puzzles.ID, now)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to add a new sale: %s", tests.Failed, testID, err)
 		}
 		t.Logf("\t%s\tTest %d:\tShould be able to add a new sale.", tests.Success, testID)
 
 		// Puzzles should show the 1 sale.
-		sales, err := product.ListSales(ctx, db, puzzles.ID)
+		sales, err := data.Retrieve.Sale.List(ctx, db, puzzles.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to list sales for a product: %s.", tests.Failed, testID, err)
 		}
@@ -81,7 +81,7 @@ func TestSales(t *testing.T) {
 		}
 
 		// Toys should have 0 sales.
-		sales, err = product.ListSales(ctx, db, toys.ID)
+		sales, err = data.Retrieve.Sale.List(ctx, db, toys.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tListing sales: %s", tests.Failed, testID, err)
 		}

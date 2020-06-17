@@ -1,9 +1,62 @@
-package product
+package data
 
 import (
-	"html/template"
+	"errors"
 	"time"
+
+	"github.com/lib/pq"
 )
+
+var (
+	// ErrUserNotFound is used when a specific User is requested but does not exist.
+	ErrUserNotFound = errors.New("User not found")
+	// ErrProductNotFound is used when a specific Product is requested but does not exist.
+	ErrProductNotFound = errors.New("Product not found")
+
+	// ErrInvalidID occurs when an ID is not in a valid form.
+	ErrInvalidID = errors.New("ID is not in its proper form")
+
+	// ErrAuthenticationFailure occurs when a user attempts to authenticate but
+	// anything goes wrong.
+	ErrAuthenticationFailure = errors.New("Authentication failed")
+
+	// ErrForbidden occurs when a user tries to do something that is forbidden to them according to our access control policies.
+	ErrForbidden = errors.New("Attempted action is not allowed")
+)
+
+// User represents someone with access to our system.
+type User struct {
+	ID           string         `db:"user_id" json:"id"`
+	Name         string         `db:"name" json:"name"`
+	Email        string         `db:"email" json:"email"`
+	Roles        pq.StringArray `db:"roles" json:"roles"`
+	PasswordHash []byte         `db:"password_hash" json:"-"`
+	DateCreated  time.Time      `db:"date_created" json:"date_created"`
+	DateUpdated  time.Time      `db:"date_updated" json:"date_updated"`
+}
+
+// NewUser contains information needed to create a new User.
+type NewUser struct {
+	Name            string   `json:"name" validate:"required"`
+	Email           string   `json:"email" validate:"required"`
+	Roles           []string `json:"roles" validate:"required"`
+	Password        string   `json:"password" validate:"required"`
+	PasswordConfirm string   `json:"password_confirm" validate:"eqfield=Password"`
+}
+
+// UpdateUser defines what information may be provided to modify an existing
+// User. All fields are optional so clients can send just the fields they want
+// changed. It uses pointer fields so we can differentiate between a field that
+// was not provided and a field that was provided as explicitly blank. Normally
+// we do not want to use pointers to basic types but we make exceptions around
+// marshalling/unmarshalling.
+type UpdateUser struct {
+	Name            *string  `json:"name"`
+	Email           *string  `json:"email"`
+	Roles           []string `json:"roles"`
+	Password        *string  `json:"password"`
+	PasswordConfirm *string  `json:"password_confirm" validate:"omitempty,eqfield=Password"`
+}
 
 // Product is an item we sell.
 type Product struct {
@@ -16,11 +69,6 @@ type Product struct {
 	UserID      string    `db:"user_id" json:"user_id"`           // ID of the user who created the product.
 	DateCreated time.Time `db:"date_created" json:"date_created"` // When the product was added.
 	DateUpdated time.Time `db:"date_updated" json:"date_updated"` // When the product record was last modified.
-}
-
-// NameHTML fixes encoding issues.
-func (p *Product) NameHTML() template.HTML {
-	return template.HTML(p.Name)
 }
 
 // NewProduct is what we require from clients when adding a Product.

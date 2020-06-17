@@ -15,10 +15,9 @@ import (
 
 	"github.com/ardanlabs/conf"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/database"
-	"github.com/tullo/service/internal/schema"
-	"github.com/tullo/service/internal/user"
 )
 
 func main() {
@@ -93,7 +92,7 @@ func migrate(cfg database.Config) error {
 	}
 	defer db.Close()
 
-	if err := schema.Migrate(db); err != nil {
+	if err := data.Migrate(db); err != nil {
 		return err
 	}
 
@@ -108,7 +107,7 @@ func seed(cfg database.Config) error {
 	}
 	defer db.Close()
 
-	if err := schema.Seed(db); err != nil {
+	if err := data.Seed(db); err != nil {
 		return err
 	}
 
@@ -142,14 +141,14 @@ func useradd(cfg database.Config, email, password string) error {
 
 	ctx := context.Background()
 
-	nu := user.NewUser{
+	nu := data.NewUser{
 		Email:           email,
 		Password:        password,
 		PasswordConfirm: password,
 		Roles:           []string{auth.RoleAdmin, auth.RoleUser},
 	}
 
-	u, err := user.Create(ctx, db, nu, time.Now())
+	u, err := data.Create.User(ctx, db, nu, time.Now())
 	if err != nil {
 		return err
 	}

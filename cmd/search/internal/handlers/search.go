@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/tullo/service/cmd/search/internal/views"
+	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/web"
-	"github.com/tullo/service/internal/product"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 )
@@ -65,7 +65,7 @@ func (s *Search) Query(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	defer resp.Body.Close()
 
 	// Decode the results.
-	var products []product.Product
+	var products []data.Product
 	if err := json.NewDecoder(resp.Body).Decode(&products); err != nil {
 		return err
 	}

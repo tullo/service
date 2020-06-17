@@ -7,9 +7,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
-	"github.com/tullo/service/internal/product"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 )
@@ -33,7 +33,7 @@ func (p *Product) List(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 	defer span.End()
 
-	products, err := product.List(ctx, p.db)
+	products, err := data.Retrieve.Product.List(ctx, p.db)
 	if err != nil {
 		return err
 	}
@@ -54,12 +54,12 @@ func (p *Product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.R
 	defer span.End()
 
 	id := web.Param(r, "id")
-	prod, err := product.Retrieve(ctx, p.db, id)
+	prod, err := data.Retrieve.Product.One(ctx, p.db, id)
 	if err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case product.ErrNotFound:
+		case data.ErrProductNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -92,12 +92,12 @@ func (p *Product) Create(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var np product.NewProduct
+	var np data.NewProduct
 	if err := web.Decode(r, &np); err != nil {
 		return errors.Wrap(err, "decoding new product")
 	}
 
-	prod, err := product.Create(ctx, p.db, claims, np, v.Now)
+	prod, err := data.Create.Product(ctx, p.db, claims, np, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "creating new product: %+v", np)
 	}
@@ -128,19 +128,19 @@ func (p *Product) Update(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var up product.UpdateProduct
+	var up data.UpdateProduct
 	if err := web.Decode(r, &up); err != nil {
 		return errors.Wrap(err, "")
 	}
 
 	id := web.Param(r, "id")
-	if err := product.Update(ctx, p.db, claims, id, up, v.Now); err != nil {
+	if err := data.Update.Product(ctx, p.db, claims, id, up, v.Now); err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case product.ErrNotFound:
+		case data.ErrProductNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case product.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "updating product %q: %+v", id, up)
@@ -163,9 +163,9 @@ func (p *Product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Req
 	defer span.End()
 
 	id := web.Param(r, "id")
-	if err := product.Delete(ctx, p.db, id); err != nil {
+	if err := data.Delete.Product(ctx, p.db, id); err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
@@ -188,13 +188,13 @@ func (p *Product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 	defer span.End()
 
-	var ns product.NewSale
+	var ns data.NewSale
 	if err := web.Decode(r, &ns); err != nil {
 		return errors.Wrap(err, "decoding new sale")
 	}
 
 	id := web.Param(r, "id")
-	sale, err := product.AddSale(r.Context(), p.db, ns, id, time.Now())
+	sale, err := data.Create.AddSale(r.Context(), p.db, ns, id, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "adding new sale")
 	}
@@ -215,7 +215,7 @@ func (p *Product) ListSales(ctx context.Context, w http.ResponseWriter, r *http.
 	defer span.End()
 
 	id := web.Param(r, "id")
-	list, err := product.ListSales(r.Context(), p.db, id)
+	list, err := data.Retrieve.Sale.List(r.Context(), p.db, id)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}

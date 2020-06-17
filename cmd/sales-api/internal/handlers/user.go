@@ -6,9 +6,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
-	"github.com/tullo/service/internal/user"
 	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
 	"go.opencensus.io/trace"
 )
@@ -33,7 +33,7 @@ func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request)
 	}
 	defer span.End()
 
-	users, err := user.List(ctx, u.db)
+	users, err := data.Retrieve.User.List(ctx, u.db)
 	if err != nil {
 		return err
 	}
@@ -59,14 +59,14 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	}
 
 	id := web.Param(r, "id")
-	usr, err := user.Retrieve(ctx, claims, u.db, id)
+	usr, err := data.Retrieve.User.One(ctx, claims, u.db, id)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrUserNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
@@ -93,12 +93,12 @@ func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var nu user.NewUser
+	var nu data.NewUser
 	if err := web.Decode(r, &nu); err != nil {
 		return errors.Wrap(err, "")
 	}
 
-	usr, err := user.Create(ctx, u.db, nu, v.Now)
+	usr, err := data.Create.User(ctx, u.db, nu, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "User: %+v", &usr)
 	}
@@ -128,20 +128,20 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		return errors.New("claims missing from context")
 	}
 
-	var upd user.UpdateUser
+	var upd data.UpdateUser
 	if err := web.Decode(r, &upd); err != nil {
 		return errors.Wrap(err, "")
 	}
 
 	id := web.Param(r, "id")
-	err := user.Update(ctx, claims, u.db, id, upd, v.Now)
+	err := data.Update.User(ctx, claims, u.db, id, upd, v.Now)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrUserNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %s  User: %+v", id, &upd)
@@ -164,14 +164,14 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	defer span.End()
 
 	id := web.Param(r, "id")
-	err := user.Delete(ctx, u.db, id)
+	err := data.Delete.User(ctx, u.db, id)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrUserNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
@@ -205,10 +205,10 @@ func (u *User) Token(ctx context.Context, w http.ResponseWriter, r *http.Request
 		return web.NewRequestError(err, http.StatusUnauthorized)
 	}
 
-	claims, err := user.Authenticate(ctx, u.db, v.Now, email, pass)
+	claims, err := data.Authenticate(ctx, u.db, v.Now, email, pass)
 	if err != nil {
 		switch err {
-		case user.ErrAuthenticationFailure:
+		case data.ErrAuthenticationFailure:
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		default:
 			return errors.Wrap(err, "authenticating")
