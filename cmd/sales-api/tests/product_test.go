@@ -85,8 +85,8 @@ func (pt *ProductTests) postProduct400(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to unmarshal the response to an error type.", tests.Success, testID)
 
-			// Define what we want to see.
-			want := web.ErrorResponse{
+			// Define what we expect to see.
+			exp := web.ErrorResponse{
 				Error: "field validation error",
 				Fields: []web.FieldError{
 					{Field: "name", Error: "name is a required field"},
@@ -101,7 +101,7 @@ func (pt *ProductTests) postProduct400(t *testing.T) {
 				return a.Field < b.Field
 			})
 
-			if diff := cmp.Diff(want, got, sorter); diff != "" {
+			if diff := cmp.Diff(exp, got, sorter); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -164,11 +164,11 @@ func (pt *ProductTests) getProduct400(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 400 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := `{"error":"ID is not in its proper form"}`
-			if resp != recv {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := `{"error":"ID is not in its proper form"}`
+			if exp != got {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -197,11 +197,11 @@ func (pt *ProductTests) getProduct404(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := "not found"
-			if !strings.Contains(recv, resp) {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := "not found"
+			if !strings.Contains(got, exp) {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -263,11 +263,11 @@ func (pt *ProductTests) putProduct404(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := "not found"
-			if !strings.Contains(recv, resp) {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := "not found"
+			if !strings.Contains(got, exp) {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -335,14 +335,14 @@ func (pt *ProductTests) postProduct201(t *testing.T) data.Product {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy p.
-			want := p
-			want.Name = "Comic Books"
-			want.Cost = 25
-			want.Quantity = 60
-			want.Revenue = 0
-			want.Sold = 0
+			exp := p
+			exp.Name = "Comic Books"
+			exp.Cost = 25
+			exp.Quantity = 60
+			exp.Revenue = 0
+			exp.Sold = 0
 
-			if diff := cmp.Diff(want, p); diff != "" {
+			if diff := cmp.Diff(exp, p); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -400,15 +400,15 @@ func (pt *ProductTests) getProduct200(t *testing.T, id string) {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like Dates so we copy p.
-			want := p
-			want.ID = id
-			want.Name = "Comic Books"
-			want.Cost = 25
-			want.Quantity = 60
-			want.Revenue = 0
-			want.Sold = 0
+			exp := p
+			exp.ID = id
+			exp.Name = "Comic Books"
+			exp.Cost = 25
+			exp.Quantity = 60
+			exp.Revenue = 0
+			exp.Sold = 0
 
-			if diff := cmp.Diff(want, p); diff != "" {
+			if diff := cmp.Diff(exp, p); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -454,7 +454,7 @@ func (pt *ProductTests) putProduct204(t *testing.T, id string) {
 			}
 
 			if ru.Name != "Graphic Novels" {
-				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q want %q", tests.Failed, testID, ru.Name, "Graphic Novels")
+				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q exp %q", tests.Failed, testID, ru.Name, "Graphic Novels")
 			}
 			t.Logf("\t%s\tTest %d:\tShould see an updated Name.", tests.Success, testID)
 		}
@@ -492,11 +492,11 @@ func (pt *ProductTests) postProductSale403(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to add a new sale with role=%s.", tests.Success, testID, auth.RoleUser)
 
-			recv := w.Body.String()
-			resp := `{"error":"you are not authorized for that action"}`
-			if resp != recv {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := `{"error":"you are not authorized for that action"}`
+			if exp != got {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -541,12 +541,12 @@ func (pt *ProductTests) postProductSale201(t *testing.T, id string) {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy s.
-			want := s
-			want.ProductID = id
-			want.Quantity = ns.Quantity
-			want.Paid = ns.Paid
+			exp := s
+			exp.ProductID = id
+			exp.Quantity = ns.Quantity
+			exp.Paid = ns.Paid
 
-			if diff := cmp.Diff(want, s); diff != "" {
+			if diff := cmp.Diff(exp, s); diff != "" {
 				t.Logf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -603,12 +603,12 @@ func (pt *ProductTests) getProductSales200(t *testing.T, id string) {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy sales[0].
-			want := sales[0]
-			want.ProductID = p.ID
-			want.Quantity = p.Sold
-			want.Paid = p.Revenue
+			exp := sales[0]
+			exp.ProductID = p.ID
+			exp.Quantity = p.Sold
+			exp.Paid = p.Revenue
 
-			if diff := cmp.Diff(want, sales[0]); diff != "" {
+			if diff := cmp.Diff(exp, sales[0]); diff != "" {
 				t.Logf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)

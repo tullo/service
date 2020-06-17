@@ -139,8 +139,8 @@ func (ut *UserTests) postUser400(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to unmarshal the response to an error type.", tests.Success, testID)
 
-			// Define what we want to see.
-			want := web.ErrorResponse{
+			// Define what we expect to see.
+			exp := web.ErrorResponse{
 				Error: "field validation error",
 				Fields: []web.FieldError{
 					{Field: "name", Error: "name is a required field"},
@@ -156,7 +156,7 @@ func (ut *UserTests) postUser400(t *testing.T) {
 				return a.Field < b.Field
 			})
 
-			if diff := cmp.Diff(want, got, sorter); diff != "" {
+			if diff := cmp.Diff(exp, got, sorter); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -241,11 +241,11 @@ func (ut *UserTests) getUser400(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 400 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := `{"error":"ID is not in its proper form"}`
-			if resp != recv {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := `{"error":"ID is not in its proper form"}`
+			if exp != got {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tWant: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -272,11 +272,11 @@ func (ut *UserTests) getUser403(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 403 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := `{"error":"attempted action is not allowed"}`
-			if resp != recv {
-				t.Log("Got :", recv)
-				t.Log("Want:", resp)
+			got := w.Body.String()
+			exp := `{"error":"attempted action is not allowed"}`
+			if exp != got {
+				t.Log("Got :", got)
+				t.Log("Exp:", exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -321,11 +321,11 @@ func (ut *UserTests) getUser404(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := "not found"
-			if !strings.Contains(recv, resp) {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := "not found"
+			if !strings.Contains(got, exp) {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -387,11 +387,11 @@ func (ut *UserTests) putUser404(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
-			recv := w.Body.String()
-			resp := "not found"
-			if !strings.Contains(recv, resp) {
-				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
-				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
+			got := w.Body.String()
+			exp := "not found"
+			if !strings.Contains(got, exp) {
+				t.Logf("\t\tTest %d:\tGot : %v", testID, got)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, exp)
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -450,12 +450,12 @@ func (ut *UserTests) postUser201(t *testing.T) data.User {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy u.
-			want := u
-			want.Name = "Bill Kennedy"
-			want.Email = "bill@ardanlabs.com"
-			want.Roles = []string{auth.RoleAdmin}
+			exp := u
+			exp.Name = "Bill Kennedy"
+			exp.Email = "bill@ardanlabs.com"
+			exp.Roles = []string{auth.RoleAdmin}
 
-			if diff := cmp.Diff(want, u); diff != "" {
+			if diff := cmp.Diff(exp, u); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -513,13 +513,13 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like Dates so we copy p.
-			want := u
-			want.ID = id
-			want.Name = "Bill Kennedy"
-			want.Email = "bill@ardanlabs.com"
-			want.Roles = []string{auth.RoleAdmin}
+			exp := u
+			exp.ID = id
+			exp.Name = "Bill Kennedy"
+			exp.Email = "bill@ardanlabs.com"
+			exp.Roles = []string{auth.RoleAdmin}
 
-			if diff := cmp.Diff(want, u); diff != "" {
+			if diff := cmp.Diff(exp, u); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -566,7 +566,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 			}
 
 			if ru.Name != "Jacob Walker" {
-				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q want %q", tests.Failed, testID, ru.Name, "Jacob Walker")
+				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q exp %q", tests.Failed, testID, ru.Name, "Jacob Walker")
 			}
 			t.Logf("\t%s\tTest %d:\tShould see an updated Name.", tests.Success, testID)
 
