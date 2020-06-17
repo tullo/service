@@ -1,7 +1,7 @@
 # contrib.go.opencensus.io/exporter/zipkin v0.1.1
 ## explicit
 contrib.go.opencensus.io/exporter/zipkin
-# github.com/ardanlabs/conf v1.2.1
+# github.com/ardanlabs/conf v1.3.2
 ## explicit
 github.com/ardanlabs/conf
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -10,7 +10,7 @@ github.com/dgrijalva/jwt-go
 # github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 ## explicit
 github.com/dimiro1/darwin
-# github.com/go-chi/chi v4.1.0+incompatible
+# github.com/go-chi/chi v4.1.2+incompatible
 ## explicit
 github.com/go-chi/chi
 # github.com/go-playground/locales v0.13.0
@@ -24,7 +24,7 @@ github.com/go-playground/universal-translator
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 ## explicit
 github.com/golang/groupcache/lru
-# github.com/google/go-cmp v0.4.0
+# github.com/google/go-cmp v0.4.1
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/cmpopts
@@ -42,7 +42,7 @@ github.com/jmoiron/sqlx/reflectx
 # github.com/leodido/go-urn v1.2.0
 ## explicit
 github.com/leodido/go-urn
-# github.com/lib/pq v1.3.0
+# github.com/lib/pq v1.7.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -58,7 +58,7 @@ github.com/openzipkin/zipkin-go/reporter/http
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# go.opencensus.io v0.22.3
+# go.opencensus.io v0.22.4
 ## explicit
 go.opencensus.io
 go.opencensus.io/internal
@@ -77,7 +77,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
+# golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
