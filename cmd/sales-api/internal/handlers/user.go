@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/internal/platform/auth"
@@ -59,7 +58,7 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return errors.New("claims missing from context")
 	}
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	usr, err := user.Retrieve(ctx, claims, u.db, id)
 	if err != nil {
 		switch err {
@@ -134,7 +133,7 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		return errors.Wrap(err, "")
 	}
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	err := user.Update(ctx, claims, u.db, id, upd, v.Now)
 	if err != nil {
 		switch err {
@@ -164,7 +163,7 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	}
 	defer span.End()
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	err := user.Delete(ctx, u.db, id)
 	if err != nil {
 		switch err {

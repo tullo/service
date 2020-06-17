@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-chi/chi"
 	en "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	validator "gopkg.in/go-playground/validator.v9"
@@ -82,4 +83,9 @@ func Decode(r *http.Request, val interface{}) error {
 	}
 
 	return nil
+}
+
+// Param returns the web call parameter from the request.
+func Param(r *http.Request, key string) string {
+	return chi.URLParam(r, key)
 }

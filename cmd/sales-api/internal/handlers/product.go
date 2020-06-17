@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/internal/platform/auth"
@@ -54,7 +53,7 @@ func (p *Product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	defer span.End()
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	prod, err := product.Retrieve(ctx, p.db, id)
 	if err != nil {
 		switch err {
@@ -134,7 +133,7 @@ func (p *Product) Update(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return errors.Wrap(err, "")
 	}
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	if err := product.Update(ctx, p.db, claims, id, up, v.Now); err != nil {
 		switch err {
 		case product.ErrInvalidID:
@@ -163,7 +162,7 @@ func (p *Product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Req
 	}
 	defer span.End()
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	if err := product.Delete(ctx, p.db, id); err != nil {
 		switch err {
 		case product.ErrInvalidID:
@@ -194,7 +193,7 @@ func (p *Product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return errors.Wrap(err, "decoding new sale")
 	}
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	sale, err := product.AddSale(r.Context(), p.db, ns, id, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "adding new sale")
@@ -215,7 +214,7 @@ func (p *Product) ListSales(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	defer span.End()
 
-	id := chi.URLParam(r, "id")
+	id := web.Param(r, "id")
 	list, err := product.ListSales(r.Context(), p.db, id)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
