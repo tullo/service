@@ -22,7 +22,7 @@ var ErrForbidden = web.NewRequestError(
 func Authenticate(authenticator *auth.Authenticator) web.Middleware {
 
 	// This is the actual middleware function to be executed.
-	f := func(after web.Handler) web.Handler {
+	m := func(after web.Handler) web.Handler {
 
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -51,7 +51,7 @@ func Authenticate(authenticator *auth.Authenticator) web.Middleware {
 		return h
 	}
 
-	return f
+	return m
 }
 
 // HasRole validates that an authenticated user has at least one role from a
@@ -59,7 +59,7 @@ func Authenticate(authenticator *auth.Authenticator) web.Middleware {
 func HasRole(roles ...string) web.Middleware {
 
 	// This is the actual middleware function to be executed.
-	f := func(after web.Handler) web.Handler {
+	m := func(after web.Handler) web.Handler {
 
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			ctx, span := trace.StartSpan(ctx, "internal.mid.HasRole")
@@ -80,5 +80,5 @@ func HasRole(roles ...string) web.Middleware {
 		return h
 	}
 
-	return f
+	return m
 }
