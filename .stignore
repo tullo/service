@@ -5,6 +5,7 @@
 /*.so
 /*.dylib
 .circleci
+.dockerignore
 .gitignore
 .idea
 docker-compose.yaml

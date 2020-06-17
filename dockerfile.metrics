@@ -9,18 +9,10 @@ ARG PACKAGE_PREFIX
 RUN mkdir -p /service
 WORKDIR /service
 
-# Copy the module files first and then download the dependencies. If this
-# doesn't change, we won't need to do this again in future builds.
-COPY go.* ./
-RUN go mod download
+# Copy the source code into the build stage.
+COPY . .
 
-# Copy the source code into the image.
-COPY cmd cmd
-COPY internal internal
-COPY vendor vendor
-
-# Build the service binary. We are doing this last since this will be different
-# every time we run through this process.
+# Build the service binary.
 WORKDIR /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -ldflags "-X main.build=${VCS_REF}"
 

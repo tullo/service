@@ -1,0 +1,14 @@
+.circleci
+.dockerignore
+.github
+.gitgnore
+.idea
+CONTRIBUTORS
+docker*
+k8s
+LICENSE
+makefile
+okteto
+okteto.yml
+postman
+README.md
