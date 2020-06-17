@@ -82,10 +82,10 @@ metrics:
 		gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
 
 up:
-	docker-compose up
+	docker-compose up --remove-orphans
 
 down:
-	docker-compose down
+	docker-compose down --remove-orphans
 
 test:
 	go test ./... -count=1
