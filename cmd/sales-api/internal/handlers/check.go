@@ -11,7 +11,7 @@ import (
 )
 
 // Check provides support for orchestration health checks.
-type Check struct {
+type check struct {
 	build string
 	db    *sqlx.DB
 
@@ -19,7 +19,7 @@ type Check struct {
 }
 
 // Health validates the service is healthy and ready to accept requests.
-func (c *Check) Health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (c *check) Health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.StartSpan(ctx, "handlers.Check.Health")
 	defer span.End()
 

@@ -55,7 +55,7 @@ func (retUser) One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id stri
 	const q = `SELECT * FROM users WHERE user_id = $1`
 	if err := db.GetContext(ctx, &u, q, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrUserNotFound
+			return nil, ErrNotFound
 		}
 
 		return nil, errors.Wrapf(err, "selecting user %q", id)
@@ -109,7 +109,7 @@ func (retProduct) One(ctx context.Context, db *sqlx.DB, id string) (*Product, er
 
 	if err := db.GetContext(ctx, &p, q, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrProductNotFound
+			return nil, ErrNotFound
 		}
 
 		return nil, errors.Wrap(err, "selecting single product")

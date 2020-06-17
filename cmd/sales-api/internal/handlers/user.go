@@ -14,7 +14,7 @@ import (
 )
 
 // User represents the User API method handler set.
-type User struct {
+type user struct {
 	db            *sqlx.DB
 	authenticator *auth.Authenticator
 
@@ -22,7 +22,7 @@ type User struct {
 }
 
 // List returns all the existing users in the system.
-func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.List")
 
@@ -42,7 +42,7 @@ func (u *User) List(ctx context.Context, w http.ResponseWriter, r *http.Request)
 }
 
 // Retrieve returns the specified user from the system.
-func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Retrieve")
 
@@ -64,7 +64,7 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		switch err {
 		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrUserNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
@@ -77,7 +77,7 @@ func (u *User) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 }
 
 // Create inserts a new user into the system.
-func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Create")
 
@@ -107,7 +107,7 @@ func (u *User) Create(ctx context.Context, w http.ResponseWriter, r *http.Reques
 }
 
 // Update updates the specified user in the system.
-func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Update")
 
@@ -139,7 +139,7 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		switch err {
 		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrUserNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
@@ -152,7 +152,7 @@ func (u *User) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 }
 
 // Delete removes the specified user from the system.
-func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Delete")
 
@@ -169,7 +169,7 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 		switch err {
 		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrUserNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
@@ -183,7 +183,7 @@ func (u *User) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 // Token handles a request to authenticate a user. It expects a request using
 // Basic Auth with a user's email and password. It responds with a JWT.
-func (u *User) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (u *user) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.User.Token")
 

@@ -15,14 +15,12 @@ import (
 )
 
 // Product represents the Product API method handler set.
-type Product struct {
+type product struct {
 	db *sqlx.DB
-
-	// ADD OTHER STATE LIKE THE LOGGER IF NEEDED.
 }
 
 // List gets all existing products in the system.
-func (p *Product) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.List")
 
@@ -42,7 +40,7 @@ func (p *Product) List(ctx context.Context, w http.ResponseWriter, r *http.Reque
 }
 
 // Retrieve returns the specified product from the system.
-func (p *Product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.Retrieve")
 
@@ -59,7 +57,7 @@ func (p *Product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.R
 		switch err {
 		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrProductNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -70,8 +68,8 @@ func (p *Product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.R
 }
 
 // Create decodes the body of a request to create a new product. The full
-// product with generated fields is sent back in the response.
-func (p *Product) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// product with populatd fields is sent back in the response.
+func (p *product) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.Create")
 
@@ -107,7 +105,7 @@ func (p *Product) Create(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 // Update decodes the body of a request to update an existing product. The ID
 // of the product is part of the request URL.
-func (p *Product) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.Update")
 
@@ -138,7 +136,7 @@ func (p *Product) Update(ctx context.Context, w http.ResponseWriter, r *http.Req
 		switch err {
 		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrProductNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
@@ -151,7 +149,7 @@ func (p *Product) Update(ctx context.Context, w http.ResponseWriter, r *http.Req
 }
 
 // Delete removes a single product identified by an ID in the request URL.
-func (p *Product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.Delete")
 
@@ -177,7 +175,7 @@ func (p *Product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 // AddSale creates a new Sale for a particular product. It looks for a JSON
 // object in the request body. The full model is returned to the caller.
-func (p *Product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.AddSale")
 
@@ -203,7 +201,7 @@ func (p *Product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Re
 }
 
 // ListSales gets all sales for a particular product.
-func (p *Product) ListSales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (p *product) ListSales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.StartSpan(ctx, "handlers.Product.ListSales")
 

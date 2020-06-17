@@ -198,7 +198,7 @@ func (pt *ProductTests) getProduct404(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
 			recv := w.Body.String()
-			resp := "Product not found"
+			resp := "not found"
 			if !strings.Contains(recv, resp) {
 				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
 				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
@@ -264,7 +264,7 @@ func (pt *ProductTests) putProduct404(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 404 for the response.", tests.Success, testID)
 
 			recv := w.Body.String()
-			resp := "Product not found"
+			resp := "not found"
 			if !strings.Contains(recv, resp) {
 				t.Logf("\t\tTest %d:\tGot : %v", testID, recv)
 				t.Logf("\t\tTest %d:\tWant: %v", testID, resp)
