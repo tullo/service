@@ -26,7 +26,7 @@ RUN go build
 
 
 # Build production image with Go binary based on Alpine.
-FROM alpine:3.11
+FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
