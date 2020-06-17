@@ -21,7 +21,7 @@ down:
 load:
 	kind load docker-image gcr.io/ardan-starter-kit/sales-api-amd64:1.0 --name ardan-starter-cluster
 	kind load docker-image gcr.io/ardan-starter-kit/metrics-amd64:1.0 --name ardan-starter-cluster
-	# kind load docker-image openzipkin/zipkin:2.19 --name ardan-starter-cluster
+	# kind load docker-image openzipkin/zipkin-slim:2.21 --name ardan-starter-cluster
 	# kind load docker-image postgres:12.3-alpine --name ardan-starter-cluster
 
 services:

@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: zipkin
-        image: openzipkin/zipkin:2.19
+        image: openzipkin/zipkin-slim:2.21
         imagePullPolicy: Always
         ports:
         - name: zipkin
