@@ -13,7 +13,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/database"
-	"github.com/tullo/service/internal/platform/database/databasetest"
 	"github.com/tullo/service/internal/platform/web"
 	"github.com/tullo/service/internal/schema"
 	"github.com/tullo/service/internal/user"
@@ -28,6 +27,7 @@ const (
 // These are the IDs in the seed data for admin@example.com and
 // user@example.com.
 const (
+	dbImage = "postgres:12.3-alpine"
 	AdminID = "5cf37266-3473-4006-984f-9325122678b7"
 	UserID  = "45b5fbd3-755f-4379-8f07-a58d4a30fa2f"
 )
@@ -43,7 +43,7 @@ const (
 func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	t.Helper()
 
-	c := databasetest.StartContainer(t)
+	c := startContainer(t, dbImage)
 
 	db, err := database.Open(database.Config{
 		User:       "postgres",
@@ -71,13 +71,13 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	}
 
 	if pingError != nil {
-		databasetest.DumpContainerLogs(t, c)
-		databasetest.StopContainer(t, c)
+		dumpContainerLogs(t, c.ID)
+		stopContainer(t, c.ID)
 		t.Fatalf("waiting for database to be ready: %v", pingError)
 	}
 
 	if err := schema.Migrate(db); err != nil {
-		databasetest.StopContainer(t, c)
+		stopContainer(t, c.ID)
 		t.Fatalf("migrating: %s", err)
 	}
 
@@ -86,7 +86,7 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	teardown := func() {
 		t.Helper()
 		db.Close()
-		databasetest.StopContainer(t, c)
+		stopContainer(t, c.ID)
 	}
 
 	return db, teardown

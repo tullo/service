@@ -6,6 +6,7 @@
 /*.dylib
 .circleci
 .gitignore
+.idea
 docker-compose.yaml
 dockerfile.*
 postman

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/platform/tests"
 	"github.com/tullo/service/internal/product"
-	"github.com/tullo/service/internal/tests"
 )
 
 func TestSales(t *testing.T) {

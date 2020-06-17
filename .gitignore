@@ -1,4 +1,5 @@
 .DS_Store
+.idea
 
 # private secret generated via 'make all'
 private.pem
