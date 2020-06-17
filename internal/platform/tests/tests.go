@@ -113,7 +113,7 @@ func NewIntegration(t *testing.T) *Test {
 	}
 
 	// Create the logger to use.
-	logger := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	// Create RSA keys to enable authentication in our service.
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -131,7 +131,7 @@ func NewIntegration(t *testing.T) *Test {
 
 	return &Test{
 		DB:            db,
-		Log:           logger,
+		Log:           log,
 		Authenticator: authenticator,
 		t:             t,
 		cleanup:       cleanup,
