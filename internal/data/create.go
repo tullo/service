@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/internal/platform/auth"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/api/global"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -19,7 +19,7 @@ var Create create
 
 // User inserts a new user into the database.
 func (create) User(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, error) {
-	ctx, span := trace.StartSpan(ctx, "internal.data.create.user")
+	ctx, span := global.Tracer("service").Start(ctx, "internal.data.create.user")
 	defer span.End()
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(n.Password), bcrypt.DefaultCost)
@@ -51,7 +51,7 @@ func (create) User(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (
 // Product adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated.
 func (create) Product(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (*Product, error) {
-	ctx, span := trace.StartSpan(ctx, "internal.data.create.product")
+	ctx, span := global.Tracer("service").Start(ctx, "internal.data.create.product")
 	defer span.End()
 
 	p := Product{
@@ -82,6 +82,9 @@ func (create) Product(ctx context.Context, db *sqlx.DB, user auth.Claims, np New
 
 // AddSale records a sales transaction for a single Product.
 func (create) AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now time.Time) (*Sale, error) {
+	ctx, span := global.Tracer("service").Start(ctx, "internal.data.create.addSale")
+	defer span.End()
+
 	s := Sale{
 		ID:          uuid.New().String(),
 		ProductID:   productID,

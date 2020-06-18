@@ -6,7 +6,7 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
 
-all: go-run-keygen sales-api search metrics run down
+all: go-run-keygen sales-api metrics run down
 
 down: compose-down
 
@@ -121,23 +121,11 @@ sales-api:
 		$(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION) \
 		gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
-search:
-	docker build \
-		-f dockerfile.search \
-		-t $(REGISTRY_HOSTNAME)/$(REGISTRY_ACCOUNT)/search-amd64:$(VERSION) \
-		--build-arg PACKAGE_NAME=search \
-		--build-arg VCS_REF=`git rev-parse HEAD` \
-		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
-		.
-	docker image tag \
-		$(REGISTRY_ACCOUNT)/search-amd64:$(VERSION) \
-		gcr.io/$(PROJECT)/search-amd64:$(VERSION)
-
 docker-stop-all:
-	docker container stop $$(docker container ls -q --filter "name=sales*" --filter "name=search" --filter "name=metrics" --filter "name=zipkin")
+	docker container stop $$(docker container ls -q --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")
 
 docker-remove-all:
-	docker container rm $$(docker container ls -aq --filter "name=sales*" --filter "name=search" --filter "name=metrics" --filter "name=zipkin")
+	docker container rm $$(docker container ls -aq --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")
 
 docker-prune-system:
 	docker system prune -f

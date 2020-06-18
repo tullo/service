@@ -10,8 +10,7 @@ import (
 	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
-	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/api/global"
 )
 
 // Product represents the Product API method handler set.
@@ -22,13 +21,7 @@ type product struct {
 // List gets all existing products in the system.
 func (p *product) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.List")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.List", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.list")
 	defer span.End()
 
 	products, err := data.Retrieve.Product.List(ctx, p.db)
@@ -42,13 +35,7 @@ func (p *product) List(ctx context.Context, w http.ResponseWriter, r *http.Reque
 // Retrieve returns the specified product from the system.
 func (p *product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.Retrieve")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.Retrieve", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.retrieve")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -71,13 +58,7 @@ func (p *product) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.R
 // product with populatd fields is sent back in the response.
 func (p *product) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.Create")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.Create", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.create")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -107,13 +88,7 @@ func (p *product) Create(ctx context.Context, w http.ResponseWriter, r *http.Req
 // of the product is part of the request URL.
 func (p *product) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.Update")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.Update", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.update")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -151,13 +126,7 @@ func (p *product) Update(ctx context.Context, w http.ResponseWriter, r *http.Req
 // Delete removes a single product identified by an ID in the request URL.
 func (p *product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.Delete")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.Delete", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.delete")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -177,13 +146,7 @@ func (p *product) Delete(ctx context.Context, w http.ResponseWriter, r *http.Req
 // object in the request body. The full model is returned to the caller.
 func (p *product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.AddSale")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.AddSale", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.addSale")
 	defer span.End()
 
 	var ns data.NewSale
@@ -203,13 +166,7 @@ func (p *product) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Re
 // ListSales gets all sales for a particular product.
 func (p *product) ListSales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.Product.ListSales")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.Product.ListSales", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.listSales")
 	defer span.End()
 
 	id := web.Param(r, "id")

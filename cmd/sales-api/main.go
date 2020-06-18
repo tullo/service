@@ -14,16 +14,13 @@ import (
 	"syscall"
 	"time"
 
-	"contrib.go.opencensus.io/exporter/zipkin"
 	"github.com/ardanlabs/conf"
 	"github.com/dgrijalva/jwt-go"
-	openzipkin "github.com/openzipkin/zipkin-go"
-	zipkinHTTP "github.com/openzipkin/zipkin-go/reporter/http"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/cmd/sales-api/internal/handlers"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/database"
-	"go.opencensus.io/trace"
+	"github.com/tullo/service/internal/platform/tracer"
 )
 
 /*
@@ -46,7 +43,7 @@ func main() {
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	if err := run(log); err != nil {
-		log.Println("main: error :", err)
+		log.Println("main: error:", err)
 		os.Exit(1)
 	}
 }
@@ -78,10 +75,9 @@ func run(log *log.Logger) error {
 			Algorithm      string `conf:"default:RS256"`
 		}
 		Zipkin struct {
-			LocalEndpoint string  `conf:"default:0.0.0.0:3000"`
-			ReporterURI   string  `conf:"default:http://zipkin:9411/api/v2/spans"`
-			ServiceName   string  `conf:"default:sales-api"`
-			Probability   float64 `conf:"default:0.05"`
+			ReporterURI string  `conf:"default:http://zipkin:9411/api/v2/spans"`
+			ServiceName string  `conf:"default:sales-api"`
+			Probability float64 `conf:"default:0.05"`
 		}
 	}
 	cfg.Version.SVN = build
@@ -167,23 +163,9 @@ func run(log *log.Logger) error {
 
 	log.Println("main: Initializing zipkin tracing support")
 
-	localEndpoint, err := openzipkin.NewEndpoint(cfg.Zipkin.ServiceName, cfg.Zipkin.LocalEndpoint)
-	if err != nil {
-		return err
+	if err := tracer.Init(cfg.Zipkin.ServiceName, cfg.Zipkin.ReporterURI, cfg.Zipkin.Probability, log); err != nil {
+		return errors.Wrap(err, "starting tracer")
 	}
-
-	reporter := zipkinHTTP.NewReporter(cfg.Zipkin.ReporterURI)
-	ze := zipkin.NewExporter(reporter, localEndpoint)
-
-	trace.RegisterExporter(ze)
-	trace.ApplyConfig(trace.Config{
-		DefaultSampler: trace.ProbabilitySampler(cfg.Zipkin.Probability),
-	})
-
-	defer func() {
-		log.Printf("main: Tracing Stopping : %s", cfg.Zipkin.LocalEndpoint)
-		reporter.Close()
-	}()
 
 	// =========================================================================
 	// Start Debug Service

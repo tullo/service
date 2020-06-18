@@ -9,8 +9,7 @@ import (
 	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/web"
-	"go.opencensus.io/plugin/ochttp/propagation/tracecontext"
-	"go.opencensus.io/trace"
+	"go.opentelemetry.io/otel/api/global"
 )
 
 // User represents the User API method handler set.
@@ -24,13 +23,7 @@ type user struct {
 // List returns all the existing users in the system.
 func (u *user) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.List")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.List", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.list")
 	defer span.End()
 
 	users, err := data.Retrieve.User.List(ctx, u.db)
@@ -44,13 +37,7 @@ func (u *user) List(ctx context.Context, w http.ResponseWriter, r *http.Request)
 // Retrieve returns the specified user from the system.
 func (u *user) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.Retrieve")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Retrieve", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.retrieve")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -79,13 +66,7 @@ func (u *user) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Requ
 // Create inserts a new user into the system.
 func (u *user) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.Create")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Create", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -109,13 +90,7 @@ func (u *user) Create(ctx context.Context, w http.ResponseWriter, r *http.Reques
 // Update updates the specified user in the system.
 func (u *user) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.Update")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Update", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -154,13 +129,7 @@ func (u *user) Update(ctx context.Context, w http.ResponseWriter, r *http.Reques
 // Delete removes the specified user from the system.
 func (u *user) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.Delete")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Delete", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.delete")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -185,13 +154,7 @@ func (u *user) Delete(ctx context.Context, w http.ResponseWriter, r *http.Reques
 // Basic Auth with a user's email and password. It responds with a JWT.
 func (u *user) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.StartSpan(ctx, "handlers.User.Token")
-
-	// Get span context from incoming request
-	HTTPFormat := &tracecontext.HTTPFormat{}
-	if spanContext, ok := HTTPFormat.SpanContextFromRequest(r); ok {
-		ctx, span = trace.StartSpanWithRemoteParent(ctx, "handlers.User.Token", spanContext)
-	}
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.token")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
