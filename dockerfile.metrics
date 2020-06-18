@@ -13,7 +13,7 @@ WORKDIR /service
 COPY . .
 
 # Build the service binary.
-WORKDIR /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}
+WORKDIR /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -ldflags "-X main.build=${VCS_REF}"
 
 
@@ -23,13 +23,13 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
-COPY --from=build_stage /service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+COPY --from=build_stage /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 WORKDIR /app
 CMD ["/app/main"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="${PACKAGE_NAME}" \
       org.opencontainers.image.authors="Andreas <tullo@pm.me>" \
-      org.opencontainers.image.source="https://github.com/tullo/service/cmd/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
+      org.opencontainers.image.source="https://github.com/tullo/service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.vendor="Amstutz-IT"

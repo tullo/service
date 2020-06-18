@@ -13,10 +13,10 @@ down: compose-down
 run: compose-up compose-seed compose-status
 
 staticcheck:
-	$(shell go env GOPATH)/bin/staticcheck -go 1.14 -tests ./cmd/... ./internal/...
+	$(shell go env GOPATH)/bin/staticcheck -go 1.14 -tests ./app/... ./business/... ./foundation/...
 
 staticcheck-upgrade:
-	GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
+	GO111MODULE=off go get -u honnef.co/go/tools/app/staticcheck
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
 
 deps-reset:
@@ -38,39 +38,41 @@ go-tidy:
 	go mod vendor
 
 go-run-api:
-	go run ./cmd/sales-api --db-disable-tls=1 --auth-private-key-file=private.pem
+	go run ./app/sales-api --db-disable-tls=1 --auth-private-key-file=private.pem
 
 go-run-keygen:
-	go run ./cmd/sales-admin/main.go keygen
+	go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: go-run-migrate
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 gentoken 'd33807c1-6363-430a-866a-9303c4b343be' private.pem
+	go run ./app/sales-admin/main.go --db-disable-tls=1 gentoken 'd33807c1-6363-430a-866a-9303c4b343be' private.pem
 
 go-run-migrate: compose-db-up
 	docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 migrate
+	go run ./app/sales-admin/main.go --db-disable-tls=1 migrate
 
 go-run-seed: go-run-migrate
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 seed
+	go run ./app/sales-admin/main.go --db-disable-tls=1 seed
 
 go-run-useradd: go-run-migrate
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
+	go run ./app/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
 
 go-run-users: go-run-migrate
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 users
+	go run ./app/sales-admin/main.go --db-disable-tls=1 users
 
+go-pprof-browser:
+	firefox http://localhost:4000/debug/pprof
 go-pprof-heap:
 	go tool pprof http://localhost:4000/debug/pprof/heap
-#	firefox http://localhost:4000/debug/pprof
-#	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
-	@echo
+go-pprof-profile:
+	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
+#   (pprof) top10 -cum
 
 go-test: staticcheck
-	go vet ./cmd/... ./internal/...
+	go vet ./app/... ./business/... ./foundation/...
 	go test ./... -count=1
 #	go test -v ./... -count=1
-#	go test -v -run TestProducts ./cmd/sales-api/tests/ -count=1
-#	go test -v -run TestProducts/crudProductUser ./cmd/sales-api/tests/ -count=1
+#	go test -v -run TestProducts ./app/sales-api/tests/ -count=1
+#	go test -v -run TestProducts/crudProductUser ./app/sales-api/tests/ -count=1
 
 compose-db-up:
 	docker-compose up --detach --remove-orphans db

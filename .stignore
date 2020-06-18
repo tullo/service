@@ -22,6 +22,6 @@ postman
 /__debug_bin
 
 # go build artifacts
-/cmd/sales-admin/sales-admin
-/cmd/sales-api/sales-api
-/cmd/sidecar/metrics/metrics
+/app/sales-admin/sales-admin
+/app/sales-api/sales-api
+/app/sidecar/metrics/metrics

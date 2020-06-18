@@ -1,6 +1,10 @@
 .DS_Store
 .idea
 
-# private secret generated via 'make all'
+# auth related files
 private.pem
 public.pem
+
+# go build artifacts
+/app/sales-admin/sales-admin
+/app/sales-api/sales-api
