@@ -38,6 +38,12 @@ func KeyGen() error {
 		return errors.Wrap(err, "encoding to private file")
 	}
 
+	// Marshal the public key from the private key to PKIX.
+	asn1Bytes, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	if err != nil {
+		return errors.Wrap(err, "marshaling public key")
+	}
+
 	// Create a file for the public key information in PEM form.
 	publicFile, err := os.Create("public.pem")
 	if err != nil {
@@ -48,7 +54,7 @@ func KeyGen() error {
 	// Construct a PEM block for the public key.
 	publicBlock := pem.Block{
 		Type:  "RSA PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&key.PublicKey),
+		Bytes: asn1Bytes,
 	}
 
 	// Write the public key to the private key file.
