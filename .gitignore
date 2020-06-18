@@ -3,3 +3,4 @@
 
 # private secret generated via 'make all'
 private.pem
+public.pem

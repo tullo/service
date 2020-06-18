@@ -35,14 +35,14 @@ go-tidy:
 	go mod tidy
 	go mod vendor
 
-go-run-admin-user: go-run-migrate
-	go run ./cmd/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
-
 go-run-api:
 	go run ./cmd/sales-api --db-disable-tls=1 --auth-private-key-file=private.pem
 
 go-run-keygen:
-	go run ./cmd/sales-admin/main.go keygen private.pem
+	go run ./cmd/sales-admin/main.go keygen
+
+go-run-tokengen: go-run-migrate
+	go run ./cmd/sales-admin/main.go --db-disable-tls=1 gentoken 'd33807c1-6363-430a-866a-9303c4b343be' private.pem
 
 go-run-migrate: compose-db-up
 	docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
@@ -50,6 +50,12 @@ go-run-migrate: compose-db-up
 
 go-run-seed: go-run-migrate
 	go run ./cmd/sales-admin/main.go --db-disable-tls=1 seed
+
+go-run-useradd: go-run-migrate
+	go run ./cmd/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
+
+go-run-users: go-run-migrate
+	go run ./cmd/sales-admin/main.go --db-disable-tls=1 users
 
 go-pprof-heap:
 	go tool pprof http://localhost:4000/debug/pprof/heap
