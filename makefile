@@ -12,6 +12,13 @@ down: compose-down
 
 run: compose-up compose-seed compose-status
 
+staticcheck:
+	$(shell go env GOPATH)/bin/staticcheck -go 1.14 -tests ./cmd/... ./internal/...
+
+staticcheck-upgrade:
+	GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
+	$(shell go env GOPATH)/bin/staticcheck -debug.version
+
 deps-reset:
 	git checkout -- go.mod
 	go mod tidy
@@ -50,7 +57,8 @@ go-pprof-heap:
 #	go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
 	@echo
 
-go-test:
+go-test: staticcheck
+	go vet ./cmd/... ./internal/...
 	go test ./... -count=1
 #	go test -v ./... -count=1
 #	go test -v -run TestProducts ./cmd/sales-api/tests/ -count=1
