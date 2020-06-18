@@ -54,8 +54,9 @@ func startContainer(t *testing.T, image string) *Container {
 		Host: dbHost.HostIP + ":" + dbHost.HostPort,
 	}
 
+	t.Logf("Image:          %s", image)
 	t.Logf("DB ContainerID: %s", c.ID)
-	t.Logf("DB Host: %s", c.Host)
+	t.Logf("DB Host:        %s", c.Host)
 
 	return &c
 }
