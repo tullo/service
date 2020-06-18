@@ -33,13 +33,6 @@ func user(db *sqlx.DB) func(t *testing.T) {
 				ctx := tests.Context()
 				now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 
-				// claims is information about the person making the request.
-				claims := auth.NewClaims(
-					"718ffbea-f4a1-4667-8ae3-b349da52675e", // This is just some random UUID.
-					[]string{auth.RoleAdmin, auth.RoleUser},
-					now, time.Hour,
-				)
-
 				nu := data.NewUser{
 					Name:            "Bill Kennedy",
 					Email:           "bill@ardanlabs.com",
@@ -48,11 +41,28 @@ func user(db *sqlx.DB) func(t *testing.T) {
 					PasswordConfirm: "gophers",
 				}
 
+				if err := data.Delete.DeleteAll(ctx, db); err != nil {
+
+					t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
+
 				u, err := data.Create.User(ctx, db, nu, now)
 				if err != nil {
 					t.Fatalf("\t%s\tTest %d:\tShould be able to create user : %s.", tests.Failed, testID, err)
 				}
 				t.Logf("\t%s\tTest %d:\tShould be able to create user.", tests.Success, testID)
+
+				claims := auth.Claims{
+					StandardClaims: jwt.StandardClaims{
+						Issuer:    "service project",
+						Subject:   "718ffbea-f4a1-4667-8ae3-b349da52675e",
+						Audience:  "students",
+						ExpiresAt: now.Add(time.Hour).Unix(),
+						IssuedAt:  now.Unix(),
+					},
+					Roles: []string{auth.RoleAdmin, auth.RoleUser},
+				}
 
 				savedU, err := data.Retrieve.User.One(ctx, claims, db, u.ID)
 				if err != nil {
@@ -115,9 +125,6 @@ func user(db *sqlx.DB) func(t *testing.T) {
 
 func product(db *sqlx.DB) func(t *testing.T) {
 	tf := func(t *testing.T) {
-		db, teardown := tests.NewUnit(t)
-		defer teardown()
-
 		t.Log("Given the need to work with Product records.")
 		{
 			testID := 0
@@ -131,11 +138,21 @@ func product(db *sqlx.DB) func(t *testing.T) {
 				now := time.Date(2019, time.January, 1, 0, 0, 0, 0, time.UTC)
 				ctx := context.Background()
 
-				claims := auth.NewClaims(
-					"718ffbea-f4a1-4667-8ae3-b349da52675e", // This is just some random UUID.
-					[]string{auth.RoleAdmin, auth.RoleUser},
-					now, time.Hour,
-				)
+				if err := data.Delete.DeleteAll(ctx, db); err != nil {
+					t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
+
+				claims := auth.Claims{
+					StandardClaims: jwt.StandardClaims{
+						Issuer:    "service project",
+						Subject:   "718ffbea-f4a1-4667-8ae3-b349da52675e",
+						Audience:  "students",
+						ExpiresAt: now.Add(time.Hour).Unix(),
+						IssuedAt:  now.Unix(),
+					},
+					Roles: []string{auth.RoleAdmin, auth.RoleUser},
+				}
 
 				p, err := data.Create.Product(ctx, db, claims, np, now)
 				if err != nil {
@@ -241,6 +258,11 @@ func authenticate(db *sqlx.DB) func(t *testing.T) {
 
 				now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 
+				if err := data.Delete.DeleteAll(ctx, db); err != nil {
+					t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
+
 				u, err := data.Create.User(ctx, db, nu, now)
 				if err != nil {
 					t.Fatalf("\t%s\tTest %d:\tShould be able to create user : %s.", tests.Failed, testID, err)
@@ -256,7 +278,9 @@ func authenticate(db *sqlx.DB) func(t *testing.T) {
 				want := auth.Claims{
 					Roles: u.Roles,
 					StandardClaims: jwt.StandardClaims{
+						Issuer:    "service project",
 						Subject:   u.ID,
+						Audience:  "students",
 						ExpiresAt: now.Add(time.Hour).Unix(),
 						IssuedAt:  now.Unix(),
 					},

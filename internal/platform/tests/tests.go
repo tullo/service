@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"errors"
 	"log"
 	"os"
 	"testing"
@@ -23,25 +24,20 @@ const (
 	Failed  = "\u2717"
 )
 
-// These are the IDs in the seed data for admin@example.com and
-// user@example.com.
+// Configuration for running tests.
 const (
-	dbImage = "postgres:12.3-alpine"
+	dbImage = "postgres:11.1-alpine"
+	// IDs in the seed data for admin@example.com and user@example.com.
 	AdminID = "5cf37266-3473-4006-984f-9325122678b7"
 	UserID  = "45b5fbd3-755f-4379-8f07-a58d4a30fa2f"
 )
 
 // NewUnit creates a test database inside a Docker container. It creates the
-// required table structure but the database is otherwise empty.
-//
-// It does not return errors as this intended for testing only. Instead it will
-// call Fatal on the provided testing.T if anything goes wrong.
-//
-// It returns the database to use as well as a function to call at the end of
-// the test.
+// required table structure but the database is otherwise empty. It returns
+// the database to use as well as a function to call at the end of the test.
 func NewUnit(t *testing.T) (*sqlx.DB, func()) {
-	t.Helper()
 
+	// Start a DB container instance with dgraph running.
 	c := startContainer(t, dbImage)
 
 	db, err := database.Open(database.Config{
@@ -55,7 +51,7 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 		t.Fatalf("opening database connection: %v", err)
 	}
 
-	t.Log("waiting for database to be ready")
+	t.Log("waiting for database to be ready ...")
 
 	// Wait for the database to be ready. Wait 100ms longer between each attempt.
 	// Do not try more than 20 times.
@@ -72,12 +68,12 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	if pingError != nil {
 		dumpContainerLogs(t, c.ID)
 		stopContainer(t, c.ID)
-		t.Fatalf("waiting for database to be ready: %v", pingError)
+		t.Fatalf("database never ready: %v", pingError)
 	}
 
 	if err := data.Migrate(db); err != nil {
 		stopContainer(t, c.ID)
-		t.Fatalf("migrating: %s", err)
+		t.Fatalf("migrating error: %s", err)
 	}
 
 	// teardown is the function that should be invoked when the caller is done
@@ -103,7 +99,6 @@ type Test struct {
 
 // NewIntegration creates a database, seeds it, constructs an authenticator.
 func NewIntegration(t *testing.T) *Test {
-	t.Helper()
 
 	// Initialize and seed database. Store the cleanup function call later.
 	db, cleanup := NewUnit(t)
@@ -116,15 +111,21 @@ func NewIntegration(t *testing.T) *Test {
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	// Create RSA keys to enable authentication in our service.
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Build an authenticator using this static key.
-	kid := "4754d86b-7a6d-4df5-9c65-224741361492"
-	kf := auth.NewSimpleKeyLookupFunc(kid, key.Public().(*rsa.PublicKey))
-	authenticator, err := auth.NewAuthenticator(key, kid, "RS256", kf)
+	// Build an authenticator using this key lookup function to retrieve
+	// the corresponding public key.
+	KID := "4754d86b-7a6d-4df5-9c65-224741361492"
+	keyLookupFunc := func(kid string) (*rsa.PublicKey, error) {
+		if kid != KID {
+			return nil, errors.New("no public key found")
+		}
+		return privateKey.Public().(*rsa.PublicKey), nil
+	}
+	authenticator, err := auth.NewAuthenticator(privateKey, KID, "RS256", keyLookupFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,22 +146,17 @@ func (test *Test) Teardown() {
 
 // Token generates an authenticated token for a user.
 func (test *Test) Token(email, pass string) string {
-	test.t.Helper()
-
-	claims, err := data.Authenticate(
-		context.Background(), test.DB, time.Now(),
-		email, pass,
-	)
+	claims, err := data.Authenticate(context.Background(), test.DB, time.Now(), email, pass)
 	if err != nil {
 		test.t.Fatal(err)
 	}
 
-	tkn, err := test.Authenticator.GenerateToken(claims)
+	token, err := test.Authenticator.GenerateToken(claims)
 	if err != nil {
 		test.t.Fatal(err)
 	}
 
-	return tkn
+	return token
 }
 
 // Context returns an app level context for testing.

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/tullo/service/internal/data"
 	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/tests"
@@ -20,11 +21,16 @@ func Test_Sales(t *testing.T) {
 
 	ctx := context.Background()
 
-	claims := auth.NewClaims(
-		"718ffbea-f4a1-4667-8ae3-b349da52675e", // This is just some random UUID.
-		[]string{auth.RoleAdmin, auth.RoleUser},
-		now, time.Hour,
-	)
+	claims := auth.Claims{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    "service project",
+			Subject:   "718ffbea-f4a1-4667-8ae3-b349da52675e", // This is just some random UUID.
+			Audience:  "students",
+			ExpiresAt: now.Add(time.Hour).Unix(),
+			IssuedAt:  now.Unix(),
+		},
+		Roles: []string{auth.RoleAdmin, auth.RoleUser},
+	}
 
 	// Create two products to work with.
 	newPuzzles := data.NewProduct{

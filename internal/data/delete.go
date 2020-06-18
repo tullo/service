@@ -15,6 +15,19 @@ type delete struct{}
 var Delete delete
 
 // Delete removes a user from the database.
+func (delete) DeleteAll(ctx context.Context, db *sqlx.DB) error {
+	ctx, span := global.Tracer("service").Start(ctx, "internal.data.delete.all")
+	defer span.End()
+
+	const q = `DELETE FROM users`
+	if _, err := db.ExecContext(ctx, q); err != nil {
+		return errors.Wrap(err, "deleting users")
+	}
+
+	return nil
+}
+
+// Delete removes a user from the database.
 func (delete) User(ctx context.Context, db *sqlx.DB, id string) error {
 	ctx, span := global.Tracer("service").Start(ctx, "internal.data.delete.user")
 	defer span.End()
