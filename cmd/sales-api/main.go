@@ -18,7 +18,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/cmd/sales-api/internal/handlers"
-	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/auth"
 	"github.com/tullo/service/internal/platform/database"
 	"github.com/tullo/service/internal/platform/tracer"
 )

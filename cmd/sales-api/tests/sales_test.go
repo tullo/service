@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/tullo/service/internal/auth"
 	"github.com/tullo/service/internal/data"
-	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/tests"
 )
 

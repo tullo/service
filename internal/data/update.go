@@ -6,7 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/auth"
 	"go.opentelemetry.io/otel/api/global"
 	"golang.org/x/crypto/bcrypt"
 )

@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/tullo/service/internal/auth"
 	"github.com/tullo/service/internal/mid"
-	"github.com/tullo/service/internal/platform/auth" // Import is removed in final PR
 	"github.com/tullo/service/internal/platform/web"
 )
 

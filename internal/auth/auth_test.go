@@ -7,7 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
-	"github.com/tullo/service/internal/platform/auth"
+	"github.com/tullo/service/internal/auth"
 )
 
 func TestAuthenticator(t *testing.T) {

@@ -12,8 +12,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/tullo/service/internal/auth"
 	"github.com/tullo/service/internal/data"
-	"github.com/tullo/service/internal/platform/auth"
 	"github.com/tullo/service/internal/platform/database"
 	"github.com/tullo/service/internal/platform/web"
 )
