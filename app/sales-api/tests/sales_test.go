@@ -7,7 +7,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/business/tests"
@@ -35,7 +34,7 @@ func Test_Sales(t *testing.T) {
 	}
 
 	// Create two products to work with.
-	newPuzzles := data.NewProduct{
+	newPuzzles := product.NewProduct{
 		Name:     "Puzzles",
 		Cost:     25,
 		Quantity: 6,
@@ -46,7 +45,7 @@ func Test_Sales(t *testing.T) {
 		t.Fatalf("creating product: %s", err)
 	}
 
-	newToys := data.NewProduct{
+	newToys := product.NewProduct{
 		Name:     "Toys",
 		Cost:     40,
 		Quantity: 3,
@@ -61,7 +60,7 @@ func Test_Sales(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling product Sales.", testID)
 
-		ns := data.NewSale{
+		ns := sale.NewSale{
 			Quantity: 3,
 			Paid:     70,
 		}

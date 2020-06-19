@@ -17,7 +17,7 @@ import (
 )
 
 // Create inserts a new user into the database.
-func Create(ctx context.Context, db *sqlx.DB, n data.NewUser, now time.Time) (*data.User, error) {
+func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.user")
 	defer span.End()
 
@@ -26,7 +26,7 @@ func Create(ctx context.Context, db *sqlx.DB, n data.NewUser, now time.Time) (*d
 		return nil, errors.Wrap(err, "generating password hash")
 	}
 
-	u := data.User{
+	u := User{
 		ID:           uuid.New().String(),
 		Name:         n.Name,
 		Email:        n.Email,
@@ -48,7 +48,7 @@ func Create(ctx context.Context, db *sqlx.DB, n data.NewUser, now time.Time) (*d
 }
 
 // Update replaces a user document in the database.
-func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, upd data.UpdateUser, now time.Time) error {
+func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, upd UpdateUser, now time.Time) error {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.update.user")
 	defer span.End()
 
@@ -109,11 +109,11 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 }
 
 // List retrieves a list of existing users from the database.
-func List(ctx context.Context, db *sqlx.DB) ([]data.User, error) {
+func List(ctx context.Context, db *sqlx.DB) ([]User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.user.list")
 	defer span.End()
 
-	users := []data.User{}
+	users := []User{}
 	const q = `SELECT * FROM users`
 
 	if err := db.SelectContext(ctx, &users, q); err != nil {
@@ -124,7 +124,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]data.User, error) {
 }
 
 // One gets the specified user from the database.
-func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*data.User, error) {
+func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.user.one")
 	defer span.End()
 
@@ -137,7 +137,7 @@ func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*data
 		return nil, data.ErrForbidden
 	}
 
-	var u data.User
+	var u User
 	const q = `SELECT * FROM users WHERE user_id = $1`
 	if err := db.GetContext(ctx, &u, q, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -159,7 +159,7 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 
 	const q = `SELECT * FROM users WHERE email = $1`
 
-	var u data.User
+	var u User
 	if err := db.GetContext(ctx, &u, q, email); err != nil {
 
 		// Normally we would return ErrNotFound in this scenario but we do not want

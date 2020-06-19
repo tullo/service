@@ -75,7 +75,7 @@ func (h *userHandlers) Create(ctx context.Context, w http.ResponseWriter, r *htt
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var nu data.NewUser
+	var nu user.NewUser
 	if err := web.Decode(r, &nu); err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -104,7 +104,7 @@ func (h *userHandlers) Update(ctx context.Context, w http.ResponseWriter, r *htt
 		return errors.New("claims missing from context")
 	}
 
-	var upd data.UpdateUser
+	var upd user.UpdateUser
 	if err := web.Decode(r, &upd); err != nil {
 		return errors.Wrap(err, "")
 	}

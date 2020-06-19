@@ -23,7 +23,7 @@ func TestProduct(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling a single Product.", testID)
 		{
-			np := data.NewProduct{
+			np := product.NewProduct{
 				Name:     "Comic Books",
 				Cost:     10,
 				Quantity: 55,
@@ -65,7 +65,7 @@ func TestProduct(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould get back the same product.", tests.Success, testID)
 
-			upd := data.UpdateProduct{
+			upd := product.UpdateProduct{
 				Name:     tests.StringPointer("Comics"),
 				Cost:     tests.IntPointer(50),
 				Quantity: tests.IntPointer(40),
@@ -96,7 +96,7 @@ func TestProduct(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould get back the same product.", tests.Success, testID)
 
-			upd = data.UpdateProduct{
+			upd = product.UpdateProduct{
 				Name: tests.StringPointer("Graphic Novels"),
 			}
 

@@ -16,11 +16,11 @@ import (
 
 // Create adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated.
-func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np data.NewProduct, now time.Time) (*data.Product, error) {
+func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (*Product, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.product")
 	defer span.End()
 
-	p := data.Product{
+	p := Product{
 		ID:          uuid.New().String(),
 		Name:        np.Name,
 		Cost:        np.Cost,
@@ -48,7 +48,7 @@ func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np data.NewProdu
 
 // Update modifies data about a Product. It will error if the specified ID is
 // invalid or does not reference an existing Product.
-func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, update data.UpdateProduct, now time.Time) error {
+func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, update UpdateProduct, now time.Time) error {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.update.product")
 	defer span.End()
 
@@ -111,11 +111,11 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 }
 
 // List gets all Products from the database.
-func List(ctx context.Context, db *sqlx.DB) ([]data.Product, error) {
+func List(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.product.list")
 	defer span.End()
 
-	products := []data.Product{}
+	products := []Product{}
 	const q = `SELECT
 			p.*,
 			COALESCE(SUM(s.quantity) ,0) AS sold,
@@ -132,7 +132,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]data.Product, error) {
 }
 
 // One finds the product identified by a given ID.
-func One(ctx context.Context, db *sqlx.DB, id string) (*data.Product, error) {
+func One(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.product.list")
 	defer span.End()
 
@@ -140,7 +140,7 @@ func One(ctx context.Context, db *sqlx.DB, id string) (*data.Product, error) {
 		return nil, data.ErrInvalidID
 	}
 
-	var p data.Product
+	var p Product
 
 	const q = `SELECT
 			p.*,

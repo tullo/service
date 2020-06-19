@@ -7,16 +7,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/tullo/service/business/data"
 	"go.opentelemetry.io/otel/api/global"
 )
 
 // AddSale records a sales transaction for a single Product.
-func AddSale(ctx context.Context, db *sqlx.DB, ns data.NewSale, productID string, now time.Time) (*data.Sale, error) {
+func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now time.Time) (*Sale, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.addSale")
 	defer span.End()
 
-	s := data.Sale{
+	s := Sale{
 		ID:          uuid.New().String(),
 		ProductID:   productID,
 		Quantity:    ns.Quantity,
@@ -40,11 +39,11 @@ func AddSale(ctx context.Context, db *sqlx.DB, ns data.NewSale, productID string
 }
 
 // List gets all Sales from the database.
-func List(ctx context.Context, db *sqlx.DB, productID string) ([]data.Sale, error) {
+func List(ctx context.Context, db *sqlx.DB, productID string) ([]Sale, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.sale.list")
 	defer span.End()
 
-	sales := []data.Sale{}
+	sales := []Sale{}
 
 	const q = `SELECT * FROM sales WHERE product_id = $1`
 	if err := db.SelectContext(ctx, &sales, q, productID); err != nil {

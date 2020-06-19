@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tullo/service/app/sales-api/handlers"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
+	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/business/tests"
 	"github.com/tullo/service/foundation/web"
 )
@@ -110,7 +110,7 @@ func (ut *UserTests) getToken200(t *testing.T) {
 // postUser400 validates a user can't be created with the endpoint
 // unless a valid user document is submitted.
 func (ut *UserTests) postUser400(t *testing.T) {
-	body, err := json.Marshal(&data.NewUser{})
+	body, err := json.Marshal(&user.NewUser{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -167,7 +167,7 @@ func (ut *UserTests) postUser400(t *testing.T) {
 // postUser401 validates a user can't be created unless the calling user is
 // authenticated.
 func (ut *UserTests) postUser401(t *testing.T) {
-	body, err := json.Marshal(&data.User{})
+	body, err := json.Marshal(&user.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +195,7 @@ func (ut *UserTests) postUser401(t *testing.T) {
 // postUser403 validates a user can't be created unless the calling user is
 // an admin user. Regular users can't do this.
 func (ut *UserTests) postUser403(t *testing.T) {
-	body, err := json.Marshal(&data.User{})
+	body, err := json.Marshal(&user.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -359,7 +359,7 @@ func (ut *UserTests) deleteUserNotFound(t *testing.T) {
 
 // putUser404 validates updating a user that does not exist.
 func (ut *UserTests) putUser404(t *testing.T) {
-	u := data.UpdateUser{
+	u := user.UpdateUser{
 		Name: tests.StringPointer("Doesn't Exist"),
 	}
 
@@ -410,8 +410,8 @@ func (ut *UserTests) crudUser(t *testing.T) {
 }
 
 // postUser201 validates a user can be created with the endpoint.
-func (ut *UserTests) postUser201(t *testing.T) data.User {
-	nu := data.NewUser{
+func (ut *UserTests) postUser201(t *testing.T) user.User {
+	nu := user.NewUser{
 		Name:            "Bill Kennedy",
 		Email:           "bill@ardanlabs.com",
 		Roles:           []string{auth.RoleAdmin},
@@ -432,7 +432,7 @@ func (ut *UserTests) postUser201(t *testing.T) data.User {
 	ut.app.ServeHTTP(w, r)
 
 	// u is the value we will return.
-	var u data.User
+	var u user.User
 
 	t.Log("Given the need to create a new user with the users endpoint.")
 	{
@@ -506,7 +506,7 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
 
-			var u data.User
+			var u user.User
 			if err := json.NewDecoder(w.Body).Decode(&u); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
@@ -560,7 +560,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the retrieve.", tests.Success, testID)
 
-			var ru data.User
+			var ru user.User
 			if err := json.NewDecoder(w.Body).Decode(&ru); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}

@@ -73,7 +73,7 @@ func (h *productHandlers) Create(ctx context.Context, w http.ResponseWriter, r *
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var np data.NewProduct
+	var np product.NewProduct
 	if err := web.Decode(r, &np); err != nil {
 		return errors.Wrap(err, "decoding new product")
 	}
@@ -103,7 +103,7 @@ func (h *productHandlers) Update(ctx context.Context, w http.ResponseWriter, r *
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var up data.UpdateProduct
+	var up product.UpdateProduct
 	if err := web.Decode(r, &up); err != nil {
 		return errors.Wrap(err, "")
 	}
@@ -151,7 +151,7 @@ func (h *productHandlers) AddSale(ctx context.Context, w http.ResponseWriter, r 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.addSale")
 	defer span.End()
 
-	var ns data.NewSale
+	var ns sale.NewSale
 	if err := web.Decode(r, &ns); err != nil {
 		return errors.Wrap(err, "decoding new sale")
 	}
