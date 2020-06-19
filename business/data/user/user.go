@@ -18,7 +18,7 @@ import (
 
 // Create inserts a new user into the database.
 func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.user")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.create")
 	defer span.End()
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(n.Password), bcrypt.DefaultCost)
@@ -49,7 +49,7 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 
 // Update replaces a user document in the database.
 func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, uu UpdateUser, now time.Time) error {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.update.user")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.update")
 	defer span.End()
 
 	u, err := One(ctx, claims, db, id)
@@ -93,7 +93,7 @@ func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, uu 
 
 // Delete removes a user from the database.
 func Delete(ctx context.Context, db *sqlx.DB, id string) error {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.delete.user")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.delete")
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
@@ -110,7 +110,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 
 // List retrieves a list of existing users from the database.
 func List(ctx context.Context, db *sqlx.DB) ([]User, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.user.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.list")
 	defer span.End()
 
 	users := []User{}
@@ -125,7 +125,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]User, error) {
 
 // One gets the specified user from the database.
 func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.user.one")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.one")
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
@@ -154,7 +154,7 @@ func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User
 // success it returns a Claims value representing this user. The claims can be
 // used to generate a token for future authentication.
 func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, password string) (auth.Claims, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.authenticate")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.authenticate")
 	defer span.End()
 
 	const q = `SELECT * FROM users WHERE email = $1`

@@ -30,7 +30,7 @@ func Metrics() web.Middleware {
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := global.Tracer("service").Start(ctx, "foundation.mid.metrics")
+			ctx, span := global.Tracer("service").Start(ctx, "business.mid.metrics")
 			defer span.End()
 
 			err := before(ctx, w, r)

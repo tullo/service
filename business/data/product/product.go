@@ -17,7 +17,7 @@ import (
 // Create adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated.
 func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (*Product, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.product")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.create")
 	defer span.End()
 
 	p := Product{
@@ -49,7 +49,7 @@ func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, n
 // Update modifies data about a Product. It will error if the specified ID is
 // invalid or does not reference an existing Product.
 func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, u UpdateProduct, now time.Time) error {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.update.product")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.update")
 	defer span.End()
 
 	p, err := One(ctx, db, id)
@@ -94,7 +94,7 @@ func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, u Upd
 
 // Delete removes the product identified by a given ID.
 func Delete(ctx context.Context, db *sqlx.DB, id string) error {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.delete.product")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.delete")
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
@@ -112,7 +112,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 
 // List gets all Products from the database.
 func List(ctx context.Context, db *sqlx.DB) ([]Product, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.product.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.list")
 	defer span.End()
 
 	products := []Product{}
@@ -133,7 +133,7 @@ func List(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 
 // One finds the product identified by a given ID.
 func One(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.product.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.one")
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {

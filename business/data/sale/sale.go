@@ -12,7 +12,7 @@ import (
 
 // AddSale records a sales transaction for a single Product.
 func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now time.Time) (*Sale, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.create.addSale")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.sale.add")
 	defer span.End()
 
 	s := Sale{
@@ -40,7 +40,7 @@ func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now
 
 // List gets all Sales from the database.
 func List(ctx context.Context, db *sqlx.DB, productID string) ([]Sale, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "foundation.data.retrieve.sale.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.sale.list")
 	defer span.End()
 
 	sales := []Sale{}

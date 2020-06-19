@@ -26,7 +26,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			ctx, span := global.Tracer("service").Start(ctx, "foundation.mid.authenticate")
+			ctx, span := global.Tracer("service").Start(ctx, "business.mid.authenticate")
 			defer span.End()
 
 			// Parse the authorization header. Expected header is of
@@ -63,7 +63,7 @@ func HasRole(roles ...string) web.Middleware {
 
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := global.Tracer("service").Start(ctx, "foundation.mid.hasrole")
+			ctx, span := global.Tracer("service").Start(ctx, "business.mid.hasrole")
 			defer span.End()
 
 			claims, ok := ctx.Value(auth.Key).(auth.Claims)
