@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/business/tests"
 )
@@ -33,7 +34,7 @@ func TestUser(t *testing.T) {
 				PasswordConfirm: "gophers",
 			}
 
-			if err := data.DeleteAll(db); err != nil {
+			if err := schema.DeleteAll(db); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
@@ -133,7 +134,7 @@ func TestAuthenticate(t *testing.T) {
 
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 
-			if err := data.DeleteAll(db); err != nil {
+			if err := schema.DeleteAll(db); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)

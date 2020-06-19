@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/tullo/service/business/data"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/foundation/database"
 )
 
@@ -16,7 +16,7 @@ func Seed(cfg database.Config) error {
 	}
 	defer db.Close()
 
-	if err := data.Seed(db); err != nil {
+	if err := schema.Seed(db); err != nil {
 		return errors.Wrap(err, "seed database")
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/tests"
 )
 
@@ -32,7 +33,7 @@ func TestProduct(t *testing.T) {
 			now := time.Date(2019, time.January, 1, 0, 0, 0, 0, time.UTC)
 			ctx := context.Background()
 
-			if err := data.DeleteAll(db); err != nil {
+			if err := schema.DeleteAll(db); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)

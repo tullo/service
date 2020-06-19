@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"github.com/tullo/service/business/data"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/foundation/database"
 )
 
@@ -19,7 +19,7 @@ func Migrate(cfg database.Config) error {
 	}
 	defer db.Close()
 
-	if err := data.Migrate(db); err != nil {
+	if err := schema.Migrate(db); err != nil {
 		return errors.Wrap(err, "migrate database")
 	}
 

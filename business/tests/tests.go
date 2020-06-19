@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/web"
@@ -72,7 +72,7 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 		t.Fatalf("database never ready: %v", pingError)
 	}
 
-	if err := data.Migrate(db); err != nil {
+	if err := schema.Migrate(db); err != nil {
 		stopContainer(t, c.ID)
 		t.Fatalf("migrating error: %s", err)
 	}
@@ -104,7 +104,7 @@ func NewIntegration(t *testing.T) *Test {
 	// Initialize and seed database. Store the cleanup function call later.
 	db, cleanup := NewUnit(t)
 
-	if err := data.Seed(db); err != nil {
+	if err := schema.Seed(db); err != nil {
 		t.Fatal(err)
 	}
 
