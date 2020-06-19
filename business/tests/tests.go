@@ -92,7 +92,7 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 type Test struct {
 	DB            *sqlx.DB
 	Log           *log.Logger
-	Authenticator *auth.Authenticator
+	Authenticator *auth.Auth
 
 	t       *testing.T
 	cleanup func()
@@ -126,7 +126,7 @@ func NewIntegration(t *testing.T) *Test {
 		}
 		return privateKey.Public().(*rsa.PublicKey), nil
 	}
-	authenticator, err := auth.NewAuthenticator(privateKey, KID, "RS256", keyLookupFunc)
+	authenticator, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
 	if err != nil {
 		t.Fatal(err)
 	}

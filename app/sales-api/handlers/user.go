@@ -15,8 +15,8 @@ import (
 
 // User represents the User API method handler set.
 type userHandlers struct {
-	db            *sqlx.DB
-	authenticator *auth.Authenticator
+	db   *sqlx.DB
+	auth *auth.Auth
 
 	// ADD OTHER STATE LIKE THE LOGGER AND CONFIG HERE.
 }
@@ -182,7 +182,7 @@ func (h *userHandlers) Token(ctx context.Context, w http.ResponseWriter, r *http
 	var tkn struct {
 		Token string `json:"token"`
 	}
-	tkn.Token, err = h.authenticator.GenerateToken(claims)
+	tkn.Token, err = h.auth.GenerateToken(claims)
 	if err != nil {
 		return errors.Wrap(err, "generating token")
 	}

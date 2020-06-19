@@ -19,7 +19,7 @@ var ErrForbidden = web.NewRequestError(
 )
 
 // Authenticate validates a JWT from the `Authorization` header.
-func Authenticate(authenticator *auth.Authenticator) web.Middleware {
+func Authenticate(a *auth.Auth) web.Middleware {
 
 	// This is the actual middleware function to be executed.
 	m := func(after web.Handler) web.Handler {
@@ -37,7 +37,7 @@ func Authenticate(authenticator *auth.Authenticator) web.Middleware {
 				return web.NewRequestError(err, http.StatusUnauthorized)
 			}
 
-			claims, err := authenticator.ParseClaims(parts[1])
+			claims, err := a.ParseClaims(parts[1])
 			if err != nil {
 				return web.NewRequestError(err, http.StatusUnauthorized)
 			}

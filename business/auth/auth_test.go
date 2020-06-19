@@ -31,7 +31,7 @@ func TestAuthenticator(t *testing.T) {
 		}
 		return publicKey, nil
 	}
-	a, err := auth.NewAuthenticator(privateKey, KID, "RS256", keyLookupFunc)
+	a, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
