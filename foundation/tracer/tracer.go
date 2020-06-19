@@ -21,14 +21,17 @@ func Init(serviceName string, reporterURI string, probability float64, log *log.
 		return errors.Wrap(err, "creating new exporter")
 	}
 
+	// WARNING: The current Init settings are using defaults which I listed out
+	// for readability. Please review the documentation for opentelemetry.
+
 	// For demoing purposes, always sample. In a production application, you should
 	// configure this to a trace.ProbabilitySampler set at the desired probability.
 	tp, err := sdktrace.NewProvider(
-		// TODO sdktrace.ProbabilitySampler()
 		sdktrace.WithConfig(sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
 		sdktrace.WithBatcher(exporter,
-			sdktrace.WithBatchTimeout(5),
-			sdktrace.WithMaxExportBatchSize(10),
+			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
+			sdktrace.WithBatchTimeout(sdktrace.DefaultBatchTimeout),
+			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
 		),
 	)
 	if err != nil {
