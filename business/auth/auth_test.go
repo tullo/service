@@ -52,7 +52,7 @@ func TestAuthenticator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	parsedClaims, err := a.ParseClaims(token)
+	parsedClaims, err := a.ValidateToken(token)
 	if err != nil {
 		t.Fatal(err)
 	}

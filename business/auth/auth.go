@@ -131,9 +131,9 @@ func (a *Auth) GenerateToken(claims Claims) (string, error) {
 	return str, nil
 }
 
-// ParseClaims recreates the Claims that were used to generate a token. It
+// ValidateToken recreates the Claims that were used to generate a token. It
 // verifies that the token was signed using our key.
-func (a *Auth) ParseClaims(tokenStr string) (Claims, error) {
+func (a *Auth) ValidateToken(tokenStr string) (Claims, error) {
 
 	// keyFunc is a function that returns the public key for validating a token.
 	// We use the parsed (but unverified) token to find the key id. That ID is
