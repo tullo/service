@@ -1,12 +1,14 @@
 SHELL := /bin/bash
 
-export PROJECT = ardan-starter-kit
+export PROJECT = tullo-starter-kit
 export REGISTRY_HOSTNAME = docker.io
 export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
 
-all: go-run-keygen sales-api metrics run down
+all: go-run-keygen images run down
+
+images: sales-api metrics
 
 down: compose-down
 
@@ -99,12 +101,20 @@ curl-health-check:
 	curl -v http://0.0.0.0:3000/v1/health | jq
 	@echo
 
+.PHONY: generate-load
 generate-load:
-	$(TOKEN = $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token'))
-#	@echo $(TOKEN)
-#	curl -s -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/products | jq
-	hey -c 10 -n 30000 -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/products
-	@echo
+#   make --dry-run
+	curl -H "Authorization: Bearer $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')" \
+	http://localhost:3000/v1/products | jq
+
+	$(shell go env GOPATH)/bin/hey -c 10 -n 30000 \
+	-H "Authorization: Bearer $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')" \
+	http://localhost:3000/v1/products
+
+.PHONY: hey-upgrade
+hey-upgrade:
+	GO111MODULE=off go get -u github.com/rakyll/hey
+	$(shell go env GOPATH)/bin/hey
 
 metrics:
 	docker build \
