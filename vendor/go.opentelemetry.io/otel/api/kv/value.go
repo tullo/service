@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package value
+package kv
 
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"go.opentelemetry.io/otel/api/internal"
@@ -34,6 +36,8 @@ type Value struct {
 	numeric  uint64
 	stringly string
 	// TODO Lazy value type?
+
+	array interface{}
 }
 
 const (
@@ -46,42 +50,43 @@ const (
 	FLOAT32             // 32 bit floating point value, use AsFloat32() to get it.
 	FLOAT64             // 64 bit floating point value, use AsFloat64() to get it.
 	STRING              // String value, use AsString() to get it.
+	ARRAY               // Array value of arbitrary type, use AsArray() to get it.
 )
 
-// Bool creates a BOOL Value.
-func Bool(v bool) Value {
+// BoolValue creates a BOOL Value.
+func BoolValue(v bool) Value {
 	return Value{
 		vtype:   BOOL,
 		numeric: internal.BoolToRaw(v),
 	}
 }
 
-// Int64 creates an INT64 Value.
-func Int64(v int64) Value {
+// Int64Value creates an INT64 Value.
+func Int64Value(v int64) Value {
 	return Value{
 		vtype:   INT64,
 		numeric: internal.Int64ToRaw(v),
 	}
 }
 
-// Uint64 creates a UINT64 Value.
-func Uint64(v uint64) Value {
+// Uint64Value creates a UINT64 Value.
+func Uint64Value(v uint64) Value {
 	return Value{
 		vtype:   UINT64,
 		numeric: internal.Uint64ToRaw(v),
 	}
 }
 
-// Float64 creates a FLOAT64 Value.
-func Float64(v float64) Value {
+// Float64Value creates a FLOAT64 Value.
+func Float64Value(v float64) Value {
 	return Value{
 		vtype:   FLOAT64,
 		numeric: internal.Float64ToRaw(v),
 	}
 }
 
-// Int32 creates an INT32 Value.
-func Int32(v int32) Value {
+// Int32Value creates an INT32 Value.
+func Int32Value(v int32) Value {
 	return Value{
 		vtype:   INT32,
 		numeric: internal.Int32ToRaw(v),
@@ -89,7 +94,7 @@ func Int32(v int32) Value {
 }
 
 // Uint32 creates a UINT32 Value.
-func Uint32(v uint32) Value {
+func Uint32Value(v uint32) Value {
 	return Value{
 		vtype:   UINT32,
 		numeric: internal.Uint32ToRaw(v),
@@ -97,7 +102,7 @@ func Uint32(v uint32) Value {
 }
 
 // Float32 creates a FLOAT32 Value.
-func Float32(v float32) Value {
+func Float32Value(v float32) Value {
 	return Value{
 		vtype:   FLOAT32,
 		numeric: internal.Float32ToRaw(v),
@@ -105,7 +110,7 @@ func Float32(v float32) Value {
 }
 
 // String creates a STRING Value.
-func String(v string) Value {
+func StringValue(v string) Value {
 	return Value{
 		vtype:    STRING,
 		stringly: v,
@@ -114,20 +119,46 @@ func String(v string) Value {
 
 // Int creates either an INT32 or an INT64 Value, depending on whether
 // the int type is 32 or 64 bits wide.
-func Int(v int) Value {
+func IntValue(v int) Value {
 	if unsafe.Sizeof(v) == 4 {
-		return Int32(int32(v))
+		return Int32Value(int32(v))
 	}
-	return Int64(int64(v))
+	return Int64Value(int64(v))
 }
 
 // Uint creates either a UINT32 or a UINT64 Value, depending on
 // whether the uint type is 32 or 64 bits wide.
-func Uint(v uint) Value {
+func UintValue(v uint) Value {
 	if unsafe.Sizeof(v) == 4 {
-		return Uint32(uint32(v))
+		return Uint32Value(uint32(v))
 	}
-	return Uint64(uint64(v))
+	return Uint64Value(uint64(v))
+}
+
+// Array creates an ARRAY value.
+func ArrayValue(array interface{}) Value {
+	switch reflect.TypeOf(array).Kind() {
+	case reflect.Array, reflect.Slice:
+		isValidType := func() bool {
+			// get array type regardless of dimensions
+			typeName := reflect.TypeOf(array).String()
+			typeName = typeName[strings.LastIndex(typeName, "]")+1:]
+			switch typeName {
+			case "bool", "int", "int32", "int64",
+				"float32", "float64", "string",
+				"uint", "uint32", "uint64":
+				return true
+			}
+			return false
+		}()
+		if isValidType {
+			return Value{
+				vtype: ARRAY,
+				array: array,
+			}
+		}
+	}
+	return Value{vtype: INVALID}
 }
 
 // Type returns a type of the Value.
@@ -183,11 +214,18 @@ func (v Value) AsString() string {
 	return v.stringly
 }
 
+// AsArray returns the array Value as an interface{}.
+func (v Value) AsArray() interface{} {
+	return v.array
+}
+
 type unknownValueType struct{}
 
 // AsInterface returns Value's data as interface{}.
 func (v Value) AsInterface() interface{} {
 	switch v.Type() {
+	case ARRAY:
+		return v.AsArray()
 	case BOOL:
 		return v.AsBool()
 	case INT32:
@@ -211,6 +249,8 @@ func (v Value) AsInterface() interface{} {
 // Emit returns a string representation of Value's data.
 func (v Value) Emit() string {
 	switch v.Type() {
+	case ARRAY:
+		return fmt.Sprint(v.array)
 	case BOOL:
 		return strconv.FormatBool(v.AsBool())
 	case INT32:

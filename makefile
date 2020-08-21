@@ -85,7 +85,7 @@ go-pprof-profile:
 	@go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
 #   (pprof) top10 -cum
 
-go-test: staticcheck
+go-test: check
 	@go vet ./app/... ./business/... ./foundation/...
 	@go test ./... -count=1
 #	@go test -v ./... -count=1
