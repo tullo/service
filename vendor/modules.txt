@@ -18,7 +18,7 @@ github.com/go-playground/locales/en
 # github.com/go-playground/universal-translator v0.17.0
 ## explicit
 github.com/go-playground/universal-translator
-# github.com/google/go-cmp v0.5.0
+# github.com/google/go-cmp v0.5.1
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/cmpopts
@@ -36,7 +36,7 @@ github.com/jmoiron/sqlx/reflectx
 # github.com/leodido/go-urn v1.2.0
 ## explicit
 github.com/leodido/go-urn
-# github.com/lib/pq v1.7.0
+# github.com/lib/pq v1.8.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -71,7 +71,7 @@ go.opentelemetry.io/otel/sdk/trace/internal
 # go.opentelemetry.io/otel/exporters/trace/zipkin v0.6.0
 ## explicit
 go.opentelemetry.io/otel/exporters/trace/zipkin
-# golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
+# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
