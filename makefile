@@ -9,6 +9,7 @@ export COMPOSE_DOCKER_CLI_BUILD = 1
 
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 hey-upgrade: export GO111MODULE := off
+generate-load: export TOKEN := $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')
 
 
 all: go-run-keygen images run down
@@ -121,13 +122,8 @@ curl-health-check:
 
 .PHONY: generate-load
 generate-load:
-#   make --dry-run
-	@curl -H "Authorization: Bearer $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')" \
-	http://localhost:3000/v1/products | jq
-
-	$(shell go env GOPATH)/bin/hey -c 10 -n 30000 \
-	-H "Authorization: Bearer $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')" \
-	http://localhost:3000/v1/products
+#	@curl -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products | jq
+	@$(shell go env GOPATH)/bin/hey -c 10 -n 30000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products
 
 .PHONY: hey-upgrade
 hey-upgrade:
