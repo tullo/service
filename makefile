@@ -10,6 +10,7 @@ export COMPOSE_DOCKER_CLI_BUILD = 1
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 hey-upgrade: export GO111MODULE := off
 
+.DEFAULT_GOAL := run
 
 all: go-run-keygen images run down
 
