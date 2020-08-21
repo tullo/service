@@ -9,7 +9,6 @@ export COMPOSE_DOCKER_CLI_BUILD = 1
 
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 hey-upgrade: export GO111MODULE := off
-generate-load: export TOKEN := $(shell curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token | jq -r '.token')
 
 
 all: go-run-keygen images run down
@@ -116,13 +115,16 @@ compose-up:
 	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
 
 
+.PHONY: curl-health-check
 curl-health-check:
-	@curl -v http://0.0.0.0:3000/v1/health | jq
-	@echo
+	@echo $(shell curl --silent --show-error http://0.0.0.0:3000/v1/health)
 
 .PHONY: generate-load
 generate-load:
-#	@curl -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products | jq
+	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
+		http://localhost:3000/v1/users/token | jq -r '.token'`)
+	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products | jq
+	@echo "Running 'hey' tool: sending 30'000 requests via 10 concurrent workers."
 	@$(shell go env GOPATH)/bin/hey -c 10 -n 30000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products
 
 .PHONY: hey-upgrade
