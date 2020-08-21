@@ -7,6 +7,10 @@ export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
 
+# https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
+hey-upgrade: export GO111MODULE := off
+
+
 all: go-run-keygen images run down
 
 images: sales-api metrics
@@ -127,7 +131,8 @@ generate-load:
 
 .PHONY: hey-upgrade
 hey-upgrade:
-	@GO111MODULE=off go get -u github.com/rakyll/hey
+	@echo GO111MODULE=$(GO111MODULE)
+	@go get -u -v github.com/rakyll/hey
 	$(shell go env GOPATH)/bin/hey
 
 metrics:
