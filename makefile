@@ -1,10 +1,11 @@
-SHELL := /bin/bash
+SHELL = /bin/bash -o pipefail
 
 export PROJECT = tullo-starter-kit
 export REGISTRY_HOSTNAME = docker.io
 export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
+export COMPOSE_DOCKER_CLI_BUILD = 1
 
 all: go-run-keygen images run down
 
