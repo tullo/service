@@ -14,12 +14,21 @@ down: compose-down
 
 run: compose-up compose-seed compose-status
 
-staticcheck:
-	$(shell go env GOPATH)/bin/staticcheck -go 1.14 -tests ./app/... ./business/... ./foundation/...
+check:
+	$(shell go env GOPATH)/bin/staticcheck -go 1.15 \
+		-tests ./app/... ./business/... ./foundation/...
 
-staticcheck-upgrade:
-	GO111MODULE=off go get -u honnef.co/go/tools/app/staticcheck
+clone:
+	@git clone git@github.com:dominikh/go-tools.git /tmp/go-tools \
+		&& cd /tmp/go-tools \
+		&& git checkout "2020.1.5" \
+
+install:
+	@cd /tmp/go-tools && go install -v ./cmd/staticcheck
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
+
+.PHONY: staticcheck
+staticcheck: clone install
 
 deps-reset:
 	git checkout -- go.mod
