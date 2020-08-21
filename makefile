@@ -90,7 +90,6 @@ go-test: staticcheck
 
 compose-db-up:
 	@docker-compose up --detach --remove-orphans db
-	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
 
 compose-down:
 	@docker-compose down --remove-orphans --volumes
