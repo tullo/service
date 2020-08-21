@@ -90,7 +90,7 @@ go-test: staticcheck
 
 compose-db-up:
 	@docker-compose up --detach --remove-orphans db
-	@sleep 2
+	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
 
 compose-down:
 	@docker-compose down --remove-orphans --volumes
@@ -109,7 +109,8 @@ compose-status:
 
 compose-up:
 	@docker-compose up --detach --remove-orphans
-	@sleep 2
+	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+
 
 curl-health-check:
 	@curl -v http://0.0.0.0:3000/v1/health | jq
