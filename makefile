@@ -56,7 +56,7 @@ go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: go-run-migrate
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 gentoken 'd33807c1-6363-430a-866a-9303c4b343be' private.pem
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 gentoken '5cf37266-3473-4006-984f-9325122678b7' private.pem 'RS256'
 
 go-run-migrate: compose-db-up
 	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
