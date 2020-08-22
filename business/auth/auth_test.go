@@ -18,20 +18,14 @@ func TestAuthenticator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Parse the public key used to validate the token.
-	publicKey, err := jwt.ParseRSAPublicKeyFromPEM([]byte(publicRSAKey))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// Create a key lookup function that returns the public key for the test KID.
-	keyLookupFunc := func(kid string) (*rsa.PublicKey, error) {
-		if kid != KID {
+	keyLookupFunc := func(publicKID string) (*rsa.PublicKey, error) {
+		if publicKID != keyID {
 			return nil, errors.New("no public key found")
 		}
-		return publicKey, nil
+		return &privateKey.PublicKey, nil
 	}
-	a, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
+	a, err := auth.New(privateKey, keyID, "RS256", keyLookupFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +60,8 @@ func TestAuthenticator(t *testing.T) {
 }
 
 // The key id we would have generated for the keys below.
-const KID = "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
+// The key id represents the public key in the public key store.
+const keyID = "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
 
 // Output of:
 // openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
@@ -99,14 +94,5 @@ E8Imrlt3vuxnUE1UMkhDXrlhrxslRXU9enynVghAcSrg6ijs8KuN/9RB/I7H03cT
 77mx9eHMcYcRUciY5C8AOaArmMA=
 -----END PRIVATE KEY-----`
 
-// Output of:
+// How to generate a public key PEM file.
 // openssl rsa -pubout -in private.pem -out public.pem
-const publicRSAKey = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3YgQ1OI6kWLh5cgZqOXV
-gdY/Wng6181EyW0SpYKPg1g0MyMyUL2nJL0bvP3+weXLHqKpniXJgbuqXOA5kPqb
-hjR8cwsmFRUjMEbRwWb31ktz/lKiFwikQF/zWWy5FBHqj55+Vl4wPmFypLH54hNM
-Qx/FttqNDlxzs0YQ1jkYzU7paTKS7/LSp5yyodmP5Ai/+L6NEmfkVofBfePiU2cf
-+O0R1m+n5MZIpMkzt8zt3nyJKyo30cdgsBcDtq0P909OBkAfy4K+ZXyUFIqH771W
-Lo9sQSWqPt7fSK9Dnkm8NU+Uc9N1S7TfEmYb2sVmgX8JFLlDS9YJSTvmHS5DMRkt
-MwIDAQAB
------END PUBLIC KEY-----`

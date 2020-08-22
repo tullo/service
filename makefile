@@ -61,6 +61,7 @@ go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: go-run-migrate
+	@echo gentoken (userID, privateKeyPEM, algorithm)
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 gentoken '5cf37266-3473-4006-984f-9325122678b7' private.pem 'RS256'
 
 go-run-migrate: compose-db-up
@@ -125,8 +126,8 @@ generate-load:
 	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
 		http://localhost:3000/v1/users/token | jq -r '.token'`)
 	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products | jq
-	@echo "Running 'hey' tool: sending 30'000 requests via 10 concurrent workers."
-	@$(shell go env GOPATH)/bin/hey -c 10 -n 30000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products
+	@echo "Running 'hey' tool: sending 10'000 requests via 100 concurrent workers."
+	@$(shell go env GOPATH)/bin/hey -c 10 -n 10000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products
 
 .PHONY: hey-upgrade
 hey-upgrade:
