@@ -1,5 +1,5 @@
 # Build the Go Binary.
-FROM golang:1.14.4-alpine3.12 as build_stage
+FROM golang:1.15-alpine3.12 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
@@ -29,10 +29,13 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
-COPY --from=build_stage /service/private.pem /app/private.pem
-COPY --from=build_stage /service/app/${PACKAGE_PREFIX}sales-admin/sales-admin /app/admin
-COPY --from=build_stage /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+RUN apk --no-cache add ca-certificates
+RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app --no-create-home --disabled-password
+USER app
 WORKDIR /app
+COPY --from=build_stage --chown=app:app /service/private.pem /app/private.pem
+COPY --from=build_stage --chown=app:app /service/app/${PACKAGE_PREFIX}sales-admin/sales-admin /app/admin
+COPY --from=build_stage --chown=app:app /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 CMD ["/app/main"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \

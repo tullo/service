@@ -1,5 +1,5 @@
 # Build the sidecar as Go binary.
-FROM golang:1.14.4-alpine3.12 as build_stage
+FROM golang:1.15-alpine3.12 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
@@ -12,7 +12,7 @@ WORKDIR /service
 # Copy the source code into the build stage.
 COPY . .
 
-# Build the service binary.
+# Build the metrics sidecar binary.
 WORKDIR /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}
 RUN go build -ldflags "-X main.build=${VCS_REF}"
 
@@ -23,10 +23,12 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 ARG PACKAGE_PREFIX
-COPY --from=build_stage /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+RUN apk --no-cache add ca-certificates
+RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app --no-create-home --disabled-password
+USER app
 WORKDIR /app
+COPY --from=build_stage --chown=app:app /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 CMD ["/app/main"]
-
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="${PACKAGE_NAME}" \
       org.opencontainers.image.authors="Andreas <tullo@pm.me>" \
