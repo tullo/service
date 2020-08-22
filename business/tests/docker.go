@@ -3,21 +3,22 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"os/exec"
 	"testing"
 )
 
-// Container tracks information about a docker container started for tests.
+// Container tracks information about the docker container started for tests.
 type Container struct {
 	ID   string
 	Host string // IP:Port
 }
 
-// startContainer runs a postgres container to execute commands.
-func startContainer(t *testing.T, image string) *Container {
-	t.Helper()
+// startContainer launches a container using the specified image and port.
+func startContainer(t *testing.T, image string, port string) *Container {
+	t.Helper() // marks this func as a test helper function
 
-	cmd := exec.Command("docker", "run", "-P", "-d", "-e", "POSTGRES_PASSWORD=postgres", image)
+	cmd := exec.Command("docker", "run", "-P", "-d", image)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -33,30 +34,21 @@ func startContainer(t *testing.T, image string) *Container {
 		t.Fatalf("could not inspect container %s: %v", id, err)
 	}
 
-	var doc []struct {
-		NetworkSettings struct {
-			Ports struct {
-				TCP5432 []struct {
-					HostIP   string `json:"HostIp"`
-					HostPort string `json:"HostPort"`
-				} `json:"5432/tcp"`
-			} `json:"Ports"`
-		} `json:"NetworkSettings"`
-	}
+	var doc []map[string]interface{}
 	if err := json.Unmarshal(out.Bytes(), &doc); err != nil {
 		t.Fatalf("could not decode json: %v", err)
 	}
 
-	dbHost := doc[0].NetworkSettings.Ports.TCP5432[0]
+	ip, randPort := extractIPPort(t, doc, port)
 
 	c := Container{
 		ID:   id,
-		Host: dbHost.HostIP + ":" + dbHost.HostPort,
+		Host: net.JoinHostPort(ip, randPort),
 	}
 
-	t.Logf("Image:          %s", image)
-	t.Logf("DB ContainerID: %s", c.ID)
-	t.Logf("DB Host:        %s", c.Host)
+	t.Logf("Image:       %s", image)
+	t.Logf("ContainerID: %s", c.ID)
+	t.Logf("Host:        %s", c.Host)
 
 	return &c
 }
@@ -76,7 +68,7 @@ func stopContainer(t *testing.T, id string) {
 	t.Log("Removed:", id)
 }
 
-// dumpContainerLogs runs "docker logs" against the container and send it to t.Log
+// dumpContainerLogs sends the container log to t.Log.
 func dumpContainerLogs(t *testing.T, id string) {
 	t.Helper()
 
@@ -85,4 +77,33 @@ func dumpContainerLogs(t *testing.T, id string) {
 		t.Fatalf("could not log container: %v", err)
 	}
 	t.Logf("Logs for %s\n%s:", id, out)
+}
+
+// extractIPPort extracts network settings based on the specified port.
+func extractIPPort(t *testing.T, doc []map[string]interface{}, port string) (string, string) {
+	nw, exists := doc[0]["NetworkSettings"]
+	if !exists {
+		t.Fatal("could not get network settings")
+	}
+	ports, exists := nw.(map[string]interface{})["Ports"]
+	if !exists {
+		t.Fatal("could not get network ports settings")
+	}
+	tcp, exists := ports.(map[string]interface{})[port+"/tcp"]
+	if !exists {
+		t.Fatal("could not get network ports/tcp settings")
+	}
+	list, exists := tcp.([]interface{})
+	if !exists {
+		t.Fatal("could not get network ports/tcp list settings")
+	}
+	if len(list) != 1 {
+		t.Fatal("could not get network ports/tcp list settings")
+	}
+	data, exists := list[0].(map[string]interface{})
+	if !exists {
+		t.Fatal("could not get network ports/tcp list data")
+	}
+
+	return data["HostIp"].(string), data["HostPort"].(string)
 }
