@@ -48,16 +48,13 @@ func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
 		mw:       mw,
 	}
 
-	// Create an OpenCensus HTTP Handler which wraps the router. This will start
+	// Create an OpenTelemetry HTTP Handler which wraps the router. This will start
 	// the initial span and annotate it with information about the request/response.
 	//
 	// This is configured to use the W3C TraceContext standard to set the remote
 	// parent if an client request includes the appropriate headers.
 	// https://w3c.github.io/trace-context/
-	app.oth = othttp.NewHandler(
-		app.mux,
-		"server",
-	)
+	app.oth = othttp.NewHandler(app.mux, "server")
 	//app.och = &ochttp.Handler{
 	//	Handler:     app.mux,
 	//	Propagation: &tracecontext.HTTPFormat{},
