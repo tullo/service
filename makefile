@@ -55,7 +55,10 @@ go-tidy:
 	go mod vendor
 
 go-run-api:
-	@go run ./app/sales-api --db-disable-tls=1 --auth-private-key-file=private.pem
+	@go run ./app/sales-api \
+		--db-disable-tls=1 \
+		--auth-private-key-file=private.pem \
+		--zipkin-reporter-uri=http://0.0.0.0:9411/api/v2/spans
 
 go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
