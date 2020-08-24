@@ -34,5 +34,5 @@ jobs:
 
     - name: Run tests
       run: |
-        docker pull postgres:12.3-alpine
+        docker pull postgres:12.4-alpine
         go test ./...

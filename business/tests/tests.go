@@ -27,7 +27,7 @@ const (
 
 // Configuration for running tests.
 const (
-	image = "postgres:11.1-alpine"
+	image = "postgres:12.4-alpine"
 	port  = "5432"
 	// IDs from the seed data for admin@example.com and user@example.com.
 	AdminID = "5cf37266-3473-4006-984f-9325122678b7"

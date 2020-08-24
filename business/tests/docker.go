@@ -18,7 +18,9 @@ type Container struct {
 func startContainer(t *testing.T, image string, port string) *Container {
 	t.Helper() // marks this func as a test helper function
 
-	cmd := exec.Command("docker", "run", "-P", "-d", image)
+	cmd := exec.Command("docker", "run", "-P", "-d",
+		"-e", "POSTGRES_USER=postgres", "-e", "POSTGRES_PASSWORD=postgres",
+		image)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
