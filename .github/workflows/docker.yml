@@ -36,6 +36,6 @@ jobs:
         name: tullo/sales-api-amd64
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: dockerfile.sales-api
+        dockerfile: deployment/docker/dockerfile.sales-api
         buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
         tags: latest,${{ env.VCS_REF }}
