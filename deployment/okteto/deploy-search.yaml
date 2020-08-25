@@ -19,7 +19,7 @@ spec:
         fsGroup: 1000
       containers:
       - name: search
-        image: tullo/search-amd64:1.0
+        image: registry.cloud.okteto.net/{{NAMESPACE}}/search-amd64:{{VERSION}}
         env:
         - name: SEARCH_SALES_ENDPOINT
           value: http://sales-api:8080/v1/products

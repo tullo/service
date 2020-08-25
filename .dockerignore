@@ -4,7 +4,7 @@
 .gitgnore
 .idea
 CONTRIBUTORS
-docker*
+deployment/
 k8s
 LICENSE
 makefile

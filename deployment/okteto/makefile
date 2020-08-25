@@ -1,10 +1,10 @@
-SHELL := /bin/bash
+SHELL = /bin/bash -o pipefail
 
-NAMESPACE = tullo
-DATABASE = postgresql
-REGISTRY_ACCOUNT = tullo
-VERSION = 1.0
-KUBECONFIG= $(HOME)/Downloads/okteto-kube.config:$(HOME)/.kube/config
+export NAMESPACE = tullo
+export DATABASE = postgresql
+export REGISTRY_ACCOUNT = tullo
+export VERSION = 1.0
+export KUBECONFIG= $(HOME)/Downloads/okteto-kube.config:$(HOME)/.kube/config
 
 config:
 	@echo Setting environment for $(NAMESPACE)
@@ -50,35 +50,23 @@ shell:
 	# ./admin --db-disable-tls=1 seed
 
 sales-api:
-	cd .. && \
 	okteto build \
-		-f dockerfile.sales-api \
-		-t registry.cloud.okteto.net/tullo/sales-api-amd64:$(VERSION) \
+		-f ./../../deployment/docker/dockerfile.sales-api \
+		-t registry.cloud.okteto.net/$(NAMESPACE)/sales-api-amd64:$(VERSION) \
 		--build-arg PACKAGE_NAME=sales-api \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
-		.
-
-search:
-	cd .. && \
-	okteto build \
-		-f dockerfile.search \
-		-t registry.cloud.okteto.net/tullo/search-amd64:$(VERSION) \
-		--build-arg PACKAGE_NAME=search \
-		--build-arg VCS_REF=`git rev-parse HEAD` \
-		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
-		.
+		./../../.
 
 metrics:
-	cd .. && \
 	okteto build \
-		-f dockerfile.metrics \
-		-t registry.cloud.okteto.net/tullo/metrics-amd64:$(VERSION) \
+		-f ./../../deployment/docker/dockerfile.metrics \
+		-t registry.cloud.okteto.net/$(NAMESPACE)/metrics-amd64:$(VERSION) \
 		--build-arg PACKAGE_NAME=metrics \
 		--build-arg PACKAGE_PREFIX=sidecar/ \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
-		.
+		./../../.
 
 port-forward:
 	kubectl get pod -l service=sales-api

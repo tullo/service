@@ -1,11 +1,11 @@
-SHELL := /bin/bash
+SHELL = /bin/bash -o pipefail
 
-export PROJECT = ardan-starter-kit
-CLUSTER = ardan-starter-cluster
-DATABASE = ardan-starter-db
-ZONE = us-central1-b
-VERSION = 1.0
-#PRIVATE_DB_IP = uncomment this & use value from 'make db-private-ip' -- see below
+export PROJECT = tullo-starter-kit
+export CLUSTER = tullo-starter-cluster
+export DATABASE = tullo-starter-db
+export ZONE = europe-west3
+export VERSION = 1.0
+#export PRIVATE_DB_IP = uncomment this & use value from 'make db-private-ip' -- see below
 
 config:
 	@echo Setting environment for $(PROJECT)
@@ -28,6 +28,13 @@ cluster:
 upload:
 	docker push gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 	docker push gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
+	@echo ======================================================================
+
+network:
+	# Creating your own VPC network. We will use the default VPC.
+	@gcloud compute networks create $(PROJECT)-vpc --subnet-mode=auto --bgp-routing-mode=regional
+	@gcloud compute addresses create $(PROJECT)-network --global --purpose=VPC_PEERING --prefix-length=16 --network=$(PROJECT)-vpc
+	@gcloud compute addresses list --global --filter="purpose=VPC_PEERING"
 	@echo ======================================================================
 
 database:

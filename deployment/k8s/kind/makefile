@@ -1,4 +1,8 @@
-SHELL := /bin/bash
+SHELL = /bin/bash -o pipefail
+
+export PROJECT = tullo-starter-kit
+export CLUSTER = tullo-starter-cluster
+export VERSION = 1.0
 
 all:
 	(cd ../.. && make all)
@@ -13,16 +17,16 @@ test:
 	(cd ../.. && make test)
 
 up:
-	kind create cluster --name ardan-starter-cluster --config kind-config.yaml
+	kind create cluster --name $(CLUSTER) --config kind-config.yaml
 
 down:
-	kind delete cluster --name ardan-starter-cluster
+	kind delete cluster --name $(CLUSTER)
 
 load:
-	kind load docker-image gcr.io/ardan-starter-kit/sales-api-amd64:1.0 --name ardan-starter-cluster
-	kind load docker-image gcr.io/ardan-starter-kit/metrics-amd64:1.0 --name ardan-starter-cluster
-	# kind load docker-image openzipkin/zipkin-slim:2.21 --name ardan-starter-cluster
-	# kind load docker-image postgres:12.3-alpine --name ardan-starter-cluster
+	kind load docker-image gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
+	kind load docker-image gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) --name $(CLUSTER)
+	# kind load docker-image openzipkin/zipkin-slim:2.21 --name $(CLUSTER)
+	# kind load docker-image postgres:12.4-alpine --name $(CLUSTER)
 
 services:
 	kubectl create -f deploy-postgres.yaml
@@ -30,9 +34,8 @@ services:
 	@echo ======================================================================
 
 update-sales-api:
-	# Build a new version using 1.1
-	kind load docker-image gcr.io/ardan-starter-kit/sales-api-amd64:1.1 --name ardan-starter-cluster
-	kubectl set image pod <POD_NAME> sales-api=gcr.io/ardan-starter-kit/sales-api-amd64:1.1
+	kind load docker-image gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
+	kubectl set image pod <POD_NAME> sales-api=gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 	kubectl delete pod <POD_NAME>
 
 get-pods:
