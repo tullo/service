@@ -1,6 +1,7 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
+# map extra ports from the nodes to the host machine
 - role: control-plane
   extraPortMappings:
   - containerPort: 5432
