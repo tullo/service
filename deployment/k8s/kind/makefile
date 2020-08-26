@@ -4,64 +4,78 @@ export PROJECT = tullo-starter-kit
 export CLUSTER = tullo-starter-cluster
 export VERSION = 1.0
 
-all:
-	(cd ../.. && make all)
+cluster-create:
+	$(shell go env GOPATH)/bin/kind create cluster --name $(CLUSTER) --config kind-config.yaml
 
-sales-api:
-	(cd ../.. && make sales-api)
+cluster-delete:
+	$(shell go env GOPATH)/bin/kind delete cluster --name $(CLUSTER)
 
-metrics:
-	(cd ../.. && make metrics)
+cluster-info:
+	@kubectl cluster-info --context kind-$(CLUSTER)
 
-test:
-	(cd ../.. && make test)
+images-load:
+	@$(shell go env GOPATH)/bin/kind load docker-image eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
+	@$(shell go env GOPATH)/bin/kind load docker-image eu.gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) --name $(CLUSTER)
 
-up:
-	kind create cluster --name $(CLUSTER) --config kind-config.yaml
+images-list:
+	@docker exec -it $(CLUSTER)-control-plane crictl images
 
-down:
-	kind delete cluster --name $(CLUSTER)
+deployment-create:
+	@kubectl create -f deploy-postgres.yaml
+	@kubectl create -f deploy-sales-api.yaml
 
-load:
-	kind load docker-image gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
-	kind load docker-image gcr.io/$(PROJECT)/metrics-amd64:$(VERSION) --name $(CLUSTER)
-	# kind load docker-image openzipkin/zipkin-slim:2.21 --name $(CLUSTER)
-	# kind load docker-image postgres:12.4-alpine --name $(CLUSTER)
-
-services:
-	kubectl create -f deploy-postgres.yaml
-	kubectl create -f deploy-sales-api.yaml
-	@echo ======================================================================
+deployment-delete:
+	@kubectl delete -f deploy-sales-api.yaml
+	@kubectl delete -f deploy-postgres.yaml
 
 update-sales-api:
-	kind load docker-image gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
-	kubectl set image pod <POD_NAME> sales-api=gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
-	kubectl delete pod <POD_NAME>
+	@$(shell go env GOPATH)/bin/kind load docker-image eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
+	@kubectl set image pod <POD_NAME> sales-api=eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
 get-pods:
-	kubectl get pods
+	@kubectl get pods
 
+.PHONY: logs
 logs:
-	kubectl logs <POD_NAME> sales-api
+	@echo ====== postgres =========================================================
+	@kubectl logs --tail=5 <POD_NAME>
+	@echo
+	@echo ====== metrics ==========================================================
+	@kubectl logs --tail=8 <POD_NAME> --container metrics
+	@echo
+	@echo ====== sales-api ========================================================
+	@kubectl logs --tail=1 <POD_NAME> --container sales-api
+	@echo
+	@echo ====== zipkin ===========================================================
+	@kubectl logs --tail=10 <POD_NAME> --container zipkin
+
+schema: get-pods migrate seed
+
+migrate:
+	@kubectl exec -it <POD_NAME> --container sales-api  -- /app/admin --db-disable-tls=1 migrate
+
+seed:
+	@kubectl exec -it <POD_NAME> --container sales-api  -- /app/admin --db-disable-tls=1 seed
+
+health-request:
+	@echo ====== postgres ======================================================
+	@kubectl exec -it <POD_NAME> -- pg_isready
+	@echo 
+	@echo ====== sales-api =====================================================
+	@wget -q -O - http://localhost:3000/v1/health | jq
+
+users-request:
+	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
+		http://localhost:3000/v1/users/token | jq -r '.token'`)
+	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users | jq
 
 status:
-	kubectl get nodes
-	kubectl get pods
-	kubectl get services sales-api
-	kubectl logs <POD_ID> -c sales-api
-	@echo ======================================================================
+	@echo ====== nodes =========================================================
+	@kubectl get nodes
+	@echo ====== pods ==========================================================
+	@kubectl get pods
+	@echo ====== services ======================================================
+	@kubectl get services postgres sales-api
 
-shell:
-	# kubectl get pods
-	# kubectl exec -it <POD NAME> --container sales-api  -- /bin/sh
-	# ./admin --db-disable-tls=1 migrate
-	# ./admin --db-disable-tls=1 seed
-	# curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token
-	# export TOKEN="COPY TOKEN STRING FROM LAST CALL"
-	# curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users
-	@echo ======================================================================
-
-delete:
-	kubectl delete services sales-api
-	kubectl delete deployment sales-api	
-	@echo ======================================================================
+sales-api-shell: get-pods
+	@kubectl exec -it <POD_NAME> --container sales-api  -- /bin/sh
