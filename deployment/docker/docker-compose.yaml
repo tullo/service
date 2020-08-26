@@ -24,7 +24,6 @@ services:
     container_name: metrics
     networks:
       - shared-network
-    #image: gcr.io/${PROJECT}/metrics-amd64:${VERSION}
     image: ${REGISTRY_ACCOUNT}/metrics-amd64:${VERSION}
     ports:
       - 3001:3001 # EXPVAR API
@@ -46,7 +45,6 @@ services:
     container_name: sales-api
     networks:
       - shared-network
-    #image: gcr.io/${PROJECT}/sales-api-amd64:${VERSION}
     image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
     ports:
       - 3000:3000 # CRUD API
@@ -55,6 +53,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - SALES_DB_HOST=db
       - SALES_DB_DISABLE_TLS=1 # This is only disabled for our development enviroment.
+      - SALES_ZIPKIN_PROBABILITY=1 # 100% recording and sampling
       # - GODEBUG=gctrace=1
     depends_on:
       - metrics
