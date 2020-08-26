@@ -150,7 +150,7 @@ metrics:
 		.
 	@docker image tag \
 		$(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION) \
-		gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
+		eu.gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
 
 sales-api:
 	@docker build \
@@ -162,7 +162,7 @@ sales-api:
 		.
 	@docker image tag \
 		$(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION) \
-		gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
+		eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
 docker-stop-all:
 	@docker container stop $$(docker container ls -q --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")

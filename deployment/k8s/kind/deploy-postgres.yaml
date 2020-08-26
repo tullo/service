@@ -20,6 +20,8 @@ spec:
         image: postgres:12.3-alpine
         imagePullPolicy: Always
         env:
+        - name: POSTGRES_PASSWORD
+          value: postgres
         - name: DB_USER
           value: postgres
         - name: DB_PASS
