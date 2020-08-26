@@ -20,17 +20,16 @@ images-load:
 images-list:
 	@docker exec -it $(CLUSTER)-control-plane crictl images
 
-deployment-create:
-	@kubectl create -f deploy-postgres.yaml
-	@kubectl create -f deploy-sales-api.yaml
+deployment-apply:
+	kustomize build . | kubectl apply -f -
 
 deployment-delete:
-	@kubectl delete -f deploy-sales-api.yaml
-	@kubectl delete -f deploy-postgres.yaml
+	kustomize build . | kubectl delete -f -
 
 update-sales-api:
 	@$(shell go env GOPATH)/bin/kind load docker-image eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
-	@kubectl set image pod <POD_NAME> sales-api=eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl set image pod ${APP} sales-api=eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
 get-pods:
 	@kubectl get pods
@@ -38,28 +37,31 @@ get-pods:
 .PHONY: logs
 logs:
 	@echo ====== postgres =========================================================
-	@kubectl logs --tail=5 <POD_NAME>
+	@kubectl logs --tail=5 -l app=postgres --all-containers=true
 	@echo
 	@echo ====== metrics ==========================================================
-	@kubectl logs --tail=8 <POD_NAME> --container metrics
+	@kubectl logs --tail=8 -l app=sales-api --container metrics
 	@echo
 	@echo ====== sales-api ========================================================
-	@kubectl logs --tail=1 <POD_NAME> --container sales-api
+	@kubectl logs --tail=1 -l app=sales-api --container app
 	@echo
 	@echo ====== zipkin ===========================================================
-	@kubectl logs --tail=10 <POD_NAME> --container zipkin
+	@kubectl logs --tail=10 -l app=sales-api --container zipkin
 
 schema: get-pods migrate seed
 
 migrate:
-	@kubectl exec -it <POD_NAME> --container sales-api  -- /app/admin --db-disable-tls=1 migrate
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 migrate
 
 seed:
-	@kubectl exec -it <POD_NAME> --container sales-api  -- /app/admin --db-disable-tls=1 seed
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 seed
 
 health-request:
 	@echo ====== postgres ======================================================
-	@kubectl exec -it <POD_NAME> -- pg_isready
+	@$(eval DB=`kubectl get pod -l "app=postgres" -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${DB} -- pg_isready
 	@echo 
 	@echo ====== sales-api =====================================================
 	@wget -q -O - http://localhost:3000/v1/health | jq
@@ -78,4 +80,4 @@ status:
 	@kubectl get services postgres sales-api
 
 sales-api-shell: get-pods
-	@kubectl exec -it <POD_NAME> --container sales-api  -- /bin/sh
+	@kubectl exec -it <POD_NAME> --container app  -- /bin/sh

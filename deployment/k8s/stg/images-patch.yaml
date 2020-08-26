@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-api
+spec:
+  selector:
+    matchLabels:
+      app: sales-api
+  template:
+    metadata:
+      labels:
+        app: sales-api
+    spec:
+      containers:
+      - name: app
+        image: eu.gcr.io/tullo-starter-kit/sales-api-amd64:1.0.1
+      - name: metrics
+        image: eu.gcr.io/tullo-starter-kit/metrics-amd64:1.0.1
