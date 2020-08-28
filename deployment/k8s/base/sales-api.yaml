@@ -30,9 +30,6 @@ spec:
         resources: {}
       - name: metrics
         image: eu.gcr.io/tullo-starter-kit/metrics-amd64:1.0
-        env:
-        - name: METRICS_COLLECT_FROM
-          value: "http://localhost:4000/debug/vars"
         ports:
         - name: metrics
           containerPort: 3001
