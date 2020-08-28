@@ -22,29 +22,6 @@ spec:
         resources: {}
       - name: app
         image: eu.gcr.io/tullo-starter-kit/sales-api-amd64:1.0
-        env:
-        - name: SALES_AUTH_PRIVATE_KEY_FILE
-          value: "/app/private.pem"
-        - name: SALES_DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: sales-api
-              key: db_host
-        - name: SALES_DB_DISABLE_TLS
-          valueFrom:
-            configMapKeyRef:
-              name: sales-api
-              key: db_disable_tls
-        - name: SALES_ZIPKIN_PROBABILITY
-          valueFrom:
-            configMapKeyRef:
-              name: sales-api
-              key: zipkin-probability
-        - name: SALES_ZIPKIN_REPORTER_URI
-          valueFrom:
-            configMapKeyRef:
-              name: sales-api
-              key: zipkin_reporter_uri
         ports:
         - name: app
           containerPort: 3000
