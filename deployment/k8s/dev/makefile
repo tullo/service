@@ -40,8 +40,7 @@ deployment-delete:
 
 update-sales-api:
 	@$(shell go env GOPATH)/bin/kind load docker-image eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION) --name $(CLUSTER)
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl set image pod ${APP} sales-api=eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
+	@kubectl set image deployment -l app=sales-api sales-api=eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
 get-pods:
 	@kubectl get pods
