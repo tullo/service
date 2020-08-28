@@ -4,6 +4,14 @@ export PROJECT = tullo-starter-kit
 export CLUSTER = tullo-starter-cluster
 export VERSION = 1.0
 
+.DEFAULT_GOAL := contexts
+
+contexts:
+	@kubectl config get-contexts
+
+use-context:
+	@kubectl config use-context kind-$(CLUSTER)
+
 cluster-create:
 	$(shell go env GOPATH)/bin/kind create cluster --name $(CLUSTER) --config kind-config.yaml
 
@@ -20,8 +28,12 @@ images-load:
 images-list:
 	@docker exec -it $(CLUSTER)-control-plane crictl images
 
-deployment-apply:
-	kustomize build . | kubectl apply -f -
+kubeval:
+	@kustomize build . | kubeval --strict --force-color -
+
+deployment-apply: kubeval
+	@kustomize build . | kubectl apply --validate -f -
+#	@kustomize build . | kubectl apply --dry-run=client --validate -f -
 
 deployment-delete:
 	kustomize build . | kubectl delete -f -
