@@ -6,5 +6,9 @@ data:
   collect_from: "http://0.0.0.0:4000/debug/vars"
   db_host: 0.0.0.0
   db_disable_tls: "true"
+  db_name: "postgres"
+  db_user: "postgres"
+  db_pass: "postgres"
+  db_su_password: "postgres"
   zipkin-probability: "1.0"
   zipkin_reporter_uri: "http://0.0.0.0:9411/api/v2/spans"
