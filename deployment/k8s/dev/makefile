@@ -91,4 +91,5 @@ status:
 	@kubectl get services postgres sales-api
 
 sales-api-shell: get-pods
-	@kubectl exec -it <POD_NAME> --container app  -- /bin/sh
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- /bin/sh
