@@ -3,7 +3,8 @@ kind: Kustomization
 resources:
   - ./stg-config.yaml
   - ../base
-patches:
-  - ./replicas-patch.yaml
-  - ./loadbalancer-patch.yaml
-  - ./images-patch.yaml
+patchesStrategicMerge:
+  - env-patch.yaml
+  - images-patch.yaml
+  - loadbalancer-patch.yaml
+  - replicas-patch.yaml

@@ -4,7 +4,7 @@ metadata:
   name: sales-api
 data:
   collect_from: "http://0.0.0.0:4000/debug/vars"
-  db_host: 10.3.0.9
+  db_host: 172.23.0.3
   db_disable_tls: "true"
   zipkin-probability: "0.05"
   zipkin_reporter_uri: "http://0.0.0.0:9411/api/v2/spans"
