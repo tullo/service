@@ -1,5 +1,27 @@
 # Deployment
 
+## [Create a Kubernetes cluster](https://console.cloud.google.com/kubernetes/add?project=stackwise-starter-kit&authuser=2)
+
+* Cluster basics
+  * Name: `stackwise-starter-cluster`
+  * Location type: Zonal
+  * Zone: `europe-west3-c`
+  * Master version
+    * Release channel: `Regular-channel 1.16.xxx`
+* Node Pools
+  * default-pool
+    * nodes
+      * Machine type: `e2-small`
+      * Boot disk type: `HDD`
+* Security
+  * Enable Shielded GKE Nodes: `check`
+  * Enable Workload Identity: `check`
+* Features
+  * Enable Istio: `check`
+  * Enable Application Manager: `check`
+
+---
+
 ## [Cloud SQL](https://console.cloud.google.com)
 
 * Open SQL [instances](https://console.cloud.google.com/sql/instances?authuser=2&project=stackwise-starter-kit) for project (stackwise-starter-kit)
@@ -22,6 +44,8 @@
         * **Private IP address**: `<COPY>` (referenced in deployment manifest)
 * Resulting instance: [stackwise-starter-db](https://console.cloud.google.com/sql/instances/stackwise-starter-db/overview?authuser=2&folder=&organizationId=&project=stackwise-starter-kit&supportedpurview=project)
 
+---
+
 ## [Connecting from Google Kubernetes Engine](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine)
 
 ### Secrets
@@ -35,6 +59,8 @@ kubectl create secret generic sales-api \
 ```
 
 Configuration > Secret: [stackwise-starter-db](https://console.cloud.google.com/kubernetes/secret/europe-west3-c/stackwise-starter-cluster/default/stackwise-starter-db?authuser=2&project=stackwise-starter-kit&supportedpurview=project)
+
+---
 
 ## [Connecting using the Cloud SQL Proxy](https://cloud.google.com/sql/docs/postgres/connect-kubernetes-engine#proxy)
 
@@ -72,12 +98,16 @@ The Cloud SQL Proxy is added to your [pod](https://kubernetes.io/docs/concepts/w
 gcloud container clusters get-credentials stackwise-starter-cluster --zone europe-west3-c --project stackwise-starter-kit
 ```
 
+---
+
 ## [Port Forwarding](https://console.cloud.google.com/kubernetes/service/europe-west3-c/stackwise-starter-cluster/default/sales-api/overview?authuser=2&project=stackwise-starter-kit)
 
 ```sh
 gcloud container clusters get-credentials stackwise-starter-cluster --zone europe-west3-c --project stackwise-starter-kit \
  && kubectl port-forward $(kubectl get pod --selector="app=sales-api" --output jsonpath='{.items[0].metadata.name}') 8080:3000
 ```
+
+---
 
 ## [Debug Running Pods](https://kubernetes.io/docs/tasks/debug-application-cluster/debug-running-pod/)
 
@@ -94,9 +124,9 @@ kubectl logs --previous ${POD_NAME} ${CONTAINER_NAME}
 ```sh
 kubectl exec ${POD_NAME} -c ${CONTAINER_NAME} -- ${CMD} ${ARG1} ${ARG2} ... ${ARGN}
 
-# take a look at the logs
-kubectl exec -it cassandra -- sh
 # run a shell
+kubectl exec -it cassandra -- sh
+# take a look at the logs
 kubectl exec cassandra -- cat /var/log/cassandra/system.log
 ```
 
@@ -119,6 +149,8 @@ kubectl alpha debug -it ephemeral-demo --image=busybox --target=ephemeral-demo
 ```
 
 ["Distroless" Docker Images](https://github.com/GoogleContainerTools/distroless) contain **only your application and its runtime dependencies**. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution.
+
+---
 
 ## [Tasks](https://kubernetes.io/docs/tasks/)
 
