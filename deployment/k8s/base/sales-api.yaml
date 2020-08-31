@@ -43,20 +43,9 @@ metadata:
   name: sales-api
 spec:
   selector:
-    service: sales-api
+    app: sales-api
   ports:
-  - name: zipkin
-    port: 9411
-    targetPort: zipkin
   - name: app
     port: 3000
-    targetPort: app
-  - name: app-debug
-    port: 4000
-    targetPort: app-debug
-  - name: metrics
-    port: 3001
-    targetPort: metrics
-  - name: metrics-debug
-    port: 4001
-    targetPort: metrics-debug
+    protocol: TCP
+    targetPort: 3000
