@@ -8,3 +8,6 @@ public.pem
 # go build artifacts
 /app/sales-admin/sales-admin
 /app/sales-api/sales-api
+
+# cloud sql proxy binary
+cloud_sql_proxy
