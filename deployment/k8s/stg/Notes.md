@@ -50,15 +50,17 @@
 
 ### Secrets
 
+Generate [secret](makefile#L134) with database related data `make kctl-db-secret-create`
+
 ```sh
-kubectl create secret generic sales-api \
+kubectl create secret generic stackwise \
   --from-literal=user=postgres \
   --from-literal=pass=<PASTE> \
-  --from-literal=db=postgres \
+  --from-literal=db=stackwise \
   --from-literal=db_host=<PASTE>
 ```
 
-Configuration > Secret: [stackwise-starter-db](https://console.cloud.google.com/kubernetes/secret/europe-west3-c/stackwise-starter-cluster/default/stackwise-starter-db?authuser=2&project=stackwise-starter-kit&supportedpurview=project)
+Configuration > Secret: [stackwise-starter-db](https://console.cloud.google.com/kubernetes/config?authuser=2&project=stackwise-starter-kit)
 
 ---
 
@@ -102,9 +104,13 @@ gcloud container clusters get-credentials stackwise-starter-cluster --zone europ
 
 ## [Port Forwarding](https://console.cloud.google.com/kubernetes/service/europe-west3-c/stackwise-starter-cluster/default/sales-api/overview?authuser=2&project=stackwise-starter-kit)
 
+Port forwarding the `sales-api` port.
+
+Listen on port 3000 locally, forwarding to 3000 in the pod.
+
 ```sh
 gcloud container clusters get-credentials stackwise-starter-cluster --zone europe-west3-c --project stackwise-starter-kit \
- && kubectl port-forward $(kubectl get pod --selector="app=sales-api" --output jsonpath='{.items[0].metadata.name}') 8080:3000
+ && kubectl port-forward $(kubectl get pod --selector="app=sales-api" --output jsonpath='{.items[0].metadata.name}') 3000:3000
 ```
 
 ---
@@ -119,30 +125,31 @@ kubectl logs ${POD_NAME} ${CONTAINER_NAME}
 kubectl logs --previous ${POD_NAME} ${CONTAINER_NAME}
 ```
 
-### Debugging with container exec 
+### Debugging with container exec
 
 ```sh
 kubectl exec ${POD_NAME} -c ${CONTAINER_NAME} -- ${CMD} ${ARG1} ${ARG2} ... ${ARGN}
 
 # run a shell
 kubectl exec -it cassandra -- sh
+
 # take a look at the logs
 kubectl exec cassandra -- cat /var/log/cassandra/system.log
 ```
 
-### Debugging with an **ephemeral** debug container
+### Debugging with an `ephemeral debug container`
 
-FEATURE STATE: Kubernetes v1.18 [alpha]
+FEATURE STATE: Kubernetes `v1.18 (alpha)`
 
 Ephemeral containers are useful for interactive troubleshooting when kubectl exec is insufficient because a container has crashed or a container image doesn't include debugging utilities, such as with [distroless images](https://github.com/GoogleContainerTools/distroless).
 
 Requires the **EphemeralContainers** `feature gate` enabled in your **cluster and kubectl** version v1.18 or later.
 
 ```sh
-# 1. create a pod, which simulates a problem
+# 1. Create a pod, which simulates a problem ...
 kubectl run ephemeral-demo --image=k8s.gcr.io/pause:3.1 --restart=Never
 
-# 2. add a debugging container; kubectl attaches to the console of 'ephemeral-demo'
+# 2. Add a debugging container; kubectl attaches to the console of 'ephemeral-demo'
 kubectl alpha debug -it ephemeral-demo --image=busybox --target=ephemeral-demo
 
 # The --target parameter targets the process namespace of another container. 
@@ -152,6 +159,6 @@ kubectl alpha debug -it ephemeral-demo --image=busybox --target=ephemeral-demo
 
 ---
 
-## [Tasks](https://kubernetes.io/docs/tasks/)
+## [Kubernetes Tasks](https://kubernetes.io/docs/tasks/)
 
 This section of the Kubernetes documentation contains pages that show how to do individual tasks. A task page shows how to do a single thing, typically by giving a short sequence of steps.
