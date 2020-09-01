@@ -79,6 +79,11 @@ kctl-logs:
 	@echo ====== zipkin log ===================================================
 	@kubectl logs --tail=10 -l app=sales-api --container zipkin
 
+app-shell: kctl-get-pods
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- sh
+#	@kubectl exec -it ${APP} --container app  -- env | grep DB
+
 app-schema: kctl-get-pods app-migrate app-seed
 
 app-migrate:
@@ -94,10 +99,19 @@ app-health-request:
 	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
 	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://localhost:3000/v1/health
 
-app-users-request:
-	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
-		http://localhost:3000/v1/users/token | jq -r '.token'`)
-	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users | jq
+lb-health-request:
+	@echo ====== health-request via LoadBalancer ==============================
+	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
+	@echo IP: ${IP}
+	@wget -q -O - http://${IP}:3000/v1/health | jq
+
+# make -np 2>&1 users-request | less
+lb-users-request:
+	@echo ====== users-request via LoadBalancer ===============================
+	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
+	@$(eval TOKEN=$(shell curl --no-progress-meter --user 'admin@example.com:gophers' http://${IP}:3000/v1/users/token | jq -r '.token'))
+	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://${IP}:3000/v1/users | jq
+
 
 kctl-status:
 	@echo ====== nodes =========================================================
@@ -110,12 +124,6 @@ kctl-status:
 	@kubectl get deploy/sales-api -o wide
 	@echo ====== replicaset ====================================================
 	@kubectl get rs -l app=sales-api -o wide
-
-kctl-sales-api-shell: kctl-get-pods
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl exec -it ${APP} --container app  -- sh
-#	@kubectl exec -it ${APP} --container app  -- env | grep DB
-#	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://sales-api:3000/v1/health
 
 # Listen on a random port locally, forwarding to 3000 in the pod
 # - kubectl port-forward pod/${APP} :3000
