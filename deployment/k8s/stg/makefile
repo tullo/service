@@ -1,31 +1,28 @@
 SHELL = /bin/bash -o pipefail
 
-export PROJECT = tullo-starter-kit
-export CLUSTER = tullo-starter-cluster
+export PROJECT = stackwise-starter-kit
+export CLUSTER = stackwise-starter-cluster
 export CONTAINER_REGISTRY = eu.gcr.io
-export DATABASE = tullo-starter-db
-export ZONE = europe-west3
+export DATABASE_INSTANCE = stackwise-starter-db-europe-west3
+export DATABASE = stackwise
+export ZONE = europe-west3-c
 export VERSION = 1.0
+export MY_IP = 12.34.56.78
 
-.DEFAULT_GOAL := contexts
+.DEFAULT_GOAL := kctl-config-contexts
 
-contexts:
+kctl-config-contexts:
 	@kubectl config get-contexts
 
-use-context:
-	@kubectl config use-context gke_$(PROJECT)_europe-west3_$(CLUSTER)
+kctl-config-use-context:
+	@kubectl config use-context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
 
-cluster-create:
-	$(shell go env GOPATH)/bin/kind create cluster --name $(CLUSTER) --config kind-config.yaml
-
-cluster-delete:
-	$(shell go env GOPATH)/bin/kind delete cluster --name $(CLUSTER)
-
-cluster-info:
-	@kubectl cluster-info --context gke_$(PROJECT)_europe-west3_$(CLUSTER)
+kctl-cluster-info:
+	@kubectl cluster-info --context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
 
 # https://cloud.google.com/container-registry/docs/pushing-and-pulling
-image-registry:
+# Register gcloud as the credential helper for the Google-supported Docker registry.
+gc-auth-configure-docker:
 	gcloud auth configure-docker $(CONTAINER_REGISTRY)
 
 docker-tag-images:
@@ -37,17 +34,18 @@ docker-push-images:
 	@docker image push $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64:$(VERSION)
 
 # https://cloud.google.com/sdk/gcloud/reference/container/images/list
-image-list:
+gc-images-list:
 	@gcloud container images list --repository $(CONTAINER_REGISTRY)/$(PROJECT)
 
 # https://cloud.google.com/sdk/gcloud/reference/container/images/list-tags
-image-tag-list:
+gc-images-list-tags:
 	@echo '==>' listing tags for image: [$(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64]:
 	@gcloud container images list-tags $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64
 	@echo
 	@echo '==>' listing tags for image: [$(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64]:
 	@gcloud container images list-tags $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64
 
+# validate kubernetes yaml manifests
 kubeval:
 	@kustomize build . | kubeval --strict --force-color -
 
@@ -59,47 +57,48 @@ deployment-apply: kubeval
 deployment-delete:
 	kustomize build . | kubectl delete -f -
 
-update-sales-api:
+kctl-update-sales-api-image:
 	@kubectl set image deployment -l app=sales-api sales-api=$(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
 
-get-pods:
+kctl-get-pods:
 	@kubectl get pods
 
-desc-app-pod:
+kctl-describe-app-pod:
 	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
 	@kubectl describe po/${APP}
 
-.PHONY: logs
-logs:
-	@echo ====== metrics ==========================================================
+.PHONY: kctl-logs
+kctl-logs:
+	@echo ====== metrics log ==================================================
 	@kubectl logs --tail=8 -l app=sales-api --container metrics
 	@echo
-	@echo ====== sales-api ========================================================
+	@echo ====== sales-api log ================================================
 	@kubectl logs --tail=1 -l app=sales-api --container app
 	@echo
-	@echo ====== zipkin ===========================================================
+	@echo ====== zipkin log ===================================================
 	@kubectl logs --tail=10 -l app=sales-api --container zipkin
 
-schema: get-pods migrate seed
+app-schema: kctl-get-pods app-migrate app-seed
 
-migrate:
+app-migrate:
 	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
 	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 migrate
 
-seed:
+app-seed:
 	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
 	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 seed
 
-health-request:
-	@echo ====== sales-api =====================================================
-	@wget -q -O - http://sales-api:3000/v1/health | jq
+app-health-request:
+	@echo ====== /v1/health ===================================================
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://localhost:3000/v1/health
 
-users-request:
+app-users-request:
 	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
 		http://localhost:3000/v1/users/token | jq -r '.token'`)
 	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users | jq
 
-status:
+kctl-status:
 	@echo ====== nodes =========================================================
 	@kubectl get nodes
 	@echo ====== pods ==========================================================
@@ -110,19 +109,119 @@ status:
 	@kubectl get deploy/sales-api -o wide
 	@echo ====== replicaset ====================================================
 	@kubectl get rs -l app=sales-api -o wide
-	@echo ====== statefulset ===================================================
-	@kubectl get sts -l app=sales-api -o wide
 
-sales-api-shell: get-pods
+kctl-sales-api-shell: kctl-get-pods
 	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-#	@kubectl exec -it ${APP} --container app  -- /bin/sh
-	@kubectl exec -it ${APP} --container app  -- env | grep DB
-	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://sales-api:3000/v1/health
+	@kubectl exec -it ${APP} --container app  -- sh
+#	@kubectl exec -it ${APP} --container app  -- env | grep DB
+#	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://sales-api:3000/v1/health
 
-port-forward: get-pods
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl port-forward pod/${APP} :3000
+# Listen on a random port locally, forwarding to 3000 in the pod
+# - kubectl port-forward pod/${APP} :3000
+# kubectl port-forward -h
+kctl-port-forward: kctl-get-pods
+	kubectl port-forward service/sales-api 3000
 
-database:
-	@gcloud sql instances create $(DATABASE) --database-version=POSTGRES_12 --tier=db-f1-micro --zone=$(ZONE)-a
-	@gcloud sql instances describe $(DATABASE)
+# https://cloud.google.com/sql/pricing#pg-cpu-mem-pricing
+# db-f1-micro               0.6 GB RAM, 3 GB Max Storage Cap. ($9.20/mo)
+# tier: db-custom-1-3840    1.0 GB RAM, 3 GB Max Storage Cap. ($???/mo)
+# gcloud beta sql instances create -h
+gc-db-instance-create:
+	@gcloud beta sql instances create \
+		$(DATABASE_INSTANCE) \
+		--async \
+		--authorized-networks=$(MY_IP)
+		--availability-type=zonal \
+		--database-version=POSTGRES_12 \
+		--network=default \
+		--no-assign-ip \
+		--root-password=<PASSWD> \
+		--storage-type=HDD \
+		--tier=db-f1-micro \
+		--zone=$(ZONE)
+
+# https://cloud.google.com/sdk/gcloud/reference/sql/connect
+gc-db-instance-connect:
+	@gcloud sql connect $(DATABASE_INSTANCE) \
+	 --database=$(DATABASE) \
+	 --user=postgres
+
+# 1. Enable the Cloud SQL Admin API
+#    https://console.cloud.google.com/flows/enableapi?apiid=sqladmin
+# 2. Download the proxy, make it executable
+gc-db-cloud-proxy:
+#	sudo ufw allow out 3307
+	wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+	chmod +x cloud_sql_proxy
+	sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
+	@echo starting cloud_sql_proxy ... 
+	@echo connect with \'psql "host=127.0.0.1 sslmode=disable dbname=$(PDATABASE) user=postgres"\'
+	./cloud_sql_proxy -dir=/cloudsql
+#	./cloud_sql_proxy \
+		-instances=$(PROJECT):europe-west3:$(PDATABASE_INSTANCE)=tcp:5432 \
+		-credential_file=/home/anda/Downloads/stackwise-starter-kit-ef6acd140ba1.json
+#	./cloud_sql_proxy -dir=/cloudsql \
+		-instances=$(PROJECT):europe-west3:$(PDATABASE_INSTANCE) \
+		-credential_file=/path/to/service-account.json
+
+gc-db-instance-describe:
+	@gcloud sql instances describe $(DATABASE_INSTANCE)
+
+# https://cloud.google.com/sql/docs/postgres/start-stop-restart-instance#gcloud
+# stop the db instance to save money; data is persistent.
+gc-db-instance-stop:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
+		--activation-policy NEVER \
+		--async
+
+# https://cloud.google.com/sql/docs/postgres/start-stop-restart-instance#gcloud
+gc-db-instance-start:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
+		--activation-policy ALWAYS \
+		--async
+
+# https://cloud.google.com/sql/docs/postgres/start-stop-restart-instance#gcloud
+# The instance will shut down and start up again immediately:
+# - if its activation policy is "always".
+# - if "on demand," the instance will start up again 
+#   when a new connection request is made.
+gc-db-instance-restart:
+	@gcloud sql instances restart $(DATABASE_INSTANCE)
+
+gc-db-list:
+	@gcloud sql databases list --instance=$(DATABASE_INSTANCE)
+
+# https://cloud.google.com/sdk/gcloud/reference/sql/databases/create
+gc-db-create:
+	@gcloud beta sql databases create \
+		$(DATABASE) \
+		--instance=$(DATABASE_INSTANCE) \
+		--async \
+		--charset=UTF-8 \
+		--collation=da_DK.UTF-8 \
+		--verbosity=info
+
+# https://cloud.google.com/sdk/gcloud/reference/sql/databases/patch
+# does not seem to work at all; collation will stay at en_US.UTF-8 
+gc-db-patch:
+	@gcloud sql databases patch \
+		$(DATABASE) \
+		--instance=$(DATABASE_INSTANCE) \
+		--charset=UTF-8 \
+		--collation=da_DK.UTF-8 \
+		--diff \
+		--verbosity=info
+
+# https://cloud.google.com/sdk/gcloud/reference/sql/databases/delete
+gc-db-delete:
+	@gcloud sql databases delete \
+		$(DATABASE) \
+		--instance=$(DATABASE_INSTANCE) \
+		--verbosity=info
+
+# https://cloud.google.com/sdk/gcloud/reference/sql/databases/describe
+gc-db-describe:
+	@gcloud sql databases describe \
+		$(DATABASE) \
+		--instance=$(DATABASE_INSTANCE) \
+		--verbosity=info
