@@ -5,6 +5,7 @@ export CLUSTER = stackwise-starter-cluster
 export CONTAINER_REGISTRY = eu.gcr.io
 export DATABASE_INSTANCE = stackwise-starter-db-europe-west3
 export DATABASE = stackwise
+export PRIVATE_ADDRESS = 'make gc-db-instance-list & copy PRIVATE_ADDRESS here'
 export ZONE = europe-west3-c
 export VERSION = 1.0
 export MY_IP = 12.34.56.78
@@ -121,6 +122,23 @@ kctl-sales-api-shell: kctl-get-pods
 # kubectl port-forward -h
 kctl-port-forward: kctl-get-pods
 	kubectl port-forward service/sales-api 3000
+
+kctl-db-secret-create:
+	@echo +-----------------------------------------------------+
+	@echo \| run \'make gc-db-instance-list\' to get the privat IP \|
+	@echo +-----------------------------------------------------+
+	kubectl create secret generic $(DATABASE) \
+		--from-literal=user=postgres \
+		--from-literal=pass=<PASSWD> \
+		--from-literal=db=$(DATABASE) \
+		--from-literal=db_host=$(PRIVATE_ADDRESS)
+
+kctl-db-secret-delete:
+	@echo run \'make gc-db-instance-list\' to get the privat IP
+	@gcloud secrets delete $(DATABASE)
+
+gc-db-instance-list:
+	@gcloud sql instances list
 
 # https://cloud.google.com/sql/pricing#pg-cpu-mem-pricing
 # db-f1-micro               0.6 GB RAM, 3 GB Max Storage Cap. ($9.20/mo)

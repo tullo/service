@@ -13,22 +13,22 @@ spec:
           - name: SALES_DB_USER
             valueFrom:
               secretKeyRef:
-                name: sales-api
+                name: stackwise
                 key: user
           - name: SALES_DB_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: sales-api
+                name: stackwise
                 key: pass
           - name: SALES_DB_NAME
             valueFrom:
               secretKeyRef:
-                name: sales-api
+                name: stackwise
                 key: db
           - name: SALES_DB_HOST
             valueFrom:
               secretKeyRef:
-                name: sales-api
+                name: stackwise
                 key: db_host
           - name: SALES_DB_DISABLE_TLS
             valueFrom:
