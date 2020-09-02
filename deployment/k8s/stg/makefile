@@ -178,16 +178,20 @@ gc-db-instance-connect:
 gc-db-cloud-proxy:
 #	sudo ufw allow out 3307
 	wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-	chmod +x cloud_sql_proxy
+	chmod u+x cloud_sql_proxy
 	sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
-	@echo starting cloud_sql_proxy ... 
-	@echo connect with \'psql "host=127.0.0.1 sslmode=disable dbname=$(PDATABASE) user=postgres"\'
+	@echo starting \'Cloud SQL Proxy\' using \'Unix sockets\' ...
+	@echo connect with \'psql "sslmode=disable host=/cloudsql/$(PROJECT):europe-west3:$(DATABASE_INSTANCE) user=postgres"\'
 	./cloud_sql_proxy -dir=/cloudsql
+#	@echo connect with \'psql "sslmode=disable host=127.0.0.1 dbname=$(DATABASE) user=postgres"\'
+#	TCP sockets:
+#	./cloud_sql_proxy -instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE)=tcp:5432
 #	./cloud_sql_proxy \
-		-instances=$(PROJECT):europe-west3:$(PDATABASE_INSTANCE)=tcp:5432 \
-		-credential_file=/home/anda/Downloads/stackwise-starter-kit-ef6acd140ba1.json
+		-instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE)=tcp:5432 \
+		-credential_file=/path/to/service-account.json
+#	Recommended for production environments:
 #	./cloud_sql_proxy -dir=/cloudsql \
-		-instances=$(PROJECT):europe-west3:$(PDATABASE_INSTANCE) \
+		-instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE) \
 		-credential_file=/path/to/service-account.json
 
 gc-db-instance-describe:
