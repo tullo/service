@@ -75,22 +75,22 @@ The Cloud SQL Proxy is added to your [pod](https://kubernetes.io/docs/concepts/w
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: sales-api
+              name: stackwise
               key: user
         - name: DB_PASS
           valueFrom:
             secretKeyRef:
-              name: sales-api
+              name: stackwise
               key: pass
         - name: DB_NAME
           valueFrom:
             secretKeyRef:
-              name: sales-api
+              name: stackwise
               key: db
         - name: DB_HOST
           valueFrom:
             secretKeyRef:
-              name: sales-api
+              name: stackwise
               key: db_host
 ```
 
