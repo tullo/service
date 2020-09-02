@@ -1,6 +1,9 @@
 #!make
 SHELL = /bin/bash -o pipefail
 VERSION = 1.0
+ACCOUNT = xyz@gmail.com
+SERVICE_ACCOUNT = stackwise
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 PROJECT = stackwise-starter-kit
 CLUSTER = stackwise-starter-cluster
 CONTAINER_REGISTRY = eu.gcr.io
@@ -14,29 +17,126 @@ MY_IP = 12.34.56.78
 include .env
 #export
 
-.DEFAULT_GOAL := kctl-config-contexts
+.DEFAULT_GOAL := show-configs
 
-kctl-config-contexts:
-	@kubectl config get-contexts
+#==============================================================================
+# GKE Installation
+#
+# Install the Google Cloud SDK. 
+# This contains the gcloud client needed to perform sdk related tasks
+# https://cloud.google.com/sdk/
+#
+# Install the K8s kubectl client. 
+# https://kubernetes.io/docs/tasks/tools/install-kubectl/
+#
+#
+# A region is a specific geographical location where you can host your resources.
+# Each region has one or more zones.
+# Resources that live in a zone, such as virtual machine instances or zonal persistent disks,
+# are referred to as zonal resources.
+# Other resources, like static external IP addresses, are regional.
+# https://cloud.google.com/compute/docs/regions-zones
+#
+#
+# Google designs zones to be independent from each other:
+# - a zone usually has power, cooling, networking, and control planes that are isolated from other zones
+# - most single failure events will affect only a single zone.
+# - https://cloud.google.com/compute/docs/regions-zones#available
+# - europe-west3-c (region:europe-west3 zone:c)
+#
+# Generally, communication within regions will always be cheaper and faster than communication across different regions.
+# To mitigate effects of possible events, you should duplicate important systems in multiple zones and regions.
+# eg. europe-west3-a, europe-west3-b, etc
+# https://cloud.google.com/compute/docs/regions-zones#choosing_a_region_and_zone
+#
 
-kctl-config-use-context:
-	@kubectl config use-context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
+show-configs: kctl-config-contexts gc-configurations-list
 
-kctl-cluster-info:
-	@kubectl cluster-info --context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
+lb-health-request:
+	@echo ====== health-request via LoadBalancer ==============================
+	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
+	@echo IP: ${IP}
+	@wget -q -O - http://${IP}:3000/v1/health | jq
+
+# make -np 2>&1 users-request | less
+lb-users-request:
+	@echo ====== users-request via LoadBalancer ===============================
+	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
+	@$(eval TOKEN=$(shell curl --no-progress-meter --user 'admin@example.com:gophers' http://${IP}:3000/v1/users/token | jq -r '.token'))
+	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://${IP}:3000/v1/users | jq
+
+#==============================================================================
+# Cloud SDK goals                                                             #
+#==============================================================================
+
+gc-projects-create:
+	@gcloud projects create $(PROJECT)
+
+gc-init: gc-projects-create
+	@gcloud init
+
+gc-config-list:
+	@gcloud config list
+
+gc-config-set:
+	@echo setting project: ${PROJECT} and compute region: ${REGION}
+	gcloud config set project ${PROJECT}
+
+
+# https://cloud.google.com/sdk/docs/configurations
+gc-configurations-list:
+	gcloud config configurations list
+
+gc-configurations-describe:
+	@gcloud config configurations describe cloud-experiments
+
+gc-configurations-delete:
+	@gcloud config configurations delete default
+
+gc-config-set-account: gc-auth-list
+	@gcloud config set account ${ACCOUNT}
+
+# listing of enabled services.
+gc-svc-list:
+	@gcloud services list
+
+# enable cloud sql admin api.
+gc-svc-enable-sqladmin:
+	@gcloud services enable sqladmin.googleapis.com
+
+gc-auth-list:
+	@gcloud auth list
+
+# obtain access credentials for your user account via a web-based authorization flow.
+gc-auth-login:
+	@echo '==>' Authorize with a user account without setting up a configuration.
+	@gcloud auth login
+
+# same function as [gcloud auth login] but uses a service account.
+# gcloud auth activate-service-account -h
+gc-auth-activate-service-account:
+	@echo '==>' Authorize with a service account instead of a user account.
+	@echo '==>' Open in browser: 'https://console.cloud.google.com/iam-admin/serviceaccounts'
+	@echo '==>' Create service account with ID: \'${SERVICE_ACCOUNT}\'
+	@echo '==>' From the \'Role\' list, select \'Project \> Owner\'.
+	@echo '==>' From the \'Actions\' list, select \'Create key\', choose \'json\' format.
+	@gcloud auth activate-service-account --key-file=/path/to/service-account.json
+
+# list existing clusters.
+gc-clusters-list:
+	@gcloud container clusters list
+
+# fetch credentials for a running cluster.
+gc-clusters-get-credentials:
+	@gcloud container clusters get-credentials $(CLUSTER) \
+		--project $(PROJECT) \
+		--zone $(ZONE)
+
 
 # https://cloud.google.com/container-registry/docs/pushing-and-pulling
-# Register gcloud as the credential helper for the Google-supported Docker registry.
+# register gcloud as the credential helper for the Google-supported Docker registry.
 gc-auth-configure-docker:
 	gcloud auth configure-docker $(CONTAINER_REGISTRY)
-
-docker-tag-images:
-	@docker tag tullo/sales-api-amd64:$(VERSION) $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
-	@docker tag tullo/metrics-amd64:$(VERSION) $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64:$(VERSION)
-
-docker-push-images:
-	@docker image push $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
-	@docker image push $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64:$(VERSION)
 
 # https://cloud.google.com/sdk/gcloud/reference/container/images/list
 gc-images-list:
@@ -50,6 +150,22 @@ gc-images-list-tags:
 	@echo '==>' listing tags for image: [$(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64]:
 	@gcloud container images list-tags $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64
 
+#==============================================================================
+# Docker goals                                                                #
+#==============================================================================
+
+docker-tag-images:
+	@docker tag tullo/sales-api-amd64:$(VERSION) $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
+	@docker tag tullo/metrics-amd64:$(VERSION) $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64:$(VERSION)
+
+docker-push-images:
+	@docker image push $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
+	@docker image push $(CONTAINER_REGISTRY)/$(PROJECT)/metrics-amd64:$(VERSION)
+
+#==============================================================================
+# kubectl goals                                                               #
+#==============================================================================
+
 # validate kubernetes yaml manifests
 kubeval:
 	@kustomize build . | kubeval --strict --force-color -
@@ -61,6 +177,15 @@ deployment-apply: kubeval
 
 deployment-delete:
 	kustomize build . | kubectl delete -f -
+
+kctl-config-contexts:
+	@kubectl config get-contexts
+
+kctl-config-use-context:
+	@kubectl config use-context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
+
+kctl-cluster-info:
+	@kubectl cluster-info --context gke_$(PROJECT)_$(ZONE)_$(CLUSTER)
 
 kctl-update-sales-api-image:
 	@kubectl set image deployment -l app=sales-api sales-api=$(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(VERSION)
@@ -82,40 +207,6 @@ kctl-logs:
 	@echo
 	@echo ====== zipkin log ===================================================
 	@kubectl logs --tail=10 -l app=sales-api --container zipkin
-
-app-shell: kctl-get-pods
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl exec -it ${APP} --container app  -- sh
-#	@kubectl exec -it ${APP} --container app  -- env | grep DB
-
-app-schema: kctl-get-pods app-migrate app-seed
-
-app-migrate:
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 migrate
-
-app-seed:
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 seed
-
-app-health-request:
-	@echo ====== /v1/health ===================================================
-	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
-	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://localhost:3000/v1/health
-
-lb-health-request:
-	@echo ====== health-request via LoadBalancer ==============================
-	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
-	@echo IP: ${IP}
-	@wget -q -O - http://${IP}:3000/v1/health | jq
-
-# make -np 2>&1 users-request | less
-lb-users-request:
-	@echo ====== users-request via LoadBalancer ===============================
-	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
-	@$(eval TOKEN=$(shell curl --no-progress-meter --user 'admin@example.com:gophers' http://${IP}:3000/v1/users/token | jq -r '.token'))
-	@wget -q -O - --header "Authorization: Bearer ${TOKEN}" http://${IP}:3000/v1/users | jq
-
 
 kctl-status:
 	@echo ====== nodes =========================================================
@@ -149,6 +240,34 @@ kctl-db-secret-delete:
 	@echo run \'make gc-db-instance-list\' to get the privat IP
 	@gcloud secrets delete $(DATABASE)
 
+#==============================================================================
+# APP goals                                                                   #
+#==============================================================================
+
+app-shell: kctl-get-pods
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- sh
+#	@kubectl exec -it ${APP} --container app  -- env | grep DB
+
+app-schema: kctl-get-pods app-migrate app-seed
+
+app-migrate:
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 migrate
+
+app-seed:
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- /app/admin --db-disable-tls=1 seed
+
+app-health-request:
+	@echo ====== /v1/health ===================================================
+	@$(eval APP=`kubectl get pod -l app=sales-api -o jsonpath='{.items[0].metadata.name}'`)
+	@kubectl exec -it ${APP} --container app  -- wget -q -O - http://localhost:3000/v1/health
+
+#==============================================================================
+# DB instance goals                                                           #
+#==============================================================================
+
 gc-db-instance-list:
 	@gcloud sql instances list
 
@@ -169,6 +288,9 @@ gc-db-instance-create:
 		--storage-type=HDD \
 		--tier=db-f1-micro \
 		--zone=$(ZONE)
+
+gc-db-instance-delete:
+	gcloud sql instances delete $(DATABASE_INSTANCE) --async
 
 # acquire a public ip address
 gc-db-instance-patch-public-ip-acquire:
@@ -203,8 +325,9 @@ gc-db-instance-connect:
 # 1. Enable the Cloud SQL Admin API
 #    https://console.cloud.google.com/flows/enableapi?apiid=sqladmin
 # 2. Download the proxy, make it executable
+# firewalls eventually block outgoing port 3307
+# sudo ufw allow out 3307
 gc-db-cloud-proxy:
-#	sudo ufw allow out 3307
 	wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
 	chmod u+x cloud_sql_proxy
 	sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
@@ -245,6 +368,10 @@ gc-db-instance-start:
 #   when a new connection request is made.
 gc-db-instance-restart:
 	@gcloud sql instances restart $(DATABASE_INSTANCE)
+
+#==============================================================================
+# Database goals                                                              #
+#==============================================================================
 
 gc-db-list:
 	@gcloud sql databases list --instance=$(DATABASE_INSTANCE)
