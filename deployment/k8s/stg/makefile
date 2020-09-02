@@ -1,14 +1,17 @@
+#!make
 SHELL = /bin/bash -o pipefail
-
-export PROJECT = stackwise-starter-kit
-export CLUSTER = stackwise-starter-cluster
-export CONTAINER_REGISTRY = eu.gcr.io
-export DATABASE_INSTANCE = stackwise-starter-db-europe-west3
-export DATABASE = stackwise
-export PRIVATE_ADDRESS = 'make gc-db-instance-list & copy PRIVATE_ADDRESS here'
-export ZONE = europe-west3-c
-export VERSION = 1.0
-export MY_IP = 12.34.56.78
+PROJECT = stackwise-starter-kit
+CLUSTER = stackwise-starter-cluster
+CONTAINER_REGISTRY = eu.gcr.io
+DATABASE_INSTANCE = stackwise-starter-db-europe-west3
+DB_ROOT_PASSWORD = r00tpasswd
+DATABASE = stackwise
+PRIVATE_ADDRESS = 'make gc-db-instance-list & put PRIVATE_ADDRESS here'
+ZONE = europe-west3-c
+VERSION = 1.0
+MY_IP = 12.34.56.78
+include .env
+#export
 
 .DEFAULT_GOAL := kctl-config-contexts
 
@@ -152,16 +155,29 @@ gc-db-instance-list:
 # db-f1-micro               0.6 GB RAM, 3 GB Max Storage Cap. ($9.20/mo)
 # tier: db-custom-1-3840    1.0 GB RAM, 3 GB Max Storage Cap. ($???/mo)
 # gcloud beta sql instances create -h
-gc-db-instance-create:
+gc-db-instance-create-public:
 	@gcloud beta sql instances create \
 		$(DATABASE_INSTANCE) \
 		--async \
-		--authorized-networks=$(MY_IP)
+		--authorized-networks=$(MY_IP) \
 		--availability-type=zonal \
 		--database-version=POSTGRES_12 \
 		--network=default \
 		--no-assign-ip \
-		--root-password=<PASSWD> \
+		--root-password=${DB_ROOT_PASSWORD} \
+		--storage-type=HDD \
+		--tier=db-f1-micro \
+		--zone=$(ZONE)
+
+gc-db-instance-create-privat:
+	@gcloud beta sql instances create \
+		$(DATABASE_INSTANCE) \
+		--async \
+		--availability-type=zonal \
+		--database-version=POSTGRES_12 \
+		--network=default \
+		--no-assign-ip \
+		--root-password=${DB_ROOT_PASSWORD} \
 		--storage-type=HDD \
 		--tier=db-f1-micro \
 		--zone=$(ZONE)
