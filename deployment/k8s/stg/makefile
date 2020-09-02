@@ -1,14 +1,15 @@
 #!make
 SHELL = /bin/bash -o pipefail
+VERSION = 1.0
 PROJECT = stackwise-starter-kit
 CLUSTER = stackwise-starter-cluster
 CONTAINER_REGISTRY = eu.gcr.io
-DATABASE_INSTANCE = stackwise-starter-db-europe-west3
+REGION = europe-west3
+ZONE = europe-west3-c
+DATABASE_INSTANCE = stackwise-starter-db-$(REGION)
 DB_ROOT_PASSWORD = r00tpasswd
 DATABASE = stackwise
 PRIVATE_ADDRESS = 'make gc-db-instance-list & put PRIVATE_ADDRESS here'
-ZONE = europe-west3-c
-VERSION = 1.0
 MY_IP = 12.34.56.78
 include .env
 #export
@@ -208,17 +209,17 @@ gc-db-cloud-proxy:
 	chmod u+x cloud_sql_proxy
 	sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
 	@echo starting \'Cloud SQL Proxy\' using \'Unix sockets\' ...
-	@echo connect with \'psql \"sslmode=disable host=/cloudsql/$(PROJECT):europe-west3:$(DATABASE_INSTANCE) user=postgres\"\'
+	@echo connect with \'psql \"sslmode=disable host=/cloudsql/$(PROJECT):$(REGION):$(DATABASE_INSTANCE) user=postgres\"\'
 	./cloud_sql_proxy -dir=/cloudsql
 #	@echo connect with \'psql "sslmode=disable host=127.0.0.1 dbname=$(DATABASE) user=postgres"\'
 #	TCP sockets:
-#	./cloud_sql_proxy -instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE)=tcp:5432
+#	./cloud_sql_proxy -instances=$(PROJECT):$(REGION):$(DATABASE_INSTANCE)=tcp:5432
 #	./cloud_sql_proxy \
-		-instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE)=tcp:5432 \
+		-instances=$(PROJECT):$(REGION):$(DATABASE_INSTANCE)=tcp:5432 \
 		-credential_file=/path/to/service-account.json
 #	Recommended for production environments:
 #	./cloud_sql_proxy -dir=/cloudsql \
-		-instances=$(PROJECT):europe-west3:$(DATABASE_INSTANCE) \
+		-instances=$(PROJECT):$(REGION):$(DATABASE_INSTANCE) \
 		-credential_file=/path/to/service-account.json
 
 gc-db-instance-describe:
