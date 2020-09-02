@@ -151,15 +151,15 @@ kctl-db-secret-delete:
 gc-db-instance-list:
 	@gcloud sql instances list
 
+# Create the db instance (micro, hdd, private IP, single zone)
 # https://cloud.google.com/sql/pricing#pg-cpu-mem-pricing
 # db-f1-micro               0.6 GB RAM, 3 GB Max Storage Cap. ($9.20/mo)
 # tier: db-custom-1-3840    1.0 GB RAM, 3 GB Max Storage Cap. ($???/mo)
 # gcloud beta sql instances create -h
-gc-db-instance-create-public:
+gc-db-instance-create:
 	@gcloud beta sql instances create \
 		$(DATABASE_INSTANCE) \
 		--async \
-		--authorized-networks=$(MY_IP) \
 		--availability-type=zonal \
 		--database-version=POSTGRES_12 \
 		--network=default \
@@ -169,18 +169,29 @@ gc-db-instance-create-public:
 		--tier=db-f1-micro \
 		--zone=$(ZONE)
 
-gc-db-instance-create-privat:
-	@gcloud beta sql instances create \
-		$(DATABASE_INSTANCE) \
-		--async \
-		--availability-type=zonal \
-		--database-version=POSTGRES_12 \
-		--network=default \
+# acquire a public ip address
+gc-db-instance-patch-public-ip-acquire:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
+		--assign-ip \
+		--async
+
+# release the public ip address
+gc-db-instance-patch-public-ip-release:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
 		--no-assign-ip \
-		--root-password=${DB_ROOT_PASSWORD} \
-		--storage-type=HDD \
-		--tier=db-f1-micro \
-		--zone=$(ZONE)
+		--async
+
+# trust the specified ip address
+gc-db-instance-patch-authorized-networks:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
+		--authorized-networks=$(MY_IP) \
+		--async
+
+# detrust the specified ip addresses
+gc-db-instance-patch-clear-authorized-networks:
+	@gcloud sql instances patch $(DATABASE_INSTANCE) \
+		--clear-authorized-networks \
+		--async
 
 # https://cloud.google.com/sdk/gcloud/reference/sql/connect
 gc-db-instance-connect:
@@ -197,7 +208,7 @@ gc-db-cloud-proxy:
 	chmod u+x cloud_sql_proxy
 	sudo mkdir /cloudsql; sudo chmod 777 /cloudsql
 	@echo starting \'Cloud SQL Proxy\' using \'Unix sockets\' ...
-	@echo connect with \'psql "sslmode=disable host=/cloudsql/$(PROJECT):europe-west3:$(DATABASE_INSTANCE) user=postgres"\'
+	@echo connect with \'psql \"sslmode=disable host=/cloudsql/$(PROJECT):europe-west3:$(DATABASE_INSTANCE) user=postgres\"\'
 	./cloud_sql_proxy -dir=/cloudsql
 #	@echo connect with \'psql "sslmode=disable host=127.0.0.1 dbname=$(DATABASE) user=postgres"\'
 #	TCP sockets:
