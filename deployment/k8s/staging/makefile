@@ -178,6 +178,17 @@ docker-push-images:
 kubeval:
 	@kustomize build . | kubeval --strict --force-color -
 
+# modify kustomization.yaml and add a SecretGenerator.
+deployment-add-secret:
+	@kustomize edit add secret $(DATABASE) --from-env-file=.env-db
+	@echo ==== add secret generator ====
+	@echo secretGenerator:
+	@echo - envs:
+	@echo   - .env-db
+	@echo   name: $(DATABASE)
+	@echo   type: Opaque
+
+
 deployment-apply: kubeval
 	@kustomize build . | kubectl apply --validate -f -
 #	@kustomize build . | kubectl apply --dry-run=client --validate -f -

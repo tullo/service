@@ -1,10 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ./staging-config.yaml
-  - ../base
+- ./staging-config.yaml
+- ../base
 patchesStrategicMerge:
-  - env-patch.yaml
-  - images-patch.yaml
-  - loadbalancer-patch.yaml
-  - replicas-patch.yaml
+- env-patch.yaml
+- images-patch.yaml
+- loadbalancer-patch.yaml
+- secrets-patch.yaml
+- replicas-patch.yaml
+secretGenerator:
+- envs:
+  - .env-db
+  name: stackwise
+  type: Opaque

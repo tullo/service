@@ -3,6 +3,7 @@
 
 # env vars
 .env
+.env-db
 
 # auth related files
 private.pem
