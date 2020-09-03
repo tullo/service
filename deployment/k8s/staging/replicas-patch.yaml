@@ -3,4 +3,9 @@ kind: Deployment
 metadata:
   name: sales-api
 spec:
-  replicas: 1
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
