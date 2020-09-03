@@ -14,3 +14,7 @@ secretGenerator:
   - .env-db
   name: stackwise
   type: Opaque
+images:
+- name: eu.gcr.io/stackwise-starter-kit/sales-api-amd64
+  newName: eu.gcr.io/stackwise-starter-kit/sales-api-amd64
+  newTag: fc91632512b4b318ae13a2aea52f7b31dc54aa16

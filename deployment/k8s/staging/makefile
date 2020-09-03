@@ -188,6 +188,14 @@ deployment-add-secret:
 	@echo   name: $(DATABASE)
 	@echo   type: Opaque
 
+# change an image of the deployment.
+# note: the image tag HASH/VERSION is usualy defined by a CI/CD system.
+deployment-set-image:
+	@echo ==============================================================================+
+	@echo '==>' kustomize edit set image - Make sure the image is pullable on the cluster \|
+	@echo ==============================================================================+
+	@$(eval HASH=`git rev-parse HEAD`)
+	@kustomize edit set image $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64=$(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(HASH)
 
 deployment-apply: kubeval
 	@kustomize build . | kubectl apply --validate -f -
