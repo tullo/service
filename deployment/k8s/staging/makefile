@@ -2,6 +2,7 @@
 SHELL = /bin/bash -o pipefail
 VERSION = 1.0
 ACCOUNT = xyz@gmail.com
+BILLING_ACCOUNT_ID = ABCDEF-GHIJKL-NMOPQR
 SERVICE_ACCOUNT = stackwise
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 PROJECT = stackwise-starter-kit
@@ -79,19 +80,25 @@ gc-config-list:
 	@gcloud config list
 
 gc-config-set:
-	@echo setting project: ${PROJECT} and compute region: ${REGION}
-	gcloud config set project ${PROJECT}
+	@echo '==>' setting project: ${PROJECT} and compute zone: $(ZONE)
+	@gcloud config set project ${PROJECT}
+	@gcloud config set compute/zone $(ZONE)
 
+config: gc-projects-create gc-config-set gc-auth-configure-docker
+	@gcloud beta billing projects link $(PROJECT) --billing-account=$(BILLING_ACCOUNT_ID)
 
 # https://cloud.google.com/sdk/docs/configurations
 gc-configurations-list:
+	@echo ============================================================================+
+	@echo '==>' gcloud config configurations list - lists existing named configurations \|
+	@echo ============================================================================+
 	gcloud config configurations list
 
 gc-configurations-describe:
 	@gcloud config configurations describe cloud-experiments
 
 gc-configurations-delete:
-	@gcloud config configurations delete default
+	@gcloud config configurations delete <config>
 
 gc-config-set-account: gc-auth-list
 	@gcloud config set account ${ACCOUNT}
@@ -105,6 +112,7 @@ gc-svc-enable-sqladmin:
 	@gcloud services enable sqladmin.googleapis.com
 
 gc-auth-list:
+	@echo '==>' gcloud auth list - lists credentialed accounts.
 	@gcloud auth list
 
 # obtain access credentials for your user account via a web-based authorization flow.
@@ -179,6 +187,9 @@ deployment-delete:
 	kustomize build . | kubectl delete -f -
 
 kctl-config-contexts:
+	@echo ================================================================================+
+	@echo '==>' kubectl config get-contexts - List all the contexts in your kubeconfig file \|
+	@echo ================================================================================+
 	@kubectl config get-contexts
 
 kctl-config-use-context:
@@ -410,3 +421,19 @@ gc-db-describe:
 		$(DATABASE) \
 		--instance=$(DATABASE_INSTANCE) \
 		--verbosity=info
+
+# see Notes.md: [Create a Kubernetes Cluster]
+cluster: gc-clusters-list
+	@gcloud compute instances list
+#	@gcloud compute machine-types list | grep ${ZONE}
+	@$(eval k8s_version=`gcloud container get-server-config --zone=${ZONE} --format=json | jq -r '.validNodeVersions[0]'`)
+	@echo Current valid node sersion: ${k8s_version}
+	@gcloud container clusters describe $(CLUSTER) --zone=${ZONE}
+#	@gcloud container clusters create $(CLUSTER) \
+		--cluster-version=${k8s_version} \
+		--zone=${ZONE} \
+		--num-nodes=1 \
+		--machine-type=e2-small \
+		--disk-size=30 \
+		--enable-ip-alias \
+		--enable-autoupgrade
