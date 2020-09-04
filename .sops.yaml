@@ -1,9 +1,11 @@
 creation_rules:
   - path_regex: .*/k8s/staging/.*
+    encrypted-regex: ^(data|stringData)$
     pgp: >-
       E03741868C02382277A3D0A141611E17EA20D77B,
       0C304B8BF332F7FF4453E3FE93A1FC0545354082
   - path_regex: .*/k8s/production/.*
+    encrypted-regex: ^(data|stringData)$
     pgp: >-
       E03741868C02382277A3D0A141611E17EA20D77B,
       0C304B8BF332F7FF4453E3FE93A1FC0545354082

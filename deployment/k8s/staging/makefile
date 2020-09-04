@@ -59,6 +59,15 @@ sops-encrypt-file-using-sops.yaml:
 	@echo ====== encrypt secrets using keys defined in \.sops.yaml ====
 	@$(shell go env GOPATH)/bin/sops config.staging.yaml
 
+sops-encrypt-k8s-secret:
+	@kubectl create secret generic app-secret \
+		--from-env-file=.env-db --dry-run=client -o yaml > app-secret.yaml
+	@$(shell go env GOPATH)/bin/sops --verbose -e -in-place \
+		--encrypted-regex '^(data|stringData)$$' app-secret.yaml
+	@$(shell go env GOPATH)/bin/sops -d app-secret.yaml | kubectl apply -f -
+#	@$(shell go env GOPATH)/bin/sops --verbose -e \
+		-in-place app-secret.yaml # results in encrypted metadata: name: app-secret 
+
 sops-encrypt-secrets:
 	@echo ====== encrypt secrets using fingerpring:  ${SOPS_PGP_FP} ====
 	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} -e .env > .enc.env
@@ -237,9 +246,9 @@ deployment-set-image:
 	@kustomize edit set image $(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64=$(CONTAINER_REGISTRY)/$(PROJECT)/sales-api-amd64:$(HASH)
 
 deployment-apply: kubeval
-	@kustomize build . | kubectl apply --validate -f -
+	@kustomize build .
 #	@kustomize build . | kubectl apply --dry-run=client --validate -f -
-	@watch kubectl get po
+#	@watch kubectl get po
 
 deployment-delete:
 	kustomize build . | kubectl delete -f -
