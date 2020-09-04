@@ -15,6 +15,7 @@ DB_ROOT_PASSWORD = r00tpasswd
 DATABASE = stackwise
 PRIVATE_ADDRESS = 'make gc-db-instance-list & put PRIVATE_ADDRESS here'
 MY_IP = 12.34.56.78
+SOPS_PGP_FP='gpg key fingerprint list; comma separated'
 include .env
 #export
 
@@ -52,6 +53,16 @@ include .env
 #
 
 show-configs: kctl-config-contexts gc-configurations-list
+
+sops-encrypt-secrets:
+	@echo ====== encrypt secrets using fingerpring:  ${SOPS_PGP_FP} ====
+	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} -e .env > .enc.env
+	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} -e .env-db > .enc.env-db
+
+sops-decrypt-secrets:
+	@echo ====== decrypt secrets ====
+	@$(shell go env GOPATH)/bin/sops --verbose -d .enc.env > .env
+	@$(shell go env GOPATH)/bin/sops --verbose -d .enc.env-db > .env-db
 
 lb-health-request:
 	@echo ====== health-request via LoadBalancer ==============================
