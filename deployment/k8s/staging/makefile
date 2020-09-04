@@ -54,6 +54,11 @@ include .env
 
 show-configs: kctl-config-contexts gc-configurations-list
 
+# https://github.com/mozilla/sops
+sops-encrypt-file-using-sops.yaml:
+	@echo ====== encrypt secrets using keys defined in \.sops.yaml ====
+	@$(shell go env GOPATH)/bin/sops config.staging.yaml
+
 sops-encrypt-secrets:
 	@echo ====== encrypt secrets using fingerpring:  ${SOPS_PGP_FP} ====
 	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} -e .env > .enc.env
@@ -70,13 +75,22 @@ sops-edit-env:
 sops-edit-env-db:
 	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} .enc.env-db
 
-sops-add-secret-access:
+sops-add-access:
 	gpg --list-keys
 	@$(shell go env GOPATH)/bin/sops --verbose --rotate --in-place --add-pgp <key-id> .enc.env-db
 
-sops-remove-secret-access:
+sops-remove-access:
 	gpg --list-keys
 	@$(shell go env GOPATH)/bin/sops --verbose --rotate --in-place --rm-pgp <key-id> .enc.env-db
+
+# https://github.com/mozilla/sops#adding-and-removing-keys
+sops-add-access-with-sops.yaml:
+	gpg --list-keys
+	@echo =======================================+
+	@echo '==>' add key to the \.sops.yaml file.
+	@echo =======================================+
+	@cat ../../../.sops.yaml
+	@$(shell go env GOPATH)/bin/sops updatekeys .enc.env-db
 
 lb-health-request:
 	@echo ====== health-request via LoadBalancer ==============================

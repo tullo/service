@@ -1,0 +1,10 @@
+creation_rules:
+  - path_regex: .*/k8s/staging/.*
+    pgp: >-
+      E03741868C02382277A3D0A141611E17EA20D77B
+  - path_regex: .*/k8s/production/.*
+    pgp: >-
+      E03741868C02382277A3D0A141611E17EA20D77B
+  - path_regex: \.enc\.env-db$
+    pgp: >-
+      E03741868C02382277A3D0A141611E17EA20D77B
