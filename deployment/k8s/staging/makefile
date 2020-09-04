@@ -64,6 +64,20 @@ sops-decrypt-secrets:
 	@$(shell go env GOPATH)/bin/sops --verbose -d .enc.env > .env
 	@$(shell go env GOPATH)/bin/sops --verbose -d .enc.env-db > .env-db
 
+sops-edit-env:
+	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} .enc.env
+
+sops-edit-env-db:
+	@$(shell go env GOPATH)/bin/sops --verbose -p ${SOPS_PGP_FP} .enc.env-db
+
+sops-add-secret-access:
+	gpg --list-keys
+	@$(shell go env GOPATH)/bin/sops --verbose --rotate --in-place --add-pgp <key-id> .enc.env-db
+
+sops-remove-secret-access:
+	gpg --list-keys
+	@$(shell go env GOPATH)/bin/sops --verbose --rotate --in-place --rm-pgp <key-id> .enc.env-db
+
 lb-health-request:
 	@echo ====== health-request via LoadBalancer ==============================
 	@$(eval IP=`kubectl get svc sales-api -o wide -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`)
