@@ -152,9 +152,6 @@ metrics:
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
-	@docker image tag \
-		$(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION) \
-		eu.gcr.io/$(PROJECT)/metrics-amd64:$(VERSION)
 
 sales-api:
 	@docker build \
@@ -164,9 +161,6 @@ sales-api:
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
-	@docker image tag \
-		$(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION) \
-		eu.gcr.io/$(PROJECT)/sales-api-amd64:$(VERSION)
 
 docker-stop-all:
 	@docker container stop $$(docker container ls -q --filter "name=sales*" --filter "name=metrics" --filter "name=zipkin")
