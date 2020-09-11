@@ -5,9 +5,6 @@ on:
     branches: 
       - master
 
-env:
-  PRIVATE_PEM: ${{ secrets.PRIVATE_PEM }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,16 +14,16 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Create file
-      uses: finnp/create-file-action@master
-      env:
-        FILE_NAME: "private.pem"
-        FILE_DATA: "$PRIVATE_PEM"
+      run: |
+        cat <<EOF > private.pem
+        ${{ secrets.PRIVATE_PEM }}
+        EOF
 
     - name: Get current date
       id: date
       run: echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-    - name: Build & Publish to Registry
+    - name: Build & Publish to Docker-Github (sales-api)
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
@@ -38,4 +35,19 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: deployment/docker/dockerfile.sales-api
         buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+        tags: latest,${{ env.VCS_REF }}
+
+    - name: Build & Publish to Docker-Github (metrics)
+      uses: elgohr/Publish-Docker-Github-Action@master
+      env:
+        BUILD_DATE: ${{ steps.date.outputs.date }}
+        PACKAGE_NAME: metrics
+        PACKAGE_PREFIX: sidecar/
+        VCS_REF: ${{ github.sha }}
+      with:
+        name: tullo/metrics-amd64
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: deployment/docker/dockerfile.metrics
+        buildargs: PACKAGE_NAME,PACKAGE_PREFIX,VCS_REF,BUILD_DATE
         tags: latest,${{ env.VCS_REF }}
