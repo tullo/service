@@ -22,34 +22,34 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 		build: build,
 		db:    db,
 	}
-	app.Handle(http.MethodGet, "/v1/health", check.Health)
+	app.Handle(http.MethodGet, "/v1/health", check.health)
 
 	// Register user management and authentication endpoints.
 	u := userHandlers{
 		db:   db,
 		auth: a,
 	}
-	app.Handle(http.MethodGet, "/v1/users", u.List, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodPost, "/v1/users", u.Create, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodGet, "/v1/users/{id}", u.Retrieve, mid.Authenticate(a))
-	app.Handle(http.MethodPut, "/v1/users/{id}", u.Update, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodDelete, "/v1/users/{id}", u.Delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users", u.query, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodPost, "/v1/users", u.create, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users/{id}", u.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/v1/users/{id}", u.update, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodDelete, "/v1/users/{id}", u.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
 
 	// This route is not authenticated
-	app.Handle(http.MethodGet, "/v1/users/token", u.Token)
+	app.Handle(http.MethodGet, "/v1/users/token", u.token)
 
 	// Register product and sale endpoints.
 	p := productHandlers{
 		db: db,
 	}
-	app.Handle(http.MethodGet, "/v1/products", p.List, mid.Authenticate(a))
-	app.Handle(http.MethodPost, "/v1/products", p.Create, mid.Authenticate(a))
-	app.Handle(http.MethodGet, "/v1/products/{id}", p.Retrieve, mid.Authenticate(a))
-	app.Handle(http.MethodPut, "/v1/products/{id}", p.Update, mid.Authenticate(a))
-	app.Handle(http.MethodDelete, "/v1/products/{id}", p.Delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/products", p.query, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/v1/products", p.create, mid.Authenticate(a))
+	app.Handle(http.MethodGet, "/v1/products/{id}", p.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/v1/products/{id}", p.update, mid.Authenticate(a))
+	app.Handle(http.MethodDelete, "/v1/products/{id}", p.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
 
-	app.Handle(http.MethodPost, "/v1/products/{id}/sales", p.AddSale, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodGet, "/v1/products/{id}/sales", p.ListSales, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/v1/products/{id}/sales", p.addSale, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/products/{id}/sales", p.querySales, mid.Authenticate(a))
 
 	return app
 }

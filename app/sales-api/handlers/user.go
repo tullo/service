@@ -21,13 +21,13 @@ type userHandlers struct {
 	// ADD OTHER STATE LIKE THE LOGGER AND CONFIG HERE.
 }
 
-// List returns all the existing users in the system.
-func (h *userHandlers) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// Query returns all the existing users in the system.
+func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.list")
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.query")
 	defer span.End()
 
-	users, err := user.List(ctx, h.db)
+	users, err := user.Query(ctx, h.db)
 	if err != nil {
 		return err
 	}
@@ -35,10 +35,10 @@ func (h *userHandlers) List(ctx context.Context, w http.ResponseWriter, r *http.
 	return web.Respond(ctx, w, users, http.StatusOK)
 }
 
-// Retrieve returns the specified user from the system.
-func (h *userHandlers) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// QueryByID returns the specified user from the system.
+func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.retrieve")
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.queryByID")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -47,7 +47,7 @@ func (h *userHandlers) Retrieve(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	id := web.Param(r, "id")
-	usr, err := user.One(ctx, claims, h.db, id)
+	usr, err := user.QueryByID(ctx, claims, h.db, id)
 	if err != nil {
 		switch err {
 		case data.ErrInvalidID:
@@ -65,7 +65,7 @@ func (h *userHandlers) Retrieve(ctx context.Context, w http.ResponseWriter, r *h
 }
 
 // Create inserts a new user into the system.
-func (h *userHandlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.create")
 	defer span.End()
@@ -89,7 +89,7 @@ func (h *userHandlers) Create(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 // Update updates the specified user in the system.
-func (h *userHandlers) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.update")
 	defer span.End()
@@ -128,7 +128,7 @@ func (h *userHandlers) Update(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 // Delete removes the specified user from the system.
-func (h *userHandlers) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.delete")
 	defer span.End()
@@ -153,7 +153,7 @@ func (h *userHandlers) Delete(ctx context.Context, w http.ResponseWriter, r *htt
 
 // Token handles a request to authenticate a user. It expects a request using
 // Basic Auth with a user's email and password. It responds with a JWT.
-func (h *userHandlers) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.token")
 	defer span.End()

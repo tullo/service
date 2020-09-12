@@ -19,7 +19,7 @@ type check struct {
 }
 
 // Health validates the service is healthy and ready to accept requests.
-func (h *check) Health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *check) health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.check.health")
 	defer span.End()
 

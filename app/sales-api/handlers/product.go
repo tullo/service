@@ -20,13 +20,13 @@ type productHandlers struct {
 	db *sqlx.DB
 }
 
-// List gets all existing products in the system.
-func (h *productHandlers) List(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// Query gets all existing products in the system.
+func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.list")
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.query")
 	defer span.End()
 
-	products, err := product.List(ctx, h.db)
+	products, err := product.Query(ctx, h.db)
 	if err != nil {
 		return err
 	}
@@ -34,14 +34,14 @@ func (h *productHandlers) List(ctx context.Context, w http.ResponseWriter, r *ht
 	return web.Respond(ctx, w, products, http.StatusOK)
 }
 
-// Retrieve returns the specified product from the system.
-func (h *productHandlers) Retrieve(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// QueryByID returns the specified product from the system.
+func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.retrieve")
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.queryByID")
 	defer span.End()
 
 	id := web.Param(r, "id")
-	prod, err := product.One(ctx, h.db, id)
+	prod, err := product.QueryByID(ctx, h.db, id)
 	if err != nil {
 		switch err {
 		case data.ErrInvalidID:
@@ -58,7 +58,7 @@ func (h *productHandlers) Retrieve(ctx context.Context, w http.ResponseWriter, r
 
 // Create decodes the body of a request to create a new product. The full
 // product with populatd fields is sent back in the response.
-func (h *productHandlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.create")
 	defer span.End()
@@ -88,7 +88,7 @@ func (h *productHandlers) Create(ctx context.Context, w http.ResponseWriter, r *
 
 // Update decodes the body of a request to update an existing product. The ID
 // of the product is part of the request URL.
-func (h *productHandlers) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.update")
 	defer span.End()
@@ -126,7 +126,7 @@ func (h *productHandlers) Update(ctx context.Context, w http.ResponseWriter, r *
 }
 
 // Delete removes a single product identified by an ID in the request URL.
-func (h *productHandlers) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.delete")
 	defer span.End()
@@ -146,7 +146,7 @@ func (h *productHandlers) Delete(ctx context.Context, w http.ResponseWriter, r *
 
 // AddSale creates a new Sale for a particular product. It looks for a JSON
 // object in the request body. The full model is returned to the caller.
-func (h *productHandlers) AddSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.addSale")
 	defer span.End()
@@ -165,10 +165,10 @@ func (h *productHandlers) AddSale(ctx context.Context, w http.ResponseWriter, r 
 	return web.Respond(ctx, w, sale, http.StatusCreated)
 }
 
-// ListSales gets all sales for a particular product.
-func (h *productHandlers) ListSales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// QuerySales gets all sales for a particular product.
+func (h *productHandlers) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.listSales")
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.querySales")
 	defer span.End()
 
 	id := web.Param(r, "id")

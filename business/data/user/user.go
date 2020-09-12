@@ -52,7 +52,7 @@ func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, uu 
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.update")
 	defer span.End()
 
-	u, err := One(ctx, claims, db, id)
+	u, err := QueryByID(ctx, claims, db, id)
 	if err != nil {
 		return err
 	}
@@ -108,8 +108,8 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 	return nil
 }
 
-// List retrieves a list of existing users from the database.
-func List(ctx context.Context, db *sqlx.DB) ([]User, error) {
+// Query retrieves a list of existing users from the database.
+func Query(ctx context.Context, db *sqlx.DB) ([]User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.list")
 	defer span.End()
 
@@ -123,8 +123,8 @@ func List(ctx context.Context, db *sqlx.DB) ([]User, error) {
 	return users, nil
 }
 
-// One gets the specified user from the database.
-func One(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User, error) {
+// QueryByID gets the specified user from the database.
+func QueryByID(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.one")
 	defer span.End()
 

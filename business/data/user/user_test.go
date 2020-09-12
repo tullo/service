@@ -56,7 +56,7 @@ func TestUser(t *testing.T) {
 				Roles: []string{auth.RoleAdmin, auth.RoleUser},
 			}
 
-			savedU, err := user.One(ctx, claims, db, u.ID)
+			savedU, err := user.QueryByID(ctx, claims, db, u.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user by ID: %s.", tests.Failed, testID, err)
 			}
@@ -77,7 +77,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", tests.Success, testID)
 
-			savedU, err = user.One(ctx, claims, db, u.ID)
+			savedU, err = user.QueryByID(ctx, claims, db, u.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user : %s.", tests.Failed, testID, err)
 			}
@@ -104,7 +104,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete user.", tests.Success, testID)
 
-			_, err = user.One(ctx, claims, db, u.ID)
+			_, err = user.QueryByID(ctx, claims, db, u.ID)
 			if errors.Cause(err) != data.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve user : %s.", tests.Failed, testID, err)
 			}
