@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	othttp "go.opentelemetry.io/contrib/instrumentation/net/http"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/instrumentation/othttp"
 )
 
 // ctxKey represents the type of value for the context key.
