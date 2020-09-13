@@ -1,6 +1,9 @@
 package web
 
 import (
+	"net"
+	"syscall"
+
 	"github.com/pkg/errors"
 )
 
@@ -59,4 +62,30 @@ func IsShutdown(err error) bool {
 		return true
 	}
 	return false
+}
+
+// CheckErr checks common error scenarios and returns a corresponding string
+// description.
+func CheckErr(err error) string {
+	if err == nil {
+		return "Ok"
+	}
+
+	if netError, ok := err.(net.Error); ok && netError.Timeout() {
+		return "Timeout"
+	}
+
+	switch t := err.(type) {
+	case *net.OpError:
+		if t.Op == "dial" {
+			return "Unknown host"
+		} else if t.Op == "read" {
+			return "Connection refused"
+		}
+	case syscall.Errno:
+		if t == syscall.ECONNREFUSED {
+			return "Connection refused"
+		}
+	}
+	return "Unidentified"
 }
