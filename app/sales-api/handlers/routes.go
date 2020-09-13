@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/business/auth"
@@ -19,8 +20,9 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 
 	// Register health check endpoint. This route is not authenticated.
 	check := check{
-		build: build,
-		db:    db,
+		build:   build,
+		db:      db,
+		timeout: 100 * time.Millisecond,
 	}
 	app.Handle(http.MethodGet, "/v1/health", check.health)
 
