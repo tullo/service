@@ -19,12 +19,13 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
 	// Register health check endpoint. This route is not authenticated.
-	check := check{
+	c := check{
 		build:   build,
 		db:      db,
 		timeout: 100 * time.Millisecond,
 	}
-	app.Handle(http.MethodGet, "/v1/health", check.health)
+	app.Handle(http.MethodGet, "/v1/health", c.health)
+	app.Handle(http.MethodGet, "/v1/info", c.info)
 
 	// Register user management and authentication endpoints.
 	u := userHandlers{
