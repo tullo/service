@@ -11,27 +11,41 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"go.opentelemetry.io/otel/api/global"
 	"golang.org/x/crypto/bcrypt"
 )
 
+var (
+	// ErrNotFound is used when a specific User is requested but does not exist.
+	ErrNotFound = errors.New("not found")
+
+	// ErrInvalidID occurs when an ID is not in a valid form.
+	ErrInvalidID = errors.New("ID is not in its proper form")
+
+	// ErrAuthenticationFailure occurs when a user attempts to authenticate but
+	// anything goes wrong.
+	ErrAuthenticationFailure = errors.New("authentication failed")
+
+	// ErrForbidden occurs when a user tries to do something that is forbidden to them according to our access control policies.
+	ErrForbidden = errors.New("attempted action is not allowed")
+)
+
 // Create inserts a new user into the database.
-func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, error) {
+func Create(ctx context.Context, db *sqlx.DB, nu NewUser, now time.Time) (User, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.create")
 	defer span.End()
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(n.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(nu.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, errors.Wrap(err, "generating password hash")
+		return User{}, errors.Wrap(err, "generating password hash")
 	}
 
 	u := User{
 		ID:           uuid.New().String(),
-		Name:         n.Name,
-		Email:        n.Email,
+		Name:         nu.Name,
+		Email:        nu.Email,
 		PasswordHash: hash,
-		Roles:        n.Roles,
+		Roles:        nu.Roles,
 		DateCreated:  now.UTC(),
 		DateUpdated:  now.UTC(),
 	}
@@ -39,12 +53,12 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 	const q = `INSERT INTO users
 		(user_id, name, email, password_hash, roles, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err = db.ExecContext(ctx, q, u.ID, u.Name, u.Email, u.PasswordHash, u.Roles, u.DateCreated, u.DateUpdated)
-	if err != nil {
-		return nil, errors.Wrap(err, "inserting user")
+
+	if _, err = db.ExecContext(ctx, q, u.ID, u.Name, u.Email, u.PasswordHash, u.Roles, u.DateCreated, u.DateUpdated); err != nil {
+		return User{}, errors.Wrap(err, "inserting user")
 	}
 
-	return &u, nil
+	return u, nil
 }
 
 // Update replaces a user document in the database.
@@ -73,7 +87,6 @@ func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, uu 
 		}
 		u.PasswordHash = pw
 	}
-
 	u.DateUpdated = now
 
 	const q = `UPDATE users SET
@@ -83,8 +96,8 @@ func Update(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string, uu 
 		"password_hash" = $5,
 		"date_updated" = $6
 		WHERE user_id = $1`
-	_, err = db.ExecContext(ctx, q, id, u.Name, u.Email, u.Roles, u.PasswordHash, u.DateUpdated)
-	if err != nil {
+
+	if _, err = db.ExecContext(ctx, q, id, u.Name, u.Email, u.Roles, u.PasswordHash, u.DateUpdated); err != nil {
 		return errors.Wrap(err, "updating user")
 	}
 
@@ -97,10 +110,11 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
-		return data.ErrInvalidID
+		return ErrInvalidID
 	}
 
 	const q = `DELETE FROM users WHERE user_id = $1`
+
 	if _, err := db.ExecContext(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting user %s", id)
 	}
@@ -110,12 +124,12 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 
 // Query retrieves a list of existing users from the database.
 func Query(ctx context.Context, db *sqlx.DB) ([]User, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.query")
 	defer span.End()
 
-	users := []User{}
 	const q = `SELECT * FROM users`
 
+	users := []User{}
 	if err := db.SelectContext(ctx, &users, q); err != nil {
 		return nil, errors.Wrap(err, "selecting users")
 	}
@@ -124,30 +138,53 @@ func Query(ctx context.Context, db *sqlx.DB) ([]User, error) {
 }
 
 // QueryByID gets the specified user from the database.
-func QueryByID(ctx context.Context, claims auth.Claims, db *sqlx.DB, id string) (*User, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.one")
+func QueryByID(ctx context.Context, claims auth.Claims, db *sqlx.DB, userID string) (User, error) {
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.querybyid")
 	defer span.End()
 
-	if _, err := uuid.Parse(id); err != nil {
-		return nil, data.ErrInvalidID
+	if _, err := uuid.Parse(userID); err != nil {
+		return User{}, ErrInvalidID
 	}
 
-	// If you are not an admin and looking to retrieve someone else then you are rejected.
-	if !claims.HasRole(auth.RoleAdmin) && claims.Subject != id {
-		return nil, data.ErrForbidden
+	// If you are not an admin and looking to retrieve someone other than yourself.
+	if !claims.HasRole(auth.RoleAdmin) && claims.Subject != userID {
+		return User{}, ErrForbidden
 	}
+
+	const q = `SELECT * FROM users WHERE user_id = $1`
 
 	var u User
-	const q = `SELECT * FROM users WHERE user_id = $1`
-	if err := db.GetContext(ctx, &u, q, id); err != nil {
+	if err := db.GetContext(ctx, &u, q, userID); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, data.ErrNotFound
+			return User{}, ErrNotFound
 		}
-
-		return nil, errors.Wrapf(err, "selecting user %q", id)
+		return User{}, errors.Wrapf(err, "selecting user %q", userID)
 	}
 
-	return &u, nil
+	return u, nil
+}
+
+// QueryByEmail gets the specified user from the database by email.
+func QueryByEmail(ctx context.Context, claims auth.Claims, db *sqlx.DB, email string) (User, error) {
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.user.querybyemail")
+	defer span.End()
+
+	const q = `SELECT * FROM users WHERE email = $1`
+
+	var u User
+	if err := db.GetContext(ctx, &u, q, email); err != nil {
+		if err == sql.ErrNoRows {
+			return User{}, ErrNotFound
+		}
+		return User{}, errors.Wrapf(err, "selecting user %q", email)
+	}
+
+	// If you are not an admin and looking to retrieve someone other than yourself.
+	if !claims.HasRole(auth.RoleAdmin) && claims.Subject != u.ID {
+		return User{}, ErrForbidden
+	}
+
+	return u, nil
 }
 
 // Authenticate finds a user by their email and verifies their password. On
@@ -165,7 +202,7 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
 		if err == sql.ErrNoRows {
-			return auth.Claims{}, data.ErrAuthenticationFailure
+			return auth.Claims{}, ErrAuthenticationFailure
 		}
 
 		return auth.Claims{}, errors.Wrap(err, "selecting single user")
@@ -174,7 +211,7 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
 	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(password)); err != nil {
-		return auth.Claims{}, data.ErrAuthenticationFailure
+		return auth.Claims{}, ErrAuthenticationFailure
 	}
 
 	// If we are this far the request is valid. Create some claims for the user

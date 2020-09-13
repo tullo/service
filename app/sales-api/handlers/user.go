@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/web"
 	"go.opentelemetry.io/otel/api/global"
@@ -50,11 +49,11 @@ func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *
 	usr, err := user.QueryByID(ctx, claims, h.db, id)
 	if err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case user.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrNotFound:
+		case user.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case data.ErrForbidden:
+		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
@@ -113,11 +112,11 @@ func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *htt
 	err := user.Update(ctx, claims, h.db, id, upd, v.Now)
 	if err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case user.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrNotFound:
+		case user.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case data.ErrForbidden:
+		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %s  User: %+v", id, &upd)
@@ -137,11 +136,11 @@ func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *htt
 	err := user.Delete(ctx, h.db, id)
 	if err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case user.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrNotFound:
+		case user.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case data.ErrForbidden:
+		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
@@ -172,7 +171,7 @@ func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http
 	claims, err := user.Authenticate(ctx, h.db, v.Now, email, pass)
 	if err != nil {
 		switch err {
-		case data.ErrAuthenticationFailure:
+		case user.ErrAuthenticationFailure:
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		default:
 			return errors.Wrap(err, "authenticating")

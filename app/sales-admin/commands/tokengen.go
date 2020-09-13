@@ -15,8 +15,8 @@ import (
 )
 
 // TokenGen generates a JWT for the specified user.
-func TokenGen(cfg database.Config, id string, privateKeyFile string, algorithm string) error {
-	if id == "" || privateKeyFile == "" || algorithm == "" {
+func TokenGen(cfg database.Config, userID string, privateKeyFile string, algorithm string) error {
+	if userID == "" || privateKeyFile == "" || algorithm == "" {
 		fmt.Println("help: gentoken <id> <private_key_file> <algorithm>")
 		fmt.Println("algorithm: RS256, HS256")
 		return ErrHelp
@@ -34,11 +34,11 @@ func TokenGen(cfg database.Config, id string, privateKeyFile string, algorithm s
 	// The call to retrieve a user requires an Admin role by the caller.
 	claims := auth.Claims{
 		StandardClaims: jwt.StandardClaims{
-			Subject: "admin",
+			Subject: userID,
 		},
 		Roles: []string{auth.RoleAdmin},
 	}
-	user, err := user.QueryByID(ctx, claims, db, id)
+	user, err := user.QueryByID(ctx, claims, db, userID)
 	if err != nil {
 		return errors.Wrap(err, "retrieve user")
 	}

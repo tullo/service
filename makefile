@@ -77,7 +77,7 @@ go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: go-run-migrate
-	@echo gentoken (userID, privateKeyPEM, algorithm)
+	@echo gentoken \(userID, privateKeyPEM, algorithm\)
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 gentoken '5cf37266-3473-4006-984f-9325122678b7' private.pem 'RS256'
 
 go-run-migrate: compose-db-up

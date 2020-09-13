@@ -8,7 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/business/tests"
@@ -39,7 +38,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
 
-			u, err := user.Create(ctx, db, nu, now)
+			createdU, err := user.Create(ctx, db, nu, now)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create user : %s.", tests.Failed, testID, err)
 			}
@@ -48,7 +47,7 @@ func TestUser(t *testing.T) {
 			claims := auth.Claims{
 				StandardClaims: jwt.StandardClaims{
 					Issuer:    "service project",
-					Subject:   "718ffbea-f4a1-4667-8ae3-b349da52675e",
+					Subject:   createdU.ID,
 					Audience:  "students",
 					ExpiresAt: now.Add(time.Hour).Unix(),
 					IssuedAt:  now.Unix(),
@@ -56,13 +55,13 @@ func TestUser(t *testing.T) {
 				Roles: []string{auth.RoleAdmin, auth.RoleUser},
 			}
 
-			savedU, err := user.QueryByID(ctx, claims, db, u.ID)
+			queryedU, err := user.QueryByID(ctx, claims, db, createdU.ID)
 			if err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user by ID: %s.", tests.Failed, testID, err)
+				t.Fatalf("\t%s\tTest %d:\tShould be able to query user by ID: %s.", tests.Failed, testID, err)
 			}
-			t.Logf("\t%s\tTest %d:\tShould be able to retrieve user by ID.", tests.Success, testID)
+			t.Logf("\t%s\tTest %d:\tShould be able to query user by ID.", tests.Success, testID)
 
-			if diff := cmp.Diff(u, savedU); diff != "" {
+			if diff := cmp.Diff(createdU, queryedU); diff != "" {
 				t.Fatalf("\t%s\tTest %d:\tShould get back the same user. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get back the same user.", tests.Success, testID)
@@ -72,40 +71,40 @@ func TestUser(t *testing.T) {
 				Email: tests.StringPointer("jacob@ardanlabs.com"),
 			}
 
-			if err := user.Update(ctx, claims, db, u.ID, upd, now); err != nil {
+			if err := user.Update(ctx, claims, db, createdU.ID, upd, now); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to update user : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", tests.Success, testID)
 
-			savedU, err = user.QueryByID(ctx, claims, db, u.ID)
+			updatedU, err := user.QueryByEmail(ctx, claims, db, *upd.Email)
 			if err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user : %s.", tests.Failed, testID, err)
+				t.Fatalf("\t%s\tTest %d:\tShould be able to query user by Email: %s.", tests.Failed, testID, err)
 			}
-			t.Logf("\t%s\tTest %d:\tShould be able to retrieve user.", tests.Success, testID)
+			t.Logf("\t%s\tTest %d:\tShould be able to query user by Email.", tests.Success, testID)
 
-			if savedU.Name != *upd.Name {
+			if updatedU.Name != *upd.Name {
 				t.Errorf("\t%s\tTest %d:\tShould be able to see updates to Name.", tests.Failed, testID)
-				t.Logf("\t\tTest %d:\tGot: %v", testID, savedU.Name)
+				t.Logf("\t\tTest %d:\tGot: %v", testID, updatedU.Name)
 				t.Logf("\t\tTest %d:\tExp: %v", testID, *upd.Name)
 			} else {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Name.", tests.Success, testID)
 			}
 
-			if savedU.Email != *upd.Email {
+			if updatedU.Email != *upd.Email {
 				t.Errorf("\t%s\tTest %d:\tShould be able to see updates to Email.", tests.Failed, testID)
-				t.Logf("\t\tTest %d:\tGot: %v", testID, savedU.Email)
+				t.Logf("\t\tTest %d:\tGot: %v", testID, updatedU.Email)
 				t.Logf("\t\tTest %d:\tExp: %v", testID, *upd.Email)
 			} else {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Email.", tests.Success, testID)
 			}
 
-			if err := user.Delete(ctx, db, u.ID); err != nil {
+			if err := user.Delete(ctx, db, updatedU.ID); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete user : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete user.", tests.Success, testID)
 
-			_, err = user.QueryByID(ctx, claims, db, u.ID)
-			if errors.Cause(err) != data.ErrNotFound {
+			_, err = user.QueryByID(ctx, claims, db, updatedU.ID)
+			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve user : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve user.", tests.Success, testID)

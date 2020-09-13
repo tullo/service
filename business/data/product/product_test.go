@@ -9,9 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
-	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/tests"
 )
 
@@ -29,14 +27,8 @@ func TestProduct(t *testing.T) {
 				Cost:     10,
 				Quantity: 55,
 			}
-
 			now := time.Date(2019, time.January, 1, 0, 0, 0, 0, time.UTC)
 			ctx := context.Background()
-
-			if err := schema.DeleteAll(db); err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to delete all data : %s.", tests.Failed, testID, err)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to delete all data.", tests.Success, testID)
 
 			claims := auth.Claims{
 				StandardClaims: jwt.StandardClaims{
@@ -124,7 +116,7 @@ func TestProduct(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to delete product.", tests.Success, testID)
 
 			_, err = product.QueryByID(ctx, db, p.ID)
-			if errors.Cause(err) != data.ErrNotFound {
+			if errors.Cause(err) != product.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product.", tests.Success, testID)

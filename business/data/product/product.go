@@ -10,13 +10,23 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"go.opentelemetry.io/otel/api/global"
+)
+
+var (
+	// ErrNotFound is used when a specific Product is requested but does not exist.
+	ErrNotFound = errors.New("not found")
+
+	// ErrInvalidID occurs when an ID is not in a valid form.
+	ErrInvalidID = errors.New("ID is not in its proper form")
+
+	// ErrForbidden occurs when a user tries to do something that is forbidden to them according to our access control policies.
+	ErrForbidden = errors.New("attempted action is not allowed")
 )
 
 // Create adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated.
-func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (*Product, error) {
+func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, now time.Time) (Product, error) {
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.create")
 	defer span.End()
 
@@ -30,25 +40,21 @@ func Create(ctx context.Context, db *sqlx.DB, user auth.Claims, np NewProduct, n
 		DateUpdated: now.UTC(),
 	}
 
-	const q = `
-		INSERT INTO products
+	const q = `INSERT INTO products
 		(product_id, user_id, name, cost, quantity, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
-	_, err := db.ExecContext(ctx, q,
-		p.ID, p.UserID,
-		p.Name, p.Cost, p.Quantity,
-		p.DateCreated, p.DateUpdated)
-	if err != nil {
-		return nil, errors.Wrap(err, "inserting product")
+	if _, err := db.ExecContext(ctx, q, p.ID, p.UserID, p.Name, p.Cost,
+		p.Quantity, p.DateCreated, p.DateUpdated); err != nil {
+		return Product{}, errors.Wrap(err, "inserting product")
 	}
 
-	return &p, nil
+	return p, nil
 }
 
 // Update modifies data about a Product. It will error if the specified ID is
 // invalid or does not reference an existing Product.
-func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, u UpdateProduct, now time.Time) error {
+func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, up UpdateProduct, now time.Time) error {
 	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.update")
 	defer span.End()
 
@@ -57,21 +63,19 @@ func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, u Upd
 		return err
 	}
 
-	// If you do not have the admin role ...
-	// and you are not the owner of this product ...
-	// then get outta here!
+	// If you are not an admin and looking to retrieve someone elses product.
 	if !user.HasRole(auth.RoleAdmin) && p.UserID != user.Subject {
-		return data.ErrForbidden
+		return ErrForbidden
 	}
 
-	if u.Name != nil {
-		p.Name = *u.Name
+	if up.Name != nil {
+		p.Name = *up.Name
 	}
-	if u.Cost != nil {
-		p.Cost = *u.Cost
+	if up.Cost != nil {
+		p.Cost = *up.Cost
 	}
-	if u.Quantity != nil {
-		p.Quantity = *u.Quantity
+	if up.Quantity != nil {
+		p.Quantity = *up.Quantity
 	}
 	p.DateUpdated = now
 
@@ -81,11 +85,8 @@ func Update(ctx context.Context, db *sqlx.DB, user auth.Claims, id string, u Upd
 		"quantity" = $4,
 		"date_updated" = $5
 		WHERE product_id = $1`
-	_, err = db.ExecContext(ctx, q, id,
-		p.Name, p.Cost,
-		p.Quantity, p.DateUpdated,
-	)
-	if err != nil {
+
+	if _, err = db.ExecContext(ctx, q, id, p.Name, p.Cost, p.Quantity, p.DateUpdated); err != nil {
 		return errors.Wrap(err, "updating product")
 	}
 
@@ -98,7 +99,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
-		return data.ErrInvalidID
+		return ErrInvalidID
 	}
 
 	const q = `DELETE FROM products WHERE product_id = $1`
@@ -112,10 +113,9 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 
 // Query gets all Products from the database.
 func Query(ctx context.Context, db *sqlx.DB) ([]Product, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.list")
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.query")
 	defer span.End()
 
-	products := []Product{}
 	const q = `SELECT
 			p.*,
 			COALESCE(SUM(s.quantity) ,0) AS sold,
@@ -124,6 +124,7 @@ func Query(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 		LEFT JOIN sales AS s ON p.product_id = s.product_id
 		GROUP BY p.product_id`
 
+	products := []Product{}
 	if err := db.SelectContext(ctx, &products, q); err != nil {
 		return nil, errors.Wrap(err, "selecting products")
 	}
@@ -132,15 +133,13 @@ func Query(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 }
 
 // QueryByID finds the product identified by a given ID.
-func QueryByID(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.one")
+func QueryByID(ctx context.Context, db *sqlx.DB, id string) (Product, error) {
+	ctx, span := global.Tracer("service").Start(ctx, "business.data.product.querybyid")
 	defer span.End()
 
 	if _, err := uuid.Parse(id); err != nil {
-		return nil, data.ErrInvalidID
+		return Product{}, ErrInvalidID
 	}
-
-	var p Product
 
 	const q = `SELECT
 			p.*,
@@ -151,13 +150,13 @@ func QueryByID(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
 		WHERE p.product_id = $1
 		GROUP BY p.product_id`
 
+	var p Product
 	if err := db.GetContext(ctx, &p, q, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, data.ErrNotFound
+			return Product{}, ErrNotFound
 		}
-
-		return nil, errors.Wrap(err, "selecting single product")
+		return Product{}, errors.Wrap(err, "selecting single product")
 	}
 
-	return &p, nil
+	return p, nil
 }

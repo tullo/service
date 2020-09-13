@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
-	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/foundation/web"
@@ -44,9 +43,9 @@ func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, 
 	prod, err := product.QueryByID(ctx, h.db, id)
 	if err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrNotFound:
+		case product.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -111,11 +110,11 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 	id := web.Param(r, "id")
 	if err := product.Update(ctx, h.db, claims, id, up, v.Now); err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case data.ErrNotFound:
+		case product.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case data.ErrForbidden:
+		case product.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "updating product %q: %+v", id, up)
@@ -134,7 +133,7 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 	id := web.Param(r, "id")
 	if err := product.Delete(ctx, h.db, id); err != nil {
 		switch err {
-		case data.ErrInvalidID:
+		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "Id: %s", id)
