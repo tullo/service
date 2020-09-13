@@ -2,8 +2,6 @@
 FROM golang:1.15.2-alpine3.12 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
-ARG PACKAGE_NAME
-ARG PACKAGE_PREFIX
 
 # Create a location in the image for the source code.
 RUN mkdir -p /service
@@ -13,11 +11,11 @@ WORKDIR /service
 COPY . .
 
 # Build the admin tool so we can have it in the image.
-WORKDIR /service/app/${PACKAGE_PREFIX}sales-admin
+WORKDIR /service/app/sales-admin
 RUN go build
 
 # Build the service binary.
-WORKDIR /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}
+WORKDIR /service/app/sales-api
 RUN go build -ldflags "-X main.build=${VCS_REF}"
 # The linker sets 'var build' in main.go to the specified git revision
 # See https://golang.org/cmd/link/ for supported linker flags
@@ -27,20 +25,18 @@ RUN go build -ldflags "-X main.build=${VCS_REF}"
 FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
-ARG PACKAGE_NAME
-ARG PACKAGE_PREFIX
 RUN apk --no-cache add ca-certificates
 RUN addgroup -g 1000 -S app && adduser -u 1000 -S app -G app --no-create-home --disabled-password
 USER app
 WORKDIR /app
 COPY --from=build_stage --chown=app:app /service/private.pem /app/private.pem
-COPY --from=build_stage --chown=app:app /service/app/${PACKAGE_PREFIX}sales-admin/sales-admin /app/admin
-COPY --from=build_stage --chown=app:app /service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
-CMD ["/app/main"]
+COPY --from=build_stage --chown=app:app /service/app/sales-admin/sales-admin /app/admin
+COPY --from=build_stage --chown=app:app /service/app/sales-api/sales-api /app/sales-api
+CMD ["/app/sales-api"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
-      org.opencontainers.image.title="${PACKAGE_NAME}" \
+      org.opencontainers.image.title="sales-api" \
       org.opencontainers.image.authors="Andreas <tullo@pm.me>" \
-      org.opencontainers.image.source="https://github.com/tullo/service/app/${PACKAGE_PREFIX}${PACKAGE_NAME}" \
+      org.opencontainers.image.source="https://github.com/tullo/service/tree/master/app/sales-api" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.vendor="Amstutz-IT"

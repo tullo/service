@@ -23,25 +23,23 @@ jobs:
       uses: tullo/actions/build@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
-        PACKAGE_NAME: sales-api
         VCS_REF: ${{ github.sha }}      
       with:
         file: dockerfile.sales-api
         token: ${{ secrets.OKTETO_TOKEN }}
         tag: registry.cloud.okteto.net/tullo/sales-api-amd64:${{ github.sha }}
-        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+        buildargs: VCS_REF,BUILD_DATE
 
     - name: Build & Publish to Okteto registry
       uses: tullo/actions/build@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
-        PACKAGE_NAME: search
         VCS_REF: ${{ github.sha }}      
       with:
         file: dockerfile.search
         token: ${{ secrets.OKTETO_TOKEN }}
         tag: registry.cloud.okteto.net/tullo/search-amd64:${{ github.sha }}
-        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+        buildargs: VCS_REF,BUILD_DATE
 
     - name: Get Kubeconfig
       uses: okteto/actions/namespace@v3

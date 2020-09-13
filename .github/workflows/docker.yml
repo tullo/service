@@ -27,27 +27,24 @@ jobs:
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
-        PACKAGE_NAME: sales-api
         VCS_REF: ${{ github.sha }}
       with:
         name: tullo/sales-api-amd64
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: deployment/docker/dockerfile.sales-api
-        buildargs: PACKAGE_NAME,VCS_REF,BUILD_DATE
+        buildargs: VCS_REF,BUILD_DATE
         tags: latest,${{ env.VCS_REF }}
 
     - name: Build & Publish to Docker-Github (metrics)
       uses: elgohr/Publish-Docker-Github-Action@master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
-        PACKAGE_NAME: metrics
-        PACKAGE_PREFIX: sidecar/
         VCS_REF: ${{ github.sha }}
       with:
         name: tullo/metrics-amd64
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: deployment/docker/dockerfile.metrics
-        buildargs: PACKAGE_NAME,PACKAGE_PREFIX,VCS_REF,BUILD_DATE
+        buildargs: VCS_REF,BUILD_DATE
         tags: latest,${{ env.VCS_REF }}

@@ -53,7 +53,6 @@ sales-api:
 	okteto build \
 		-f ./../../deployment/docker/dockerfile.sales-api \
 		-t registry.cloud.okteto.net/$(NAMESPACE)/sales-api-amd64:$(VERSION) \
-		--build-arg PACKAGE_NAME=sales-api \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		./../../.
@@ -62,8 +61,6 @@ metrics:
 	okteto build \
 		-f ./../../deployment/docker/dockerfile.metrics \
 		-t registry.cloud.okteto.net/$(NAMESPACE)/metrics-amd64:$(VERSION) \
-		--build-arg PACKAGE_NAME=metrics \
-		--build-arg PACKAGE_PREFIX=sidecar/ \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		./../../.
