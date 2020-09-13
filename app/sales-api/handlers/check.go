@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/foundation/database"
@@ -15,54 +14,46 @@ import (
 
 // Check provides support for orchestration health checks.
 type check struct {
-	build   string
-	db      *sqlx.DB
-	timeout time.Duration
-
+	build string
+	db    *sqlx.DB
 	// ADD OTHER STATE LIKE THE LOGGER IF NEEDED.
 }
 
-// Health validates the service is healthy and ready to accept requests.
-func (c *check) health(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.check.health")
+// readiness checks if the database is ready and if not will return a 500 status.
+// Do not respond by just returning an error because further up in the call
+// stack it will interpret that as a non-trusted error.
+func (c *check) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.check.readiness")
 	defer span.End()
 
-	health := struct {
+	status := "ok"
+	statusCode := http.StatusOK
+	if err := database.StatusCheck(ctx, c.db); err != nil {
+		status = "db not ready"
+		statusCode = http.StatusInternalServerError
+		span.SetStatus(codes.Unavailable, web.CheckErr(err))
+		span.AddEvent(ctx, "Database is not ready!")
+	}
+
+	readiness := struct {
 		Version string `json:"version"`
 		Status  string `json:"status"`
 	}{
 		Version: c.build,
+		Status:  status,
 	}
 
-	if r.Header.Get("X-Probe") == "LivenessProbe" {
-		health.Status = "ok"
-		return web.Respond(ctx, w, health, http.StatusOK)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
-
-	// Check if the database is ready.
-	if err := database.StatusCheck(ctx, c.db); err != nil {
-
-		span.SetStatus(codes.Unavailable, web.CheckErr(err))
-		span.AddEvent(ctx, "Database is not ready!")
-		// If the database is not ready we will tell the client and use a 500
-		// status. Do not respond by just returning an error because further up in
-		// the call stack we will interpret that as an unhandled error.
-		health.Status = "db not ready"
-		return web.Respond(ctx, w, health, http.StatusInternalServerError)
-	}
-
-	health.Status = "ok"
-	return web.Respond(ctx, w, health, http.StatusOK)
+	return web.Respond(ctx, w, readiness, statusCode)
 }
 
-// The info route returns simple status info if the service is alive. If the
+// liveness returns simple status info if the service is alive. If the
 // app is deployed to a Kubernetes cluster, it will also return pod, node, and
 // namespace details via the Downward API. The Kubernetes environment variables
 // need to be set within your Pod/Deployment manifest.
-func (c *check) info(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (c *check) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	ctx, span := global.Tracer("service").Start(ctx, "handlers.check.liveness")
+	defer span.End()
+
 	host, err := os.Hostname()
 	if err != nil {
 		host = "unavailable"
@@ -70,6 +61,7 @@ func (c *check) info(ctx context.Context, w http.ResponseWriter, r *http.Request
 
 	info := struct {
 		Status    string `json:"status,omitempty"`
+		Build     string `json:"build,omitempty"`
 		Host      string `json:"host,omitempty"`
 		Pod       string `json:"pod,omitempty"`
 		PodIP     string `json:"podIP,omitempty"`
@@ -77,6 +69,7 @@ func (c *check) info(ctx context.Context, w http.ResponseWriter, r *http.Request
 		Namespace string `json:"namespace,omitempty"`
 	}{
 		Status:    "up",
+		Build:     c.build,
 		Host:      host,
 		Pod:       os.Getenv("KUBERNETES_PODNAME"),
 		PodIP:     os.Getenv("KUBERNETES_NAMESPACE_POD_IP"),
