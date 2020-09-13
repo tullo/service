@@ -9,6 +9,13 @@ export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
 export COMPOSE_FILE = deployment/docker/docker-compose.yaml
 
+# ==============================================================================
+# Testing running system
+#
+# hey tool: make generate-load
+# zipkin: http://localhost:9411
+# expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,mem:memstats.Alloc"
+
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 hey-upgrade: export GO111MODULE := off
 
