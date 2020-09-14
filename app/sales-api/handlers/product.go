@@ -11,7 +11,7 @@ import (
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // Product represents the Product API method handler set.
@@ -22,7 +22,7 @@ type productHandlers struct {
 // Query gets all existing products in the system.
 func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.query")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.query")
 	defer span.End()
 
 	products, err := product.Query(ctx, h.db)
@@ -36,7 +36,7 @@ func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *h
 // QueryByID returns the specified product from the system.
 func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.queryByID")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.queryByID")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -59,7 +59,7 @@ func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, 
 // product with populatd fields is sent back in the response.
 func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.create")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.create")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -89,7 +89,7 @@ func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *
 // of the product is part of the request URL.
 func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.update")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.update")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -127,7 +127,7 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 // Delete removes a single product identified by an ID in the request URL.
 func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.delete")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.delete")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -147,7 +147,7 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 // object in the request body. The full model is returned to the caller.
 func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.addSale")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.addSale")
 	defer span.End()
 
 	var ns sale.NewSale
@@ -167,7 +167,7 @@ func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r 
 // QuerySales gets all sales for a particular product.
 func (h *productHandlers) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.product.querySales")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querySales")
 	defer span.End()
 
 	id := web.Param(r, "id")

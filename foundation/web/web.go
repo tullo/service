@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	othttp "go.opentelemetry.io/contrib/instrumentation/net/http"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // ctxKey represents the type of value for the context key.
@@ -83,7 +83,8 @@ func (a *App) Handle(verb, path string, handler Handler, mw ...Middleware) {
 	h := func(w http.ResponseWriter, r *http.Request) {
 
 		// Start or expand a distributed trace.
-		ctx, span := global.Tracer("service").Start(r.Context(), "foundation.web.roothandler")
+		ctx := r.Context()
+		ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, r.URL.Path)
 		defer span.End()
 
 		// Set the context with the required values to

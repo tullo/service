@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // AddSale records a sales transaction for a single Product.
 func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now time.Time) (*Sale, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.sale.add")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.add")
 	defer span.End()
 
 	s := Sale{
@@ -40,7 +40,7 @@ func AddSale(ctx context.Context, db *sqlx.DB, ns NewSale, productID string, now
 
 // List gets all Sales from the database.
 func List(ctx context.Context, db *sqlx.DB, productID string) ([]Sale, error) {
-	ctx, span := global.Tracer("service").Start(ctx, "business.data.sale.list")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.list")
 	defer span.End()
 
 	sales := []Sale{}

@@ -9,7 +9,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel/api/trace"
 )
 
 // User represents the User API method handler set.
@@ -23,7 +23,7 @@ type userHandlers struct {
 // Query returns all the existing users in the system.
 func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.query")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.query")
 	defer span.End()
 
 	users, err := user.Query(ctx, h.db)
@@ -37,7 +37,7 @@ func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http
 // QueryByID returns the specified user from the system.
 func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.queryByID")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.queryByID")
 	defer span.End()
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
@@ -66,7 +66,7 @@ func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *
 // Create inserts a new user into the system.
 func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.create")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -90,7 +90,7 @@ func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *htt
 // Update updates the specified user in the system.
 func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.update")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -129,7 +129,7 @@ func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *htt
 // Delete removes the specified user from the system.
 func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.delete")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.delete")
 	defer span.End()
 
 	id := web.Param(r, "id")
@@ -154,7 +154,7 @@ func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *htt
 // Basic Auth with a user's email and password. It responds with a JWT.
 func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := global.Tracer("service").Start(ctx, "handlers.user.token")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.token")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
