@@ -3,7 +3,10 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/url"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // The database driver in use.
@@ -47,7 +50,7 @@ func Open(cfg Config) (*sqlx.DB, error) {
 
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, db *sqlx.DB) error {
+func StatusCheck(ctx context.Context, traceID string, log *log.Logger, db *sqlx.DB) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "foundation.database.statuscheck")
 	defer span.End()
 
@@ -56,6 +59,30 @@ func StatusCheck(ctx context.Context, db *sqlx.DB) error {
 	// database but the database has since gone away. Running this query forces a
 	// round trip to the database.
 	const q = `SELECT true`
+	log.Printf("%s : %s : query : %s", traceID, "database.StatusCheck", q)
 	var tmp bool
 	return db.QueryRowContext(ctx, q).Scan(&tmp)
+}
+
+// Log provides a pretty print version of the query and parameters.
+func Log(query string, args ...interface{}) string {
+	for i, arg := range args {
+		n := fmt.Sprintf("$%d", i+1)
+
+		var a string
+		switch v := arg.(type) {
+		case string:
+			a = fmt.Sprintf("%q", v)
+		case []byte:
+			a = string(v)
+		case []string:
+			a = strings.Join(v, ",")
+		default:
+			a = fmt.Sprintf("%v", v)
+		}
+
+		query = strings.Replace(query, n, a, 1)
+	}
+
+	return query
 }

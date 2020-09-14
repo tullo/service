@@ -13,7 +13,7 @@ import (
 )
 
 func Test_Sales(t *testing.T) {
-	db, teardown := tests.NewUnit(t)
+	log, db, teardown := tests.NewUnit(t)
 	defer teardown()
 
 	t.Log("Given the need to work with product Sales records.")
@@ -40,7 +40,9 @@ func Test_Sales(t *testing.T) {
 		Quantity: 6,
 	}
 
-	puzzles, err := product.Create(ctx, db, claims, newPuzzles, now)
+	traceID := "00000000-0000-0000-0000-000000000000"
+
+	puzzles, err := product.Create(ctx, traceID, log, db, claims, newPuzzles, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
@@ -50,7 +52,7 @@ func Test_Sales(t *testing.T) {
 		Cost:     40,
 		Quantity: 3,
 	}
-	toys, err := product.Create(ctx, db, claims, newToys, now)
+	toys, err := product.Create(ctx, traceID, log, db, claims, newToys, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
@@ -65,14 +67,14 @@ func Test_Sales(t *testing.T) {
 			Paid:     70,
 		}
 
-		s, err := sale.AddSale(ctx, db, ns, puzzles.ID, now)
+		s, err := sale.AddSale(ctx, traceID, log, db, ns, puzzles.ID, now)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to add a new sale: %s", tests.Failed, testID, err)
 		}
 		t.Logf("\t%s\tTest %d:\tShould be able to add a new sale.", tests.Success, testID)
 
 		// Puzzles should show the 1 sale.
-		sales, err := sale.List(ctx, db, puzzles.ID)
+		sales, err := sale.List(ctx, traceID, log, db, puzzles.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to list sales for a product: %s.", tests.Failed, testID, err)
 		}
@@ -88,7 +90,7 @@ func Test_Sales(t *testing.T) {
 		}
 
 		// Toys should have 0 sales.
-		sales, err = sale.List(ctx, db, toys.ID)
+		sales, err = sale.List(ctx, traceID, log, db, toys.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tListing sales: %s", tests.Failed, testID, err)
 		}

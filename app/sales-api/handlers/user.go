@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -16,17 +17,22 @@ import (
 type userHandlers struct {
 	db   *sqlx.DB
 	auth *auth.Auth
+	log  *log.Logger
 
 	// ADD OTHER STATE LIKE THE LOGGER AND CONFIG HERE.
 }
 
 // Query returns all the existing users in the system.
 func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.query")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.list")
 	defer span.End()
 
-	users, err := user.Query(ctx, h.db)
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	users, err := user.Query(ctx, v.TraceID, h.log, h.db)
 	if err != nil {
 		return err
 	}
@@ -36,9 +42,13 @@ func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http
 
 // QueryByID returns the specified user from the system.
 func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.queryByID")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.retrieve")
 	defer span.End()
+
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
 
 	claims, ok := ctx.Value(auth.Key).(auth.Claims)
 	if !ok {
@@ -46,7 +56,7 @@ func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	id := web.Param(r, "id")
-	usr, err := user.QueryByID(ctx, claims, h.db, id)
+	usr, err := user.QueryByID(ctx, v.TraceID, h.log, claims, h.db, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -79,7 +89,7 @@ func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *htt
 		return errors.Wrap(err, "")
 	}
 
-	usr, err := user.Create(ctx, h.db, nu, v.Now)
+	usr, err := user.Create(ctx, v.TraceID, h.log, h.db, nu, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "User: %+v", &usr)
 	}
@@ -109,7 +119,7 @@ func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	id := web.Param(r, "id")
-	err := user.Update(ctx, claims, h.db, id, upd, v.Now)
+	err := user.Update(ctx, v.TraceID, h.log, claims, h.db, id, upd, v.Now)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -132,8 +142,13 @@ func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *htt
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.delete")
 	defer span.End()
 
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
 	id := web.Param(r, "id")
-	err := user.Delete(ctx, h.db, id)
+	err := user.Delete(ctx, v.TraceID, h.log, h.db, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -168,7 +183,7 @@ func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http
 		return web.NewRequestError(err, http.StatusUnauthorized)
 	}
 
-	claims, err := user.Authenticate(ctx, h.db, v.Now, email, pass)
+	claims, err := user.Authenticate(ctx, v.TraceID, h.log, h.db, v.Now, email, pass)
 	if err != nil {
 		switch err {
 		case user.ErrAuthenticationFailure:

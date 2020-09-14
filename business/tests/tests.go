@@ -41,7 +41,7 @@ var (
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty. It returns
 // the database to use as well as a function to call at the end of the test.
-func NewUnit(t *testing.T) (*sqlx.DB, func()) {
+func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
 
 	// Start a DB container instance with dgraph running.
 	c := startContainer(t, dbImage, dbPort, dbArgs...)
@@ -92,7 +92,9 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 		stopContainer(t, c.ID)
 	}
 
-	return db, teardown
+	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
+	return log, db, teardown
 }
 
 // Context returns an app level context for testing.
@@ -121,9 +123,10 @@ func IntPointer(i int) *int {
 
 // Test owns state for running and shutting down tests.
 type Test struct {
-	DB   *sqlx.DB
-	Log  *log.Logger
-	Auth *auth.Auth
+	TraceID string
+	DB      *sqlx.DB
+	Log     *log.Logger
+	Auth    *auth.Auth
 
 	t       *testing.T
 	cleanup func()
@@ -133,14 +136,11 @@ type Test struct {
 func NewIntegration(t *testing.T) *Test {
 
 	// Initialize and seed database. Store the cleanup function call later.
-	db, cleanup := NewUnit(t)
+	log, db, cleanup := NewUnit(t)
 
 	if err := schema.Seed(db); err != nil {
 		t.Fatal(err)
 	}
-
-	// Create the logger to use.
-	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	// Create RSA keys to enable authentication in our service.
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -164,6 +164,7 @@ func NewIntegration(t *testing.T) *Test {
 	}
 
 	test := Test{
+		TraceID: "00000000-0000-0000-0000-000000000000",
 		DB:      db,
 		Log:     log,
 		Auth:    auth,
@@ -181,7 +182,7 @@ func (test *Test) Teardown() {
 
 // Token generates an authenticated token for a user.
 func (test *Test) Token(email, pass string) string {
-	claims, err := user.Authenticate(context.Background(), test.DB, time.Now(), email, pass)
+	claims, err := user.Authenticate(context.Background(), test.TraceID, test.Log, test.DB, time.Now(), email, pass)
 	if err != nil {
 		test.t.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -16,16 +17,21 @@ import (
 
 // Product represents the Product API method handler set.
 type productHandlers struct {
-	db *sqlx.DB
+	db  *sqlx.DB
+	log *log.Logger
 }
 
 // Query gets all existing products in the system.
 func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.query")
 	defer span.End()
 
-	products, err := product.Query(ctx, h.db)
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	products, err := product.Query(ctx, v.TraceID, h.log, h.db)
 	if err != nil {
 		return err
 	}
@@ -36,11 +42,16 @@ func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *h
 // QueryByID returns the specified product from the system.
 func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.queryByID")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querybyid")
 	defer span.End()
 
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
 	id := web.Param(r, "id")
-	prod, err := product.QueryByID(ctx, h.db, id)
+	prod, err := product.QueryByID(ctx, v.TraceID, h.log, h.db, id)
 	if err != nil {
 		switch err {
 		case product.ErrInvalidID:
@@ -62,14 +73,14 @@ func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.create")
 	defer span.End()
 
-	claims, ok := ctx.Value(auth.Key).(auth.Claims)
-	if !ok {
-		return web.NewShutdownError("claims missing from context")
-	}
-
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
 	if !ok {
 		return web.NewShutdownError("web value missing from context")
+	}
+
+	claims, ok := ctx.Value(auth.Key).(auth.Claims)
+	if !ok {
+		return web.NewShutdownError("claims missing from context")
 	}
 
 	var np product.NewProduct
@@ -77,7 +88,7 @@ func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *
 		return errors.Wrap(err, "decoding new product")
 	}
 
-	prod, err := product.Create(ctx, h.db, claims, np, v.Now)
+	prod, err := product.Create(ctx, v.TraceID, h.log, h.db, claims, np, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "creating new product: %+v", np)
 	}
@@ -92,14 +103,14 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.update")
 	defer span.End()
 
-	claims, ok := ctx.Value(auth.Key).(auth.Claims)
-	if !ok {
-		return web.NewShutdownError("claims missing from context")
-	}
-
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
 	if !ok {
 		return web.NewShutdownError("web value missing from context")
+	}
+
+	claims, ok := ctx.Value(auth.Key).(auth.Claims)
+	if !ok {
+		return web.NewShutdownError("claims missing from context")
 	}
 
 	var up product.UpdateProduct
@@ -108,7 +119,7 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	id := web.Param(r, "id")
-	if err := product.Update(ctx, h.db, claims, id, up, v.Now); err != nil {
+	if err := product.Update(ctx, v.TraceID, h.log, h.db, claims, id, up, v.Now); err != nil {
 		switch err {
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -130,8 +141,13 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.delete")
 	defer span.End()
 
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
 	id := web.Param(r, "id")
-	if err := product.Delete(ctx, h.db, id); err != nil {
+	if err := product.Delete(ctx, v.TraceID, h.log, h.db, id); err != nil {
 		switch err {
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -147,8 +163,13 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 // object in the request body. The full model is returned to the caller.
 func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.addSale")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.addsale")
 	defer span.End()
+
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
 
 	var ns sale.NewSale
 	if err := web.Decode(r, &ns); err != nil {
@@ -156,7 +177,7 @@ func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	id := web.Param(r, "id")
-	sale, err := sale.AddSale(r.Context(), h.db, ns, id, time.Now())
+	sale, err := sale.AddSale(r.Context(), v.TraceID, h.log, h.db, ns, id, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "adding new sale")
 	}
@@ -167,11 +188,16 @@ func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r 
 // QuerySales gets all sales for a particular product.
 func (h *productHandlers) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querySales")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querysales")
 	defer span.End()
 
+	v, ok := ctx.Value(web.KeyValues).(*web.Values)
+	if !ok {
+		return web.NewShutdownError("web value missing from context")
+	}
+
 	id := web.Param(r, "id")
-	list, err := sale.List(r.Context(), h.db, id)
+	list, err := sale.List(r.Context(), v.TraceID, h.log, h.db, id)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}

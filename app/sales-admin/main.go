@@ -16,7 +16,8 @@ import (
 var build = "develop"
 
 func main() {
-	if err := run(); err != nil {
+	log := log.New(os.Stdout, "ADMIN : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+	if err := run(log); err != nil {
 		if errors.Cause(err) != commands.ErrHelp {
 			log.Printf("error: %s", err)
 		}
@@ -24,7 +25,7 @@ func main() {
 	}
 }
 
-func run() error {
+func run(log *log.Logger) error {
 
 	// =========================================================================
 	// Configuration
@@ -75,6 +76,8 @@ func run() error {
 		DisableTLS: cfg.DB.DisableTLS,
 	}
 
+	traceID := "00000000-0000-0000-0000-000000000000"
+
 	switch cfg.Args.Num(0) {
 	case "migrate":
 		if err := commands.Migrate(dbConfig); err != nil {
@@ -89,12 +92,12 @@ func run() error {
 	case "useradd":
 		email := cfg.Args.Num(1)
 		password := cfg.Args.Num(2)
-		if err := commands.UserAdd(dbConfig, email, password); err != nil {
+		if err := commands.UserAdd(traceID, log, dbConfig, email, password); err != nil {
 			return errors.Wrap(err, "adding user")
 		}
 
 	case "users":
-		if err := commands.Users(dbConfig); err != nil {
+		if err := commands.Users(traceID, log, dbConfig); err != nil {
 			return errors.Wrap(err, "getting users")
 		}
 
@@ -107,7 +110,7 @@ func run() error {
 		userID := cfg.Args.Num(1)
 		privateKeyFile := cfg.Args.Num(2)
 		algorithm := cfg.Args.Num(3)
-		if err := commands.TokenGen(dbConfig, userID, privateKeyFile, algorithm); err != nil {
+		if err := commands.TokenGen(traceID, log, dbConfig, userID, privateKeyFile, algorithm); err != nil {
 			return errors.Wrap(err, "generating token")
 		}
 

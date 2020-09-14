@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -15,7 +16,7 @@ import (
 )
 
 // TokenGen generates a JWT for the specified user.
-func TokenGen(cfg database.Config, userID string, privateKeyFile string, algorithm string) error {
+func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID string, privateKeyFile string, algorithm string) error {
 	if userID == "" || privateKeyFile == "" || algorithm == "" {
 		fmt.Println("help: gentoken <id> <private_key_file> <algorithm>")
 		fmt.Println("algorithm: RS256, HS256")
@@ -38,7 +39,7 @@ func TokenGen(cfg database.Config, userID string, privateKeyFile string, algorit
 		},
 		Roles: []string{auth.RoleAdmin},
 	}
-	user, err := user.QueryByID(ctx, claims, db, userID)
+	user, err := user.QueryByID(ctx, traceID, log, claims, db, userID)
 	if err != nil {
 		return errors.Wrap(err, "retrieve user")
 	}
