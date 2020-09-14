@@ -15,12 +15,14 @@ type Container struct {
 }
 
 // startContainer launches a container using the specified image and port.
-func startContainer(t *testing.T, image string, port string) *Container {
+func startContainer(t *testing.T, image string, port string, args ...string) *Container {
 	t.Helper() // marks this func as a test helper function
 
-	cmd := exec.Command("docker", "run", "-P", "-d",
-		"-e", "POSTGRES_USER=postgres", "-e", "POSTGRES_PASSWORD=postgres",
-		image)
+	arg := []string{"run", "-P", "-d"}
+	arg = append(arg, args...)
+	arg = append(arg, image)
+
+	cmd := exec.Command("docker", arg...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {

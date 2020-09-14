@@ -26,9 +26,13 @@ const (
 )
 
 // Configuration for running tests.
-const (
-	image = "postgres:12.4-alpine"
-	port  = "5432"
+var (
+	dbImage = "postgres:12.4-alpine"
+	dbPort  = "5432"
+	dbArgs  = []string{
+		"-e", "POSTGRES_USER=postgres",
+		"-e", "POSTGRES_PASSWORD=postgres",
+	}
 	// IDs from the seed data for admin@example.com and user@example.com.
 	AdminID = "5cf37266-3473-4006-984f-9325122678b7"
 	UserID  = "45b5fbd3-755f-4379-8f07-a58d4a30fa2f"
@@ -40,15 +44,17 @@ const (
 func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 
 	// Start a DB container instance with dgraph running.
-	c := startContainer(t, image, port)
+	c := startContainer(t, dbImage, dbPort, dbArgs...)
 
-	db, err := database.Open(database.Config{
+	cfg := database.Config{
 		User:       "postgres",
 		Password:   "postgres",
 		Host:       c.Host,
 		Name:       "postgres",
 		DisableTLS: true,
-	})
+	}
+	db, err := database.Open(cfg)
+
 	if err != nil {
 		t.Fatalf("opening database connection: %v", err)
 	}
@@ -89,11 +95,35 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	return db, teardown
 }
 
+// Context returns an app level context for testing.
+func Context() context.Context {
+	values := web.Values{
+		TraceID: uuid.New().String(),
+		Now:     time.Now(),
+	}
+
+	return context.WithValue(context.Background(), web.KeyValues, &values)
+}
+
+// StringPointer is a helper to get a *string from a string. It is in the tests
+// package because we normally don't want to deal with pointers to basic types
+// but it's useful in some tests.
+func StringPointer(s string) *string {
+	return &s
+}
+
+// IntPointer is a helper to get a *int from a int. It is in the tests package
+// because we normally don't want to deal with pointers to basic types but it's
+// useful in some tests.
+func IntPointer(i int) *int {
+	return &i
+}
+
 // Test owns state for running and shutting down tests.
 type Test struct {
-	DB            *sqlx.DB
-	Log           *log.Logger
-	Authenticator *auth.Auth
+	DB   *sqlx.DB
+	Log  *log.Logger
+	Auth *auth.Auth
 
 	t       *testing.T
 	cleanup func()
@@ -127,18 +157,21 @@ func NewIntegration(t *testing.T) *Test {
 		}
 		return privateKey.Public().(*rsa.PublicKey), nil
 	}
-	authenticator, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
+
+	auth, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	return &Test{
-		DB:            db,
-		Log:           log,
-		Authenticator: authenticator,
-		t:             t,
-		cleanup:       cleanup,
+	test := Test{
+		DB:      db,
+		Log:     log,
+		Auth:    auth,
+		t:       t,
+		cleanup: cleanup,
 	}
+
+	return &test
 }
 
 // Teardown releases any resources used for the test.
@@ -153,34 +186,10 @@ func (test *Test) Token(email, pass string) string {
 		test.t.Fatal(err)
 	}
 
-	token, err := test.Authenticator.GenerateToken(claims)
+	token, err := test.Auth.GenerateToken(claims)
 	if err != nil {
 		test.t.Fatal(err)
 	}
 
 	return token
-}
-
-// Context returns an app level context for testing.
-func Context() context.Context {
-	values := web.Values{
-		TraceID: uuid.New().String(),
-		Now:     time.Now(),
-	}
-
-	return context.WithValue(context.Background(), web.KeyValues, &values)
-}
-
-// StringPointer is a helper to get a *string from a string. It is in the tests
-// package because we normally don't want to deal with pointers to basic types
-// but it's useful in some tests.
-func StringPointer(s string) *string {
-	return &s
-}
-
-// IntPointer is a helper to get a *int from a int. It is in the tests package
-// because we normally don't want to deal with pointers to basic types but it's
-// useful in some tests.
-func IntPointer(i int) *int {
-	return &i
 }
