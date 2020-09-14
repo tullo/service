@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "54da49d5-2c8f-42a8-897f-f2875133c8aa",
+		"_postman_id": "bad2a874-7fb5-41b5-a8e9-9a335599d788",
 		"name": "Garage Sale Service",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -14,8 +14,7 @@
 						"type": "text/javascript",
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);",
-							"postman.setEnvironmentVariable(\"Token\", jsonData.token);",
-							""
+							"postman.setEnvironmentVariable(\"Token\", jsonData.token);"
 						]
 					}
 				}
@@ -95,7 +94,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "52625525-3fcf-45e1-b504-1789cbc03c6d",
+						"id": "26f9d4ad-6f57-4adf-85f3-03090d379273",
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);",
 							"pm.environment.set(\"product_id\", jsonData.id);",
@@ -242,7 +241,7 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "672c5a5c-6169-40a1-8eab-a874669a69d8",
+						"id": "caba8464-78c6-49b0-9c44-e50b229c1108",
 						"exec": [
 							""
 						],
@@ -331,7 +330,7 @@
 					],
 					"path": [
 						"v1",
-						"health"
+						"readiness"
 					]
 				}
 			},
@@ -349,7 +348,7 @@
 					],
 					"path": [
 						"v1",
-						"health"
+						"liveness"
 					]
 				}
 			},
