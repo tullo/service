@@ -320,12 +320,30 @@
 			"response": []
 		},
 		{
-			"name": "Health Check",
+			"name": "Readiness Check",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/health",
+					"raw": "{{SERVER}}/v1/readiness",
+					"host": [
+						"{{SERVER}}"
+					],
+					"path": [
+						"v1",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Liveness Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}/v1/liveness",
 					"host": [
 						"{{SERVER}}"
 					],

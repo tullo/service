@@ -47,7 +47,7 @@ spec:
             memory: 512Mi
         readinessProbe:
           httpGet:
-            path: /v1/health
+            path: /v1/readiness
             port: 3000
           initialDelaySeconds: 15
           periodSeconds: 10
@@ -56,11 +56,11 @@ spec:
           successThreshold: 1
         livenessProbe:
           httpGet:
-            path: /v1/health
+            path: /v1/liveness
             port: 3000
-            httpHeaders:
-              - name: X-Probe
-                value: LivenessProbe
+#            httpHeaders:
+#              - name: X-Probe
+#                value: LivenessProbe
           initialDelaySeconds: 30
           periodSeconds: 20
           timeoutSeconds: 10

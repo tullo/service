@@ -132,9 +132,15 @@ compose-up:
 compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
-.PHONY: curl-health-check
-curl-health-check:
-	@echo $(shell curl --silent --show-error http://0.0.0.0:3000/v1/health)
+.PHONY: curl-readiness-check
+curl-readiness-check:
+	@curl -i --silent --show-error http://0.0.0.0:3000/v1/readiness
+	@echo
+
+.PHONY: curl-liveness-check
+curl-liveness-check:
+	@curl -i --silent --show-error http://0.0.0.0:3000/v1/liveness
+	@echo
 
 .PHONY: generate-load
 generate-load:
