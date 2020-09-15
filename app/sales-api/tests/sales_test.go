@@ -16,6 +16,9 @@ func Test_Sales(t *testing.T) {
 	log, db, teardown := tests.NewUnit(t)
 	defer teardown()
 
+	p := product.New(log, db)
+	s := sale.New(log, db)
+
 	t.Log("Given the need to work with product Sales records.")
 
 	now := time.Date(2019, time.January, 1, 0, 0, 0, 0, time.UTC)
@@ -42,7 +45,7 @@ func Test_Sales(t *testing.T) {
 
 	traceID := "00000000-0000-0000-0000-000000000000"
 
-	puzzles, err := product.Create(ctx, traceID, log, db, claims, newPuzzles, now)
+	puzzles, err := p.Create(ctx, traceID, claims, newPuzzles, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
@@ -52,7 +55,7 @@ func Test_Sales(t *testing.T) {
 		Cost:     40,
 		Quantity: 3,
 	}
-	toys, err := product.Create(ctx, traceID, log, db, claims, newToys, now)
+	toys, err := p.Create(ctx, traceID, claims, newToys, now)
 	if err != nil {
 		t.Fatalf("creating product: %s", err)
 	}
@@ -67,14 +70,14 @@ func Test_Sales(t *testing.T) {
 			Paid:     70,
 		}
 
-		s, err := sale.AddSale(ctx, traceID, log, db, ns, puzzles.ID, now)
+		sale, err := s.AddSale(ctx, traceID, ns, puzzles.ID, now)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to add a new sale: %s", tests.Failed, testID, err)
 		}
 		t.Logf("\t%s\tTest %d:\tShould be able to add a new sale.", tests.Success, testID)
 
 		// Puzzles should show the 1 sale.
-		sales, err := sale.List(ctx, traceID, log, db, puzzles.ID)
+		sales, err := s.List(ctx, traceID, puzzles.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tShould be able to list sales for a product: %s.", tests.Failed, testID, err)
 		}
@@ -85,12 +88,12 @@ func Test_Sales(t *testing.T) {
 		}
 		t.Logf("\t%s\tTest %d:\tShould get back ONE sale for the product", tests.Success, testID)
 
-		if exp, got := s.ID, sales[0].ID; exp != got {
+		if exp, got := sale.ID, sales[0].ID; exp != got {
 			t.Fatalf("\t%s\tTest %d:\tExpected first sale ID %v, got %v", tests.Failed, testID, exp, got)
 		}
 
 		// Toys should have 0 sales.
-		sales, err = sale.List(ctx, traceID, log, db, toys.ID)
+		sales, err = s.List(ctx, traceID, toys.ID)
 		if err != nil {
 			t.Fatalf("\t%s\tTest %d:\tListing sales: %s", tests.Failed, testID, err)
 		}

@@ -7,6 +7,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data/product"
+	"github.com/tullo/service/business/data/sale"
+	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/business/mid"
 	"github.com/tullo/service/foundation/web"
 )
@@ -18,44 +21,42 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
 	// Register health check endpoint. This route is not authenticated.
-	c := checkHandlers{
+	cg := checkGroup{
 		build: build,
 		db:    db,
 		log:   log,
 	}
 
-	app.Handle(http.MethodGet, "/v1/readiness", c.readiness)
-	app.Handle(http.MethodGet, "/v1/liveness", c.liveness)
+	app.Handle(http.MethodGet, "/v1/readiness", cg.readiness)
+	app.Handle(http.MethodGet, "/v1/liveness", cg.liveness)
 
 	// Register user management and authentication endpoints.
-	u := userHandlers{
+	ug := userGroup{
+		user: user.New(log, db),
 		auth: a,
-		db:   db,
-		log:  log,
 	}
 
-	app.Handle(http.MethodGet, "/v1/users", u.query, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodPost, "/v1/users", u.create, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodGet, "/v1/users/{id}", u.queryByID, mid.Authenticate(a))
-	app.Handle(http.MethodPut, "/v1/users/{id}", u.update, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodDelete, "/v1/users/{id}", u.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-
+	app.Handle(http.MethodGet, "/v1/users", ug.query, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodPost, "/v1/users", ug.create, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users/{id}", ug.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/v1/users/{id}", ug.update, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodDelete, "/v1/users/{id}", ug.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
 	// This route is not authenticated
-	app.Handle(http.MethodGet, "/v1/users/token", u.token)
+	app.Handle(http.MethodGet, "/v1/users/token", ug.token)
 
 	// Register product and sale endpoints.
-	p := productHandlers{
-		db:  db,
-		log: log,
+	pg := productGroup{
+		product: product.New(log, db),
+		sale:    sale.New(log, db),
 	}
-	app.Handle(http.MethodGet, "/v1/products", p.query, mid.Authenticate(a))
-	app.Handle(http.MethodPost, "/v1/products", p.create, mid.Authenticate(a))
-	app.Handle(http.MethodGet, "/v1/products/{id}", p.queryByID, mid.Authenticate(a))
-	app.Handle(http.MethodPut, "/v1/products/{id}", p.update, mid.Authenticate(a))
-	app.Handle(http.MethodDelete, "/v1/products/{id}", p.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/products", pg.query, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/v1/products", pg.create, mid.Authenticate(a))
+	app.Handle(http.MethodGet, "/v1/products/{id}", pg.queryByID, mid.Authenticate(a))
+	app.Handle(http.MethodPut, "/v1/products/{id}", pg.update, mid.Authenticate(a))
+	app.Handle(http.MethodDelete, "/v1/products/{id}", pg.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
 
-	app.Handle(http.MethodPost, "/v1/products/{id}/sales", p.addSale, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodGet, "/v1/products/{id}/sales", p.querySales, mid.Authenticate(a))
+	app.Handle(http.MethodPost, "/v1/products/{id}/sales", pg.addSale, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/products/{id}/sales", pg.querySales, mid.Authenticate(a))
 
 	return app
 }

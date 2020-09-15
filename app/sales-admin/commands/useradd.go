@@ -25,6 +25,8 @@ func UserAdd(traceID string, log *log.Logger, cfg database.Config, email, passwo
 	}
 	defer db.Close()
 
+	u := user.New(log, db)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -34,11 +36,12 @@ func UserAdd(traceID string, log *log.Logger, cfg database.Config, email, passwo
 		PasswordConfirm: password,
 		Roles:           []string{auth.RoleAdmin, auth.RoleUser},
 	}
-	u, err := user.Create(ctx, traceID, log, db, nu, time.Now())
+
+	usr, err := u.Create(ctx, traceID, nu, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "create user")
 	}
 
-	fmt.Println("user id:", u.ID)
+	fmt.Println("user id:", usr.ID)
 	return nil
 }

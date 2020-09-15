@@ -2,11 +2,9 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
@@ -16,13 +14,13 @@ import (
 )
 
 // Product represents the Product API method handler set.
-type productHandlers struct {
-	db  *sqlx.DB
-	log *log.Logger
+type productGroup struct {
+	product product.Product
+	sale    sale.Sale
 }
 
 // Query gets all existing products in the system.
-func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.query")
 	defer span.End()
 
@@ -31,7 +29,7 @@ func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *h
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	products, err := product.Query(ctx, v.TraceID, h.log, h.db)
+	products, err := pg.product.Query(ctx, v.TraceID)
 	if err != nil {
 		return err
 	}
@@ -40,7 +38,7 @@ func (h *productHandlers) query(ctx context.Context, w http.ResponseWriter, r *h
 }
 
 // QueryByID returns the specified product from the system.
-func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querybyid")
 	defer span.End()
@@ -51,7 +49,7 @@ func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, 
 	}
 
 	id := web.Param(r, "id")
-	prod, err := product.QueryByID(ctx, v.TraceID, h.log, h.db, id)
+	prod, err := pg.product.QueryByID(ctx, v.TraceID, id)
 	if err != nil {
 		switch err {
 		case product.ErrInvalidID:
@@ -68,7 +66,7 @@ func (h *productHandlers) queryByID(ctx context.Context, w http.ResponseWriter, 
 
 // Create decodes the body of a request to create a new product. The full
 // product with populatd fields is sent back in the response.
-func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.create")
 	defer span.End()
@@ -88,7 +86,7 @@ func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *
 		return errors.Wrap(err, "decoding new product")
 	}
 
-	prod, err := product.Create(ctx, v.TraceID, h.log, h.db, claims, np, v.Now)
+	prod, err := pg.product.Create(ctx, v.TraceID, claims, np, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "creating new product: %+v", np)
 	}
@@ -98,7 +96,7 @@ func (h *productHandlers) create(ctx context.Context, w http.ResponseWriter, r *
 
 // Update decodes the body of a request to update an existing product. The ID
 // of the product is part of the request URL.
-func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.update")
 	defer span.End()
@@ -119,7 +117,7 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	id := web.Param(r, "id")
-	if err := product.Update(ctx, v.TraceID, h.log, h.db, claims, id, up, v.Now); err != nil {
+	if err := pg.product.Update(ctx, v.TraceID, claims, id, up, v.Now); err != nil {
 		switch err {
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -136,7 +134,7 @@ func (h *productHandlers) update(ctx context.Context, w http.ResponseWriter, r *
 }
 
 // Delete removes a single product identified by an ID in the request URL.
-func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.delete")
 	defer span.End()
@@ -147,7 +145,7 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	id := web.Param(r, "id")
-	if err := product.Delete(ctx, v.TraceID, h.log, h.db, id); err != nil {
+	if err := pg.product.Delete(ctx, v.TraceID, id); err != nil {
 		switch err {
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
@@ -161,7 +159,7 @@ func (h *productHandlers) delete(ctx context.Context, w http.ResponseWriter, r *
 
 // AddSale creates a new Sale for a particular product. It looks for a JSON
 // object in the request body. The full model is returned to the caller.
-func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.addsale")
 	defer span.End()
@@ -177,7 +175,7 @@ func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r 
 	}
 
 	id := web.Param(r, "id")
-	sale, err := sale.AddSale(r.Context(), v.TraceID, h.log, h.db, ns, id, time.Now())
+	sale, err := pg.sale.AddSale(r.Context(), v.TraceID, ns, id, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "adding new sale")
 	}
@@ -186,7 +184,7 @@ func (h *productHandlers) addSale(ctx context.Context, w http.ResponseWriter, r 
 }
 
 // QuerySales gets all sales for a particular product.
-func (h *productHandlers) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (pg productGroup) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querysales")
 	defer span.End()
@@ -197,7 +195,7 @@ func (h *productHandlers) querySales(ctx context.Context, w http.ResponseWriter,
 	}
 
 	id := web.Param(r, "id")
-	list, err := sale.List(r.Context(), v.TraceID, h.log, h.db, id)
+	list, err := pg.sale.List(r.Context(), v.TraceID, id)
 	if err != nil {
 		return errors.Wrap(err, "getting sales list")
 	}

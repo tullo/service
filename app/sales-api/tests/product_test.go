@@ -298,7 +298,7 @@ func (pt *ProductTests) crudProductUser(t *testing.T) {
 }
 
 // postProduct201 validates a product can be created with the endpoint.
-func (pt *ProductTests) postProduct201(t *testing.T) product.Product {
+func (pt *ProductTests) postProduct201(t *testing.T) product.Info {
 	np := product.NewProduct{
 		Name:     "Comic Books",
 		Cost:     25,
@@ -318,7 +318,7 @@ func (pt *ProductTests) postProduct201(t *testing.T) product.Product {
 	pt.app.ServeHTTP(w, r)
 
 	// p is the value we will return.
-	var p product.Product
+	var p product.Info
 
 	t.Log("Given the need to create a new product with the products endpoint.")
 	{
@@ -394,7 +394,7 @@ func (pt *ProductTests) getProduct200(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
 
-			var p product.Product
+			var p product.Info
 			if err := json.NewDecoder(w.Body).Decode(&p); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
@@ -449,7 +449,7 @@ func (pt *ProductTests) putProduct204(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the retrieve.", tests.Success, testID)
 
-			var ru product.Product
+			var ru product.Info
 			if err := json.NewDecoder(w.Body).Decode(&ru); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
@@ -535,19 +535,19 @@ func (pt *ProductTests) postProductSale201(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to add a new sale.", tests.Success, testID)
 
-			var s sale.Sale
-			if err := json.NewDecoder(w.Body).Decode(&s); err != nil {
+			var sale sale.Info
+			if err := json.NewDecoder(w.Body).Decode(&sale); err != nil {
 				t.Logf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
 
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy s.
-			exp := s
+			exp := sale
 			exp.ProductID = id
 			exp.Quantity = ns.Quantity
 			exp.Paid = ns.Paid
 
-			if diff := cmp.Diff(exp, s); diff != "" {
+			if diff := cmp.Diff(exp, sale); diff != "" {
 				t.Logf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
@@ -574,7 +574,7 @@ func (pt *ProductTests) getProductSales200(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
 
-			var sales []sale.Sale
+			var sales []sale.Info
 			if err := json.NewDecoder(w.Body).Decode(&sales); err != nil {
 				t.Logf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
@@ -597,7 +597,7 @@ func (pt *ProductTests) getProductSales200(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
 
-			var p product.Product
+			var p product.Info
 			if err := json.NewDecoder(w.Body).Decode(&p); err != nil {
 				t.Logf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}

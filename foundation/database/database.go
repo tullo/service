@@ -72,7 +72,7 @@ func Log(query string, args ...interface{}) string {
 		var a string
 		switch v := arg.(type) {
 		case string:
-			a = fmt.Sprintf("%q", v)
+			a = fmt.Sprintf("'%s'", v)
 		case []byte:
 			a = string(v)
 		case []string:

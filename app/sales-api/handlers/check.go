@@ -14,7 +14,7 @@ import (
 )
 
 // Check provides support for orchestration health checks.
-type checkHandlers struct {
+type checkGroup struct {
 	build string
 	db    *sqlx.DB
 	log   *log.Logger
@@ -24,7 +24,7 @@ type checkHandlers struct {
 // readiness checks if the database is ready and if not will return a 500 status.
 // Do not respond by just returning an error because further up in the call
 // stack it will interpret that as a non-trusted error.
-func (h *checkHandlers) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.check.readiness")
 	defer span.End()
 
@@ -35,7 +35,7 @@ func (h *checkHandlers) readiness(ctx context.Context, w http.ResponseWriter, r 
 
 	status := "ok"
 	statusCode := http.StatusOK
-	if err := database.StatusCheck(ctx, v.TraceID, h.log, h.db); err != nil {
+	if err := database.StatusCheck(ctx, v.TraceID, cg.log, cg.db); err != nil {
 		status = "db not ready"
 		statusCode = http.StatusInternalServerError
 		span.SetStatus(codes.Unavailable, web.CheckErr(err))
@@ -46,7 +46,7 @@ func (h *checkHandlers) readiness(ctx context.Context, w http.ResponseWriter, r 
 		Version string `json:"version"`
 		Status  string `json:"status"`
 	}{
-		Version: h.build,
+		Version: cg.build,
 		Status:  status,
 	}
 
@@ -57,7 +57,7 @@ func (h *checkHandlers) readiness(ctx context.Context, w http.ResponseWriter, r 
 // app is deployed to a Kubernetes cluster, it will also return pod, node, and
 // namespace details via the Downward API. The Kubernetes environment variables
 // need to be set within your Pod/Deployment manifest.
-func (h *checkHandlers) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (cg checkGroup) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.check.liveness")
 	defer span.End()
 
@@ -76,7 +76,7 @@ func (h *checkHandlers) liveness(ctx context.Context, w http.ResponseWriter, r *
 		Namespace string `json:"namespace,omitempty"`
 	}{
 		Status:    "up",
-		Build:     h.build,
+		Build:     cg.build,
 		Host:      host,
 		Pod:       os.Getenv("KUBERNETES_PODNAME"),
 		PodIP:     os.Getenv("KUBERNETES_NAMESPACE_POD_IP"),

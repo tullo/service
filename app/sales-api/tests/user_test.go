@@ -167,7 +167,7 @@ func (ut *UserTests) postUser400(t *testing.T) {
 // postUser403 validates a user can't be created unless the calling user is an
 // admin. Regular users can't do this. (403 Forbidden)
 func (ut *UserTests) postUser403(t *testing.T) {
-	body, err := json.Marshal(&user.User{})
+	body, err := json.Marshal(&user.Info{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +195,7 @@ func (ut *UserTests) postUser403(t *testing.T) {
 // postUser401 validates a user can't be created unless the calling user is
 // authenticated. (401 Unauthorized)
 func (ut *UserTests) postUser401(t *testing.T) {
-	body, err := json.Marshal(&user.User{})
+	body, err := json.Marshal(&user.Info{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -410,7 +410,7 @@ func (ut *UserTests) crudUser(t *testing.T) {
 }
 
 // postUser201 validates a user can be created with the endpoint.
-func (ut *UserTests) postUser201(t *testing.T) user.User {
+func (ut *UserTests) postUser201(t *testing.T) user.Info {
 	nu := user.NewUser{
 		Name:            "Bill Kennedy",
 		Email:           "bill@ardanlabs.com",
@@ -432,7 +432,7 @@ func (ut *UserTests) postUser201(t *testing.T) user.User {
 	ut.app.ServeHTTP(w, r)
 
 	// u is the value we will return.
-	var u user.User
+	var u user.Info
 
 	t.Log("Given the need to create a new user with the users endpoint.")
 	{
@@ -506,7 +506,7 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
 
-			var u user.User
+			var u user.Info
 			if err := json.NewDecoder(w.Body).Decode(&u); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
@@ -560,7 +560,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the retrieve.", tests.Success, testID)
 
-			var ru user.User
+			var ru user.Info
 			if err := json.NewDecoder(w.Body).Decode(&ru); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}

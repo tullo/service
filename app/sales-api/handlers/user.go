@@ -2,10 +2,8 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/user"
@@ -13,17 +11,14 @@ import (
 	"go.opentelemetry.io/otel/api/trace"
 )
 
-// User represents the User API method handler set.
-type userHandlers struct {
-	db   *sqlx.DB
+// userGroup represents the User API method handler set.
+type userGroup struct {
+	user user.User
 	auth *auth.Auth
-	log  *log.Logger
-
-	// ADD OTHER STATE LIKE THE LOGGER AND CONFIG HERE.
 }
 
 // Query returns all the existing users in the system.
-func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.list")
 	defer span.End()
 
@@ -32,7 +27,7 @@ func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	users, err := user.Query(ctx, v.TraceID, h.log, h.db)
+	users, err := ug.user.Query(ctx, v.TraceID)
 	if err != nil {
 		return err
 	}
@@ -41,7 +36,7 @@ func (h *userHandlers) query(ctx context.Context, w http.ResponseWriter, r *http
 }
 
 // QueryByID returns the specified user from the system.
-func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.retrieve")
 	defer span.End()
 
@@ -56,7 +51,7 @@ func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	id := web.Param(r, "id")
-	usr, err := user.QueryByID(ctx, v.TraceID, h.log, claims, h.db, id)
+	usr, err := ug.user.QueryByID(ctx, v.TraceID, claims, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -74,7 +69,7 @@ func (h *userHandlers) queryByID(ctx context.Context, w http.ResponseWriter, r *
 }
 
 // Create inserts a new user into the system.
-func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.create")
 	defer span.End()
@@ -89,7 +84,7 @@ func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *htt
 		return errors.Wrap(err, "")
 	}
 
-	usr, err := user.Create(ctx, v.TraceID, h.log, h.db, nu, v.Now)
+	usr, err := ug.user.Create(ctx, v.TraceID, nu, v.Now)
 	if err != nil {
 		return errors.Wrapf(err, "User: %+v", &usr)
 	}
@@ -98,7 +93,7 @@ func (h *userHandlers) create(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 // Update updates the specified user in the system.
-func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.update")
 	defer span.End()
@@ -119,7 +114,7 @@ func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	id := web.Param(r, "id")
-	err := user.Update(ctx, v.TraceID, h.log, claims, h.db, id, upd, v.Now)
+	err := ug.user.Update(ctx, v.TraceID, claims, id, upd, v.Now)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -137,7 +132,7 @@ func (h *userHandlers) update(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 // Delete removes the specified user from the system.
-func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.delete")
 	defer span.End()
@@ -148,7 +143,7 @@ func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *htt
 	}
 
 	id := web.Param(r, "id")
-	err := user.Delete(ctx, v.TraceID, h.log, h.db, id)
+	err := ug.user.Delete(ctx, v.TraceID, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -167,7 +162,7 @@ func (h *userHandlers) delete(ctx context.Context, w http.ResponseWriter, r *htt
 
 // Token handles a request to authenticate a user. It expects a request using
 // Basic Auth with a user's email and password. It responds with a JWT.
-func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.token")
 	defer span.End()
@@ -183,7 +178,7 @@ func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http
 		return web.NewRequestError(err, http.StatusUnauthorized)
 	}
 
-	claims, err := user.Authenticate(ctx, v.TraceID, h.log, h.db, v.Now, email, pass)
+	claims, err := ug.user.Authenticate(ctx, v.TraceID, v.Now, email, pass)
 	if err != nil {
 		switch err {
 		case user.ErrAuthenticationFailure:
@@ -196,7 +191,7 @@ func (h *userHandlers) token(ctx context.Context, w http.ResponseWriter, r *http
 	var tkn struct {
 		Token string `json:"token"`
 	}
-	tkn.Token, err = h.auth.GenerateToken(claims)
+	tkn.Token, err = ug.auth.GenerateToken(claims)
 	if err != nil {
 		return errors.Wrap(err, "generating token")
 	}
