@@ -1,6 +1,3 @@
-# github.com/ardanlabs/conf v1.3.2
-## explicit
-github.com/ardanlabs/conf
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
 github.com/dgrijalva/jwt-go
@@ -49,6 +46,9 @@ github.com/openzipkin/zipkin-go/model
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/tullo/conf v1.3.4
+## explicit
+github.com/tullo/conf
 # go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0
 ## explicit
 go.opentelemetry.io/contrib/instrumentation/net/http

@@ -34,8 +34,8 @@ type Sourcer interface {
 
 // Version provides the abitily to add version and description to the application.
 type Version struct {
-	SVN  string
-	Desc string
+	Version     string
+	Description string
 }
 
 // VersionString provides output to display the application version and description on the command line.

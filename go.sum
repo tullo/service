@@ -6,8 +6,6 @@ github.com/DATA-DOG/go-sqlmock v1.3.3/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q
 github.com/DataDog/sketches-go v0.0.1/go.mod h1:Q5DbzQ+3AkgGwymQO7aZFNP7ns2lZKGtvRBzRXfdi60=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
-github.com/ardanlabs/conf v1.3.2 h1:xxwIYbajuyx0O6pDBhqJaAPBGBgysZ/JFZrnXAQNDws=
-github.com/ardanlabs/conf v1.3.2/go.mod h1:ILsMo9dMqYzCxDjDXTiwMI0IgxOJd0MOiucbQY2wlJw=
 github.com/benbjohnson/clock v1.0.3/go.mod h1:bGMdMPoPVvcYyt1gHDf4J2KE153Yf9BuiUKYMaxlTDM=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -108,6 +106,8 @@ github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJy
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/tullo/conf v1.3.4 h1:tRcyFzUdiXpDXnxUS8u8IIvrDIEpzs2B9NTCSxu8MVM=
+github.com/tullo/conf v1.3.4/go.mod h1:myUlJ7OjJ0lpgEz4Xue3gSzaKzi2YQvzpoC28tfCsKA=
 go.opentelemetry.io/contrib v0.11.0 h1:EQOdk+fxs7qp3wVIS5wCinwqNHfhD/DreQRY/VADO8s=
 go.opentelemetry.io/contrib v0.11.0/go.mod h1:ZE6zLnhbB+AmcDlcG57gEbtyUasUiaeppcDfBcrZabY=
 go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0 h1:ufewgDRmtrrdDpPgm7b4/gr4RXLS7KhDttAhyThtYS4=

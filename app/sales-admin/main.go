@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/ardanlabs/conf"
 	"github.com/pkg/errors"
+	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-admin/commands"
 	"github.com/tullo/service/foundation/database"
 )
@@ -41,8 +41,8 @@ func run(log *log.Logger) error {
 			DisableTLS bool   `conf:"default:false"`
 		}
 	}
-	cfg.Version.SVN = build
-	cfg.Version.Desc = "copyright information here"
+	cfg.Version.Version = build
+	cfg.Version.Description = "copyright information here"
 
 	const prefix = "SALES"
 	if err := conf.Parse(os.Args[1:], prefix, &cfg); err != nil {

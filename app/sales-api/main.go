@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ardanlabs/conf"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
+	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-api/handlers"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/foundation/database"
@@ -74,8 +74,8 @@ func run(log *log.Logger) error {
 			Probability float64 `conf:"default:0.05"`
 		}
 	}
-	cfg.Version.SVN = build
-	cfg.Version.Desc = "copyright information here"
+	cfg.Version.Version = build
+	cfg.Version.Description = "copyright information here"
 
 	if err := conf.Parse(os.Args[1:], "SALES", &cfg); err != nil {
 		switch err {

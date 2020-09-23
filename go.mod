@@ -3,7 +3,6 @@ module github.com/tullo/service
 go 1.15
 
 require (
-	github.com/ardanlabs/conf v1.3.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 	github.com/go-chi/chi v4.1.2+incompatible
@@ -16,6 +15,7 @@ require (
 	github.com/lib/pq v1.8.0
 	github.com/openzipkin/zipkin-go v0.2.4 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/tullo/conf v1.3.4
 	go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0
 	go.opentelemetry.io/otel v0.11.0
 	go.opentelemetry.io/otel/exporters/trace/zipkin v0.11.0
