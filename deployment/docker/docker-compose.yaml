@@ -18,6 +18,7 @@ services:
     image: openzipkin/zipkin-slim:2.21
     ports:
       - 9411:9411
+    user: "1000"
 
   # This sidecar publishes metrics to the console by default.
   metrics:
@@ -28,6 +29,7 @@ services:
     ports:
       - 3001:3001 # EXPVAR API
       - 4001:4001 # DEBUG API
+    user: "100000"
 
   # This starts a local PostgreSQL DB.
   db:
@@ -59,3 +61,4 @@ services:
       - metrics
       - zipkin
       - db
+    user: "100000"
