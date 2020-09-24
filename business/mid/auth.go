@@ -22,7 +22,7 @@ var ErrForbidden = web.NewRequestError(
 func Authenticate(a *auth.Auth) web.Middleware {
 
 	// This is the actual middleware function to be executed.
-	m := func(after web.Handler) web.Handler {
+	m := func(handler web.Handler) web.Handler {
 
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -45,7 +45,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 			// Add claims to the context so they can be retrieved later.
 			ctx = context.WithValue(ctx, auth.Key, claims)
 
-			return after(ctx, w, r)
+			return handler(ctx, w, r)
 		}
 
 		return h
@@ -59,7 +59,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 func HasRole(roles ...string) web.Middleware {
 
 	// This is the actual middleware function to be executed.
-	m := func(after web.Handler) web.Handler {
+	m := func(handler web.Handler) web.Handler {
 
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
@@ -75,7 +75,7 @@ func HasRole(roles ...string) web.Middleware {
 				return ErrForbidden
 			}
 
-			return after(ctx, w, r)
+			return handler(ctx, w, r)
 		}
 
 		return h

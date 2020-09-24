@@ -25,7 +25,7 @@ var m = struct {
 func Metrics() web.Middleware {
 
 	// This is the actual middleware function to be executed.
-	m := func(before web.Handler) web.Handler {
+	m := func(handler web.Handler) web.Handler {
 
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -33,7 +33,7 @@ func Metrics() web.Middleware {
 			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.metrics")
 			defer span.End()
 
-			err := before(ctx, w, r)
+			err := handler(ctx, w, r)
 
 			// Increment the request counter.
 			m.req.Add(1)
