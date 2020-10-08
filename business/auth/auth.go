@@ -41,8 +41,8 @@ func (c Claims) Valid() error {
 	return nil
 }
 
-// HasRole returns true if the claims has at least one of the provided roles.
-func (c Claims) HasRole(roles ...string) bool {
+// Authorized returns true if the claims has at least one of the provided roles.
+func (c Claims) Authorized(roles ...string) bool {
 	for _, has := range c.Roles {
 		for _, want := range roles {
 			if has == want {

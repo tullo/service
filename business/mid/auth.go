@@ -2,6 +2,7 @@ package mid
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -9,13 +10,6 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/foundation/web"
 	"go.opentelemetry.io/otel/api/trace"
-)
-
-// ErrForbidden is returned when an authenticated user does not have a
-// sufficient role for an action.
-var ErrForbidden = web.NewRequestError(
-	errors.New("you are not authorized for that action"),
-	http.StatusForbidden,
 )
 
 // Authenticate validates a JWT from the `Authorization` header.
@@ -29,9 +23,8 @@ func Authenticate(a *auth.Auth) web.Middleware {
 			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.authenticate")
 			defer span.End()
 
-			// Parse the authorization header. Expected header is of
-			// the format `Bearer <token>`.
 			parts := strings.Split(r.Header.Get("Authorization"), " ")
+			// Expecting header format `Bearer <token>`.
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 				err := errors.New("expected authorization header format: Bearer <token>")
 				return web.NewRequestError(err, http.StatusUnauthorized)
@@ -55,9 +48,9 @@ func Authenticate(a *auth.Auth) web.Middleware {
 	return m
 }
 
-// HasRole validates that an authenticated user has at least one role from a
+// Authorize validates that an authenticated user has at least one role from a
 // specified list. This method constructs the actual function that is used.
-func HasRole(roles ...string) web.Middleware {
+func Authorize(roles ...string) web.Middleware {
 
 	// This is the actual middleware function to be executed.
 	m := func(handler web.Handler) web.Handler {
@@ -69,11 +62,14 @@ func HasRole(roles ...string) web.Middleware {
 
 			claims, ok := ctx.Value(auth.Key).(auth.Claims)
 			if !ok {
-				return errors.New("claims missing from context: HasRole called without/before Authenticate")
+				return errors.New("claims missing from context")
 			}
 
-			if !claims.HasRole(roles...) {
-				return ErrForbidden
+			if !claims.Authorized(roles...) {
+				return web.NewRequestError(
+					fmt.Errorf("you are not authorized for that action: claims: %v exp: %v", claims.Roles, roles),
+					http.StatusForbidden,
+				)
 			}
 
 			return handler(ctx, w, r)

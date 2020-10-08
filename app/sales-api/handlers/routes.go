@@ -36,11 +36,11 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 		auth: a,
 	}
 
-	app.Handle(http.MethodGet, "/v1/users", ug.query, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodPost, "/v1/users", ug.create, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodGet, "/v1/users", ug.query, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
+	app.Handle(http.MethodPost, "/v1/users", ug.create, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
 	app.Handle(http.MethodGet, "/v1/users/{id}", ug.queryByID, mid.Authenticate(a))
-	app.Handle(http.MethodPut, "/v1/users/{id}", ug.update, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
-	app.Handle(http.MethodDelete, "/v1/users/{id}", ug.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodPut, "/v1/users/{id}", ug.update, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
+	app.Handle(http.MethodDelete, "/v1/users/{id}", ug.delete, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
 	// This route is not authenticated
 	app.Handle(http.MethodGet, "/v1/users/token", ug.token)
 
@@ -53,9 +53,9 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 	app.Handle(http.MethodPost, "/v1/products", pg.create, mid.Authenticate(a))
 	app.Handle(http.MethodGet, "/v1/products/{id}", pg.queryByID, mid.Authenticate(a))
 	app.Handle(http.MethodPut, "/v1/products/{id}", pg.update, mid.Authenticate(a))
-	app.Handle(http.MethodDelete, "/v1/products/{id}", pg.delete, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodDelete, "/v1/products/{id}", pg.delete, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
 
-	app.Handle(http.MethodPost, "/v1/products/{id}/sales", pg.addSale, mid.Authenticate(a), mid.HasRole(auth.RoleAdmin))
+	app.Handle(http.MethodPost, "/v1/products/{id}/sales", pg.addSale, mid.Authenticate(a), mid.Authorize(auth.RoleAdmin))
 	app.Handle(http.MethodGet, "/v1/products/{id}/sales", pg.querySales, mid.Authenticate(a))
 
 	return app
