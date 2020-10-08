@@ -72,11 +72,11 @@ type KeyLookupFunc func(publicKID string) (*rsa.PublicKey, error)
 // Auth is used to authenticate clients. It can generate a token for a
 // set of user claims and recreate the claims by parsing the token.
 type Auth struct {
-	privateKey       *rsa.PrivateKey
-	publicKID        string
-	algorithm        string
-	pubKeyLookupFunc KeyLookupFunc
-	parser           *jwt.Parser
+	privateKey *rsa.PrivateKey
+	publicKID  string
+	algorithm  string
+	keyFunc    KeyLookupFunc
+	parser     *jwt.Parser
 }
 
 // New creates an *Auth for use. It will error if:
@@ -84,7 +84,7 @@ type Auth struct {
 // - The public key func is nil.
 // - The key ID is blank.
 // - The specified algorithm is unsupported.
-func New(privateKey *rsa.PrivateKey, publicKID, algorithm string, publicKeyLookupFunc KeyLookupFunc) (*Auth, error) {
+func New(privateKey *rsa.PrivateKey, publicKID, algorithm string, lookup KeyLookupFunc) (*Auth, error) {
 	if privateKey == nil {
 		return nil, errors.New("private key cannot be nil")
 	}
@@ -94,7 +94,7 @@ func New(privateKey *rsa.PrivateKey, publicKID, algorithm string, publicKeyLooku
 	if jwt.GetSigningMethod(algorithm) == nil {
 		return nil, errors.Errorf("unknown algorithm %v", algorithm)
 	}
-	if publicKeyLookupFunc == nil {
+	if lookup == nil {
 		return nil, errors.New("public key function cannot be nil")
 	}
 
@@ -106,11 +106,11 @@ func New(privateKey *rsa.PrivateKey, publicKID, algorithm string, publicKeyLooku
 	}
 
 	a := Auth{
-		privateKey:       privateKey,
-		publicKID:        publicKID,
-		algorithm:        algorithm,
-		pubKeyLookupFunc: publicKeyLookupFunc,
-		parser:           &parser,
+		privateKey: privateKey,
+		publicKID:  publicKID,
+		algorithm:  algorithm,
+		keyFunc:    lookup,
+		parser:     &parser,
 	}
 
 	return &a, nil
@@ -147,7 +147,7 @@ func (a *Auth) ValidateToken(tokenStr string) (Claims, error) {
 		if !ok {
 			return nil, errors.New("user token key id (kid) must be string")
 		}
-		return a.pubKeyLookupFunc(publicKID)
+		return a.keyFunc(publicKID)
 	}
 
 	var claims Claims

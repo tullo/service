@@ -151,14 +151,14 @@ func NewIntegration(t *testing.T) *Test {
 	// Build an authenticator using this key lookup function to retrieve
 	// the corresponding public key.
 	KID := "4754d86b-7a6d-4df5-9c65-224741361492"
-	keyLookupFunc := func(kid string) (*rsa.PublicKey, error) {
+	lookup := func(kid string) (*rsa.PublicKey, error) {
 		if kid != KID {
 			return nil, errors.New("no public key found")
 		}
 		return privateKey.Public().(*rsa.PublicKey), nil
 	}
 
-	auth, err := auth.New(privateKey, KID, "RS256", keyLookupFunc)
+	auth, err := auth.New(privateKey, KID, "RS256", lookup)
 	if err != nil {
 		t.Fatal(err)
 	}

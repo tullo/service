@@ -68,14 +68,14 @@ func TestAuth(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to parse the private key from pem.", success, testID)
 
 			// Create a key lookup function that returns the public key for the test KID.
-			keyLookupFunc := func(publicKID string) (*rsa.PublicKey, error) {
+			lookup := func(publicKID string) (*rsa.PublicKey, error) {
 				if publicKID != publicTestKID {
 					return nil, errors.New("no public key found")
 				}
 				return &privateKey.PublicKey, nil
 			}
 
-			authenticator, err := auth.New(privateKey, publicTestKID, "RS256", keyLookupFunc)
+			authenticator, err := auth.New(privateKey, publicTestKID, "RS256", lookup)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create an authenticator: %v", failed, testID, err)
 			}
