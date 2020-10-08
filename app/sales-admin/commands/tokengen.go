@@ -63,12 +63,12 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	// In this code, I am writing a lookup function that will return the public
 	// key for the private key provided with an arbitary KID.
 	keyID := "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
-	lookup := func(publicKID string) (*rsa.PublicKey, error) {
-		switch publicKID {
+	lookup := func(kid string) (*rsa.PublicKey, error) {
+		switch kid {
 		case keyID:
 			return &privateKey.PublicKey, nil
 		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", publicKID)
+		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 	}
 
 	// An authenticator maintains the state required to handle JWT processing.
@@ -76,7 +76,7 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	// to the corresponding public key, the algorithms to use (RS256), and the
 	// key lookup function to perform the actual retrieve of the KID to public
 	// key lookup.
-	a, err := auth.New(privateKey, keyID, algorithm, lookup)
+	a, err := auth.New(algorithm, lookup, keyID, privateKey)
 	if err != nil {
 		return errors.Wrap(err, "constructing authenticator")
 	}

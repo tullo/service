@@ -37,6 +37,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 				return web.NewRequestError(err, http.StatusUnauthorized)
 			}
 
+			// Validate the token is signed by us.
 			claims, err := a.ValidateToken(parts[1])
 			if err != nil {
 				return web.NewRequestError(err, http.StatusUnauthorized)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"errors"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -152,13 +152,14 @@ func NewIntegration(t *testing.T) *Test {
 	// the corresponding public key.
 	KID := "4754d86b-7a6d-4df5-9c65-224741361492"
 	lookup := func(kid string) (*rsa.PublicKey, error) {
-		if kid != KID {
-			return nil, errors.New("no public key found")
+		switch kid {
+		case KID:
+			return &privateKey.PublicKey, nil
 		}
-		return privateKey.Public().(*rsa.PublicKey), nil
+		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 	}
 
-	auth, err := auth.New(privateKey, KID, "RS256", lookup)
+	auth, err := auth.New("RS256", lookup, KID, privateKey)
 	if err != nil {
 		t.Fatal(err)
 	}

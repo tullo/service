@@ -15,6 +15,10 @@ export COMPOSE_FILE = deployment/docker/docker-compose.yaml
 # hey tool: make generate-load
 # zipkin: http://localhost:9411
 # expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,mem:memstats.Alloc"
+#
+# To manually generate a private/public key PEM file:
+# 1. openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+# 2. openssl rsa -pubout -in private.pem -out public.pem
 
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 hey-upgrade: export GO111MODULE := off

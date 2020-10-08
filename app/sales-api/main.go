@@ -126,14 +126,14 @@ func run(log *log.Logger) error {
 		return errors.Wrap(err, "parsing auth private key")
 	}
 
-	lookup := func(publicKID string) (*rsa.PublicKey, error) {
-		switch publicKID {
+	lookup := func(kid string) (*rsa.PublicKey, error) {
+		switch kid {
 		case cfg.Auth.KeyID:
 			return privateKey.Public().(*rsa.PublicKey), nil
 		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", publicKID)
+		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 	}
-	auth, err := auth.New(privateKey, cfg.Auth.KeyID, cfg.Auth.Algorithm, lookup)
+	auth, err := auth.New(cfg.Auth.Algorithm, lookup, cfg.Auth.KeyID, privateKey)
 	if err != nil {
 		return errors.Wrap(err, "constructing authenticator")
 	}
