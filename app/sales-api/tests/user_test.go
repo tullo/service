@@ -18,6 +18,15 @@ import (
 	"github.com/tullo/service/foundation/web"
 )
 
+// UserTests holds methods for each user subtest. This type allows passing
+// dependencies for tests while still providing a convenient syntax when
+// subtests are registered.
+type UserTests struct {
+	app        http.Handler
+	userToken  string
+	adminToken string
+}
+
 // TestUsers is the entry point for testing user management functions.
 func TestUsers(t *testing.T) {
 	test := tests.NewIntegration(t)
@@ -41,15 +50,6 @@ func TestUsers(t *testing.T) {
 	t.Run("deleteUserNotFound", tests.deleteUserNotFound)
 	t.Run("putUser404", tests.putUser404)
 	t.Run("crudUsers", tests.crudUser)
-}
-
-// UserTests holds methods for each user subtest. This type allows passing
-// dependencies for tests while still providing a convenient syntax when
-// subtests are registered.
-type UserTests struct {
-	app        http.Handler
-	userToken  string
-	adminToken string
 }
 
 // getToken401 ensures an unknown user can't generate a token.
