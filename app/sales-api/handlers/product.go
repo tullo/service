@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,7 +31,18 @@ func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	products, err := pg.product.Query(ctx, v.TraceID)
+	page := web.Param(r, "page")
+	pageNumber, err := strconv.Atoi(page)
+	if err != nil {
+		return web.NewRequestError(fmt.Errorf("invalid page format: %s", page), http.StatusBadRequest)
+	}
+	rows := web.Param(r, "rows")
+	rowsPerPage, err := strconv.Atoi(rows)
+	if err != nil {
+		return web.NewRequestError(fmt.Errorf("invalid rows format: %s", rows), http.StatusBadRequest)
+	}
+
+	products, err := pg.product.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
 	if err != nil {
 		return err
 	}

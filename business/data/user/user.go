@@ -66,11 +66,13 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 		DateUpdated:  now.UTC(),
 	}
 
-	const q = `INSERT INTO users
+	const q = `
+	INSERT INTO users
 		(user_id, name, email, password_hash, roles, date_created, date_updated)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	VALUES
+		($1, $2, $3, $4, $5, $6, $7)`
 
-	u.log.Printf("%s : %s : query : %s", traceID, "user.Create",
+	u.log.Printf("%s: %s: %s", traceID, "user.Create",
 		database.Log(q, usr.ID, usr.Name, usr.Email, "***", usr.Roles, usr.DateCreated, usr.DateUpdated),
 	)
 
@@ -110,16 +112,20 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 
 	usr.DateUpdated = now
 
-	const q = `UPDATE users SET
+	const q = `
+	UPDATE
+		users
+	SET 
 		"name" = $2,
 		"email" = $3,
 		"roles" = $4,
 		"password_hash" = $5,
 		"date_updated" = $6
-		WHERE user_id = $1`
+	WHERE
+		user_id = $1`
 
-	u.log.Printf("%s : %s : query : %s", traceID, "user.Update",
-		database.Log(q, usr.ID, usr.Name, usr.Email, "***", usr.Roles, usr.DateCreated, usr.DateUpdated),
+	u.log.Printf("%s: %s: %s", traceID, "user.Update",
+		database.Log(q, usr.ID, usr.Name, usr.Email, usr.Roles, "***", usr.DateCreated, usr.DateUpdated),
 	)
 
 	if _, err = u.db.ExecContext(ctx, q, userID, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
@@ -138,29 +144,45 @@ func (u User) Delete(ctx context.Context, traceID string, userID string) error {
 		return ErrInvalidID
 	}
 
-	const q = `DELETE FROM users WHERE user_id = $1`
+	const q = `
+	DELETE FROM
+		users
+	WHERE
+		user_id = $1`
 
-	u.log.Printf("%s : %s : query : %s", traceID, "user.Delete",
+	u.log.Printf("%s: %s: %s", traceID, "user.Delete",
 		database.Log(q, userID),
 	)
 
 	if _, err := u.db.ExecContext(ctx, q, userID); err != nil {
 		return errors.Wrapf(err, "deleting user %s", userID)
 	}
+
 	return nil
 }
 
 // Query retrieves a list of existing users from the database.
-func (u User) Query(ctx context.Context, traceID string) ([]Info, error) {
+func (u User) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.query")
 	defer span.End()
 
-	const q = `SELECT * FROM users`
+	const q = `
+	SELECT
+		*
+	FROM
+		users
+	ORDER BY
+		user_id
+	OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY`
 
-	u.log.Printf("%s : %s : query : %s", traceID, "user.Query", database.Log(q))
+	offset := (pageNumber - 1) * rowsPerPage
+
+	u.log.Printf("%s: %s: %s", traceID, "user.Query",
+		database.Log(q, offset, rowsPerPage),
+	)
 
 	users := []Info{}
-	if err := u.db.SelectContext(ctx, &users, q); err != nil {
+	if err := u.db.SelectContext(ctx, &users, q, offset, rowsPerPage); err != nil {
 		return nil, errors.Wrap(err, "selecting users")
 	}
 
@@ -181,9 +203,15 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 		return Info{}, ErrForbidden
 	}
 
-	const q = `SELECT * FROM users WHERE user_id = $1`
+	const q = `
+	SELECT
+		*
+	FROM
+		users
+	WHERE 
+		user_id = $1`
 
-	u.log.Printf("%s : %s : query : %s", traceID, "user.QueryByID",
+	u.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
 		database.Log(q, userID),
 	)
 
@@ -203,9 +231,15 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.querybyemail")
 	defer span.End()
 
-	const q = `SELECT * FROM users WHERE email = $1`
+	const q = `
+	SELECT
+		*
+	FROM
+		users
+	WHERE
+		email = $1`
 
-	log.Printf("%s : %s : query : %s", traceID, "user.QueryByEmail",
+	u.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
 		database.Log(q, email),
 	)
 
@@ -226,15 +260,21 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 }
 
 // Authenticate finds a user by their email and verifies their password. On
-// success it returns a Claims value representing this user. The claims can be
+// success it returns Claims info representing this user. The claims can be
 // used to generate a token for future authentication.
 func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, email, password string) (auth.Claims, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.authenticate")
 	defer span.End()
 
-	const q = `SELECT * FROM users WHERE email = $1`
+	const q = `
+	SELECT
+		*
+	FROM
+		users
+	WHERE
+		email = $1`
 
-	log.Printf("%s : %s : query : %s", traceID, "user.Authenticate",
+	u.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
 		database.Log(q, email),
 	)
 

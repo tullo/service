@@ -95,7 +95,7 @@ go-run-useradd: go-run-migrate
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
 
 go-run-users: go-run-migrate
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 users
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 users 1 50
 
 go-pprof-browser:
 	@firefox http://localhost:4000/debug/pprof
@@ -136,15 +136,21 @@ compose-up:
 compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
-.PHONY: curl-readiness-check
 curl-readiness-check:
 	@curl -i --silent --show-error http://0.0.0.0:3000/v1/readiness
 	@echo
 
-.PHONY: curl-liveness-check
 curl-liveness-check:
 	@curl -i --silent --show-error http://0.0.0.0:3000/v1/liveness
 	@echo
+
+curl-users:
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token | jq -r '.token'); \
+	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/users/1/50 | jq
+
+curl-products:
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token | jq -r '.token'); \
+	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/products/1/50 | jq
 
 .PHONY: generate-load
 generate-load:

@@ -24,9 +24,9 @@ func Init(serviceName string, reporterURI string, probability float64, log *log.
 	// Demo mode configuarion, always record and sample.
 	sampler := trace.AlwaysSample()
 	if probability < 1 {
-		// Production mode configuarion. A probability=0.05 means only 5% of
+		// Production mode configuarion. A probability=0.01 means only 1% of
 		// tracing information will be exported to Zipkin.
-		sampler = trace.TraceIDRatioBased(.10)
+		sampler = trace.TraceIDRatioBased(probability)
 	}
 	tp := trace.NewTracerProvider(
 		trace.WithConfig(trace.Config{DefaultSampler: sampler}),

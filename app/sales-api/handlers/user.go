@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
@@ -27,7 +29,18 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	users, err := ug.user.Query(ctx, v.TraceID)
+	page := web.Param(r, "page")
+	pageNumber, err := strconv.Atoi(page)
+	if err != nil {
+		return web.NewRequestError(fmt.Errorf("invalid page format: %s", page), http.StatusBadRequest)
+	}
+	rows := web.Param(r, "rows")
+	rowsPerPage, err := strconv.Atoi(rows)
+	if err != nil {
+		return web.NewRequestError(fmt.Errorf("invalid rows format: %s", rows), http.StatusBadRequest)
+	}
+
+	users, err := ug.user.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
 	if err != nil {
 		return err
 	}
