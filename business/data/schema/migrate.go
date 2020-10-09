@@ -19,7 +19,7 @@ func Migrate(db *sqlx.DB) error {
 // Entries should never be removed from this slice once they have been ran in
 // production.
 //
-// Using constants in a .go file is an easy way to ensure the queries are part
+// Using constants in a .go file is an easy way to ensure the schema is part
 // of the compiled executable and avoids pathing issues with the working
 // directory. It has the downside that it lacks syntax highlighting and may be
 // harder to read for some cases compared to using .sql files. You may also
@@ -27,7 +27,7 @@ func Migrate(db *sqlx.DB) error {
 var migrations = []darwin.Migration{
 	{
 		Version:     1,
-		Description: "Add products",
+		Description: "Create table products",
 		Script: `
 CREATE TABLE products (
 	product_id   UUID,
@@ -42,7 +42,7 @@ CREATE TABLE products (
 	},
 	{
 		Version:     2,
-		Description: "Add sales",
+		Description: "Create table sales",
 		Script: `
 CREATE TABLE sales (
 	sale_id      UUID,
@@ -57,7 +57,7 @@ CREATE TABLE sales (
 	},
 	{
 		Version:     3,
-		Description: "Add users",
+		Description: "Create table users",
 		Script: `
 CREATE TABLE users (
 	user_id       UUID,
@@ -74,7 +74,7 @@ CREATE TABLE users (
 	},
 	{
 		Version:     4,
-		Description: "Add user column to products",
+		Description: "Alter table products with user_id column",
 		Script: `
 ALTER TABLE products
 	ADD COLUMN user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
