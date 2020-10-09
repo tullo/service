@@ -19,7 +19,7 @@ type userGroup struct {
 
 // Query returns all the existing users in the system.
 func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.list")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.query")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -37,7 +37,7 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 // QueryByID returns the specified user from the system.
 func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.retrieve")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.queryByID")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -71,7 +71,7 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 // Create inserts a new user into the system.
 func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.create")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -95,7 +95,7 @@ func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.R
 // Update updates the specified user in the system.
 func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.update")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -134,7 +134,7 @@ func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.R
 // Delete removes the specified user from the system.
 func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.delete")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.delete")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -164,7 +164,7 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 // Basic Auth with a user's email and password. It responds with a JWT.
 func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.user.token")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.token")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)

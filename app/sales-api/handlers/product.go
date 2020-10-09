@@ -21,7 +21,7 @@ type productGroup struct {
 
 // Query gets all existing products in the system.
 func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.query")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.query")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -40,7 +40,7 @@ func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http
 // QueryByID returns the specified product from the system.
 func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querybyid")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.queryByID")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -68,7 +68,7 @@ func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *
 // product with populatd fields is sent back in the response.
 func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.create")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -98,7 +98,7 @@ func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *htt
 // of the product is part of the request URL.
 func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.update")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -136,7 +136,7 @@ func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *htt
 // Delete removes a single product identified by an ID in the request URL.
 func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.delete")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.delete")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -161,7 +161,7 @@ func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *htt
 // object in the request body. The full model is returned to the caller.
 func (pg productGroup) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.addsale")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.addsale")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -186,7 +186,7 @@ func (pg productGroup) addSale(ctx context.Context, w http.ResponseWriter, r *ht
 // QuerySales gets all sales for a particular product.
 func (pg productGroup) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.product.querysales")
+	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.querysales")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
