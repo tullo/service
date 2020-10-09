@@ -6,10 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/api/global"
-	"go.opentelemetry.io/otel/api/propagation"
-	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/exporters/trace/zipkin"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace"
 )
 
 // Init creates a new trace provider instance and registers it as global trace provider.
@@ -24,29 +22,26 @@ func Init(serviceName string, reporterURI string, probability float64, log *log.
 	}
 
 	// Demo mode configuarion, always record and sample.
-	sampler := sdktrace.AlwaysSample()
+	sampler := trace.AlwaysSample()
 	if probability < 1 {
 		// Production mode configuarion. A probability=0.05 means only 5% of
 		// tracing information will be exported to Zipkin.
-		sampler = sdktrace.ProbabilitySampler(.10)
+		sampler = trace.TraceIDRatioBased(.10)
 	}
-	tp, err := sdktrace.NewProvider(
-		sdktrace.WithConfig(sdktrace.Config{DefaultSampler: sampler}),
-		sdktrace.WithBatcher(exporter,
-			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
-			sdktrace.WithBatchTimeout(sdktrace.DefaultBatchTimeout),
-			sdktrace.WithMaxExportBatchSize(sdktrace.DefaultMaxExportBatchSize),
+	tp := trace.NewTracerProvider(
+		trace.WithConfig(trace.Config{DefaultSampler: sampler}),
+		trace.WithBatcher(exporter,
+			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
+			trace.WithBatchTimeout(trace.DefaultBatchTimeout),
+			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
 		),
 	)
-	if err != nil {
-		return errors.Wrap(err, "creating new provider")
-	}
 
-	global.SetTraceProvider(tp)
+	global.SetTracerProvider(tp)
 
-	var b3 trace.B3
-	props := propagation.New(propagation.WithExtractors(b3))
-	global.SetPropagators(props)
+	//	var b3 trace.B3
+	//	props := propagation.New(propagation.WithExtractors(b3))
+	//	global.SetPropagators(props)
 
 	return nil
 }

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	otelhttp "go.opentelemetry.io/contrib/instrumentation/net/http"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/api/trace"
 )
 
