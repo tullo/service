@@ -161,7 +161,7 @@ hey-upgrade:
 	$(shell go env GOPATH)/bin/hey
 
 metrics:
-	@docker build \
+	@docker buildx build \
 		-f deployment/docker/dockerfile.metrics \
 		-t $(REGISTRY_HOSTNAME)/$(REGISTRY_ACCOUNT)/metrics-amd64:$(VERSION) \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
@@ -169,7 +169,7 @@ metrics:
 		.
 
 sales-api:
-	@docker build \
+	@docker buildx build \
 		-f deployment/docker/dockerfile.sales-api \
 		-t $(REGISTRY_HOSTNAME)/$(REGISTRY_ACCOUNT)/sales-api-amd64:$(VERSION) \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
@@ -184,3 +184,6 @@ docker-remove-all:
 
 docker-prune-system:
 	@docker system prune -f
+	
+docker-prune-build-cache:
+	@docker buildx prune -f
