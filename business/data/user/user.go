@@ -198,9 +198,10 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 		return Info{}, ErrInvalidID
 	}
 
-	// If you are not an admin and looking to retrieve someone other than yourself.
-	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != userID {
-		return Info{}, ErrForbidden
+	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
+		if claims.Subject != userID { // and looking to retrieve someone other than yourself.
+			return Info{}, ErrForbidden
+		}
 	}
 
 	const q = `
@@ -251,17 +252,18 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 		return Info{}, errors.Wrapf(err, "selecting user %q", email)
 	}
 
-	// If you are not an admin and looking to retrieve someone other than yourself.
-	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != usr.ID {
-		return Info{}, ErrForbidden
+	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
+		if claims.Subject != usr.ID { // and looking to retrieve someone other than yourself.
+			return Info{}, ErrForbidden
+		}
 	}
 
 	return usr, nil
 }
 
 // Authenticate finds a user by their email and verifies their password. On
-// success it returns Claims info representing this user. The claims can be
-// used to generate a token for future authentication.
+// success it returns claims representing this user. The claims can be used to
+// generate a token for future authentication.
 func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, email, password string) (auth.Claims, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.authenticate")
 	defer span.End()
