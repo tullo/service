@@ -42,7 +42,7 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	users, err := ug.user.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to query for users")
 	}
 
 	return web.Respond(ctx, w, users, http.StatusOK)
@@ -94,7 +94,7 @@ func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	var nu user.NewUser
 	if err := web.Decode(r, &nu); err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "decoding new user")
 	}
 
 	usr, err := ug.user.Create(ctx, v.TraceID, nu, v.Now)
@@ -123,7 +123,7 @@ func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	var upd user.UpdateUser
 	if err := web.Decode(r, &upd); err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "decoding updated user")
 	}
 
 	id := web.Param(r, "id")

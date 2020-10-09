@@ -126,7 +126,7 @@ func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *htt
 
 	var up product.UpdateProduct
 	if err := web.Decode(r, &up); err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "decoding updated product")
 	}
 
 	id := web.Param(r, "id")
