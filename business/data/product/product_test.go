@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
+	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/tests"
 )
 
@@ -124,6 +125,54 @@ func TestProduct(t *testing.T) {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product.", tests.Success, testID)
+		}
+	}
+}
+
+func TestProductPaging(t *testing.T) {
+	log, db, teardown := tests.NewUnit(t)
+	t.Cleanup(teardown)
+
+	schema.Seed(db)
+
+	p := product.New(log, db)
+
+	t.Log("Given the need to page through Product records.")
+	{
+		testID := 0
+		t.Logf("\tTest %d:\tWhen paging through 2 products.", testID)
+		{
+			ctx := tests.Context()
+			traceID := "00000000-0000-0000-0000-000000000000"
+
+			products1, err := p.Query(ctx, traceID, 1, 1)
+			if err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve products for page 1 : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to retrieve products for page 1.", tests.Success, testID)
+
+			if len(products1) != 1 {
+				t.Fatalf("\t%s\tTest %d:\tShould have a single product : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould have a single product.", tests.Success, testID)
+
+			products2, err := p.Query(ctx, traceID, 2, 1)
+			if err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve products for page 2 : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to retrieve products for page 2.", tests.Success, testID)
+
+			if len(products2) != 1 {
+				t.Fatalf("\t%s\tTest %d:\tShould have a single product : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould have a single product.", tests.Success, testID)
+
+			if products1[0].ID == products2[0].ID {
+				t.Logf("\t\tTest %d:\tProduct1: %v", testID, products1[0].ID)
+				t.Logf("\t\tTest %d:\tProduct2: %v", testID, products2[0].ID)
+				t.Fatalf("\t%s\tTest %d:\tShould have different products : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould have different products.", tests.Success, testID)
 		}
 	}
 }
