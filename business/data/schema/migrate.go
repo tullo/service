@@ -1,3 +1,4 @@
+// Package schema contains the database schema, migrations and seeding data.
 package schema
 
 import (
@@ -16,7 +17,7 @@ func Migrate(db *sqlx.DB) error {
 }
 
 // migrations contains the queries needed to construct the database schema.
-// Entries should never be removed from this slice once they have been ran in
+// Entries should never be removed from this slice once they have been run in
 // production.
 //
 // Using constants in a .go file is an easy way to ensure the schema is part
@@ -26,7 +27,23 @@ func Migrate(db *sqlx.DB) error {
 // consider a combined approach using a tool like packr or go-bindata.
 var migrations = []darwin.Migration{
 	{
-		Version:     1,
+		Version:     1.1,
+		Description: "Create table users",
+		Script: `
+CREATE TABLE users (
+	user_id       UUID,
+	name          TEXT,
+	email         TEXT UNIQUE,
+	roles         TEXT[],
+	password_hash TEXT,
+	date_created  TIMESTAMP,
+	date_updated  TIMESTAMP,
+
+	PRIMARY KEY (user_id)
+);`,
+	},
+	{
+		Version:     1.2,
 		Description: "Create table products",
 		Script: `
 CREATE TABLE products (
@@ -41,7 +58,7 @@ CREATE TABLE products (
 );`,
 	},
 	{
-		Version:     2,
+		Version:     1.3,
 		Description: "Create table sales",
 		Script: `
 CREATE TABLE sales (
@@ -56,25 +73,8 @@ CREATE TABLE sales (
 );`,
 	},
 	{
-		Version:     3,
-		Description: "Create table users",
-		Script: `
-CREATE TABLE users (
-	user_id       UUID,
-	name          TEXT,
-	email         TEXT UNIQUE,
-	roles         TEXT[],
-	password_hash TEXT,
-
-	date_created TIMESTAMP,
-	date_updated TIMESTAMP,
-
-	PRIMARY KEY (user_id)
-);`,
-	},
-	{
-		Version:     4,
-		Description: "Alter table products with user_id column",
+		Version:     2.1,
+		Description: "Alter table products with user column",
 		Script: `
 ALTER TABLE products
 	ADD COLUMN user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
