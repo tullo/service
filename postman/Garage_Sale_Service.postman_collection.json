@@ -14,8 +14,10 @@
 						"type": "text/javascript",
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);",
-							"postman.setEnvironmentVariable(\"Token\", jsonData.token);"
-						]
+							"postman.setEnvironmentVariable(\"Token\", jsonData.token);",
+							""
+						],
+						"id": "eea7f327-b6c6-4197-a565-eadd1362ac45"
 					}
 				}
 			],
@@ -76,13 +78,45 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/products",
+					"raw": "{{SERVER}}/v1/products/{{page_number}}/{{rows_per_page}}",
 					"host": [
 						"{{SERVER}}"
 					],
 					"path": [
 						"v1",
-						"products"
+						"products",
+						"{{page_number}}",
+						"{{rows_per_page}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Users",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}/v1/users/{{page_number}}/{{rows_per_page}}",
+					"host": [
+						"{{SERVER}}"
+					],
+					"path": [
+						"v1",
+						"users",
+						"{{page_number}}",
+						"{{rows_per_page}}"
 					]
 				}
 			},
