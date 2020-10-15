@@ -121,10 +121,10 @@ compose-logs:
 	@docker-compose -f $(COMPOSE_FILE) logs -f --tail="30"
 
 compose-migrate:
-	@docker-compose -f $(COMPOSE_FILE) exec sales-api /app/admin migrate
+	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin migrate
 
 compose-seed: compose-migrate
-	@docker-compose -f $(COMPOSE_FILE) exec sales-api /app/admin seed
+	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin seed
 
 compose-status:
 	@docker-compose -f $(COMPOSE_FILE) ps --all

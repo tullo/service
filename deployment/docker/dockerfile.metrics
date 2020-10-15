@@ -20,11 +20,11 @@ FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
 RUN apk --no-cache add ca-certificates
-RUN addgroup -g 3000 -S app && adduser -u 100000 -S app -G app --no-create-home --disabled-password
+RUN addgroup -g 3000 -S metrics && adduser -u 100000 -S metrics -G metrics --no-create-home --disabled-password
 USER 100000
-WORKDIR /app
-COPY --from=build_stage --chown=app:app /service/app/sidecar/metrics/metrics /app/metrics
-CMD ["/app/metrics"]
+COPY --from=build_stage --chown=metrics:metrics /service/app/sidecar/metrics/metrics /service/metrics
+WORKDIR /service
+CMD ["./metrics"]
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="metrics" \
       org.opencontainers.image.authors="Andreas <tullo@pm.me>" \

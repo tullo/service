@@ -26,13 +26,13 @@ FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
 RUN apk --no-cache add ca-certificates
-RUN addgroup -g 3000 -S app && adduser -u 100000 -S app -G app --no-create-home --disabled-password
+RUN addgroup -g 3000 -S sales-api && adduser -u 100000 -S sales-api -G sales-api --no-create-home --disabled-password
 USER 100000
-WORKDIR /app
-COPY --from=build_stage --chown=app:app /service/private.pem /app/private.pem
-COPY --from=build_stage --chown=app:app /service/app/sales-admin/sales-admin /app/admin
-COPY --from=build_stage --chown=app:app /service/app/sales-api/sales-api /app/sales-api
-CMD ["/app/sales-api"]
+COPY --from=build_stage --chown=sales-api:sales-api /service/private.pem /service/private.pem
+COPY --from=build_stage --chown=sales-api:sales-api /service/app/sales-admin/sales-admin /service/admin
+COPY --from=build_stage --chown=sales-api:sales-api /service/app/sales-api/sales-api /service/sales-api
+WORKDIR /service
+CMD ["./sales-api"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="sales-api" \
