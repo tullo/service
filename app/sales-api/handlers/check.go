@@ -38,7 +38,7 @@ func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *ht
 	if err := database.StatusCheck(ctx, v.TraceID, cg.log, cg.db); err != nil {
 		status = "db not ready"
 		statusCode = http.StatusInternalServerError
-		span.SetStatus(codes.Unavailable, web.CheckErr(err))
+		span.SetStatus(codes.Error, web.CheckErr(err))
 		span.AddEvent(ctx, "Database is not ready!")
 	}
 
