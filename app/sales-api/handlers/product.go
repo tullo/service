@@ -139,7 +139,7 @@ func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *htt
 		case product.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "updating product %q: %+v", id, up)
+			return errors.Wrapf(err, "ID: %q Product: %+v", id, up)
 		}
 	}
 
@@ -163,7 +163,7 @@ func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *htt
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
-			return errors.Wrapf(err, "Id: %s", id)
+			return errors.Wrapf(err, "ID: %s", id)
 		}
 	}
 

@@ -74,7 +74,7 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "Id: %s", id)
+			return errors.Wrapf(err, "ID: %s", id)
 		}
 	}
 
@@ -166,7 +166,7 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 		case user.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
-			return errors.Wrapf(err, "Id: %s", id)
+			return errors.Wrapf(err, "ID: %s", id)
 		}
 	}
 
