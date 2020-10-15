@@ -5,6 +5,7 @@ import (
 	"expvar"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/tullo/service/foundation/web"
 	"go.opentelemetry.io/otel/api/trace"
@@ -33,6 +34,13 @@ func Metrics() web.Middleware {
 			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.metrics")
 			defer span.End()
 
+			// Don't count anything on /debug routes towards metrics.
+			// Call the next handler to continue processing.
+			if strings.HasPrefix(r.URL.Path, "/debug") {
+				return handler(ctx, w, r)
+			}
+
+			// Call the next handler.
 			err := handler(ctx, w, r)
 
 			// Increment the request counter.
