@@ -30,6 +30,13 @@ type Values struct {
 // framework.
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
+// registered keeps track of handlers registered to the http default server
+// mux. This is a singleton and used by the standard library for metrics
+// and profiling. The application may want to add other handlers like
+// readiness and liveness to that mux. If this is not tracked, the routes
+// could try to be registered more than once, causing a panic.
+var registered = make(map[string]bool)
+
 // App is the entrypoint into our application and what configures our context
 // object for each of our http handlers. Feel free to add any configuration
 // data/logic on this App struct
@@ -73,9 +80,30 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	a.otmux.ServeHTTP(w, r)
 }
 
-// Handle is our mechanism for mounting Handlers for a given HTTP verb and path
-// pair, this makes for really easy, convenient routing.
-func (a *App) Handle(verb, path string, handler Handler, mw ...Middleware) {
+// HandleDebug sets a handler function for a given HTTP verb and path pair to
+// the default http package server mux. /debug is added to the path.
+func (a *App) HandleDebug(verb string, path string, handler Handler, mw ...Middleware) {
+	a.handle(true, verb, path, handler, mw...)
+}
+
+// Handle sets a handler function for a given HTTP verb and path pair to the
+// application server mux.
+func (a *App) Handle(verb string, path string, handler Handler, mw ...Middleware) {
+	a.handle(false, verb, path, handler, mw...)
+}
+
+// handle performs the real work of applying boilerplate and framework code for
+// a handler.
+func (a *App) handle(debug bool, verb string, path string, handler Handler, mw ...Middleware) {
+
+	if debug {
+		// Track all the handlers that are being registered so we don't have
+		// the same handlers registered twice to this singleton.
+		if _, exists := registered[verb+path]; exists {
+			return
+		}
+		registered[verb+path] = true
+	}
 
 	// First wrap handler specific middleware around this handler.
 	handler = wrapMiddleware(mw, handler)
@@ -107,5 +135,17 @@ func (a *App) Handle(verb, path string, handler Handler, mw ...Middleware) {
 	}
 
 	// Add this handler for the specified verb and route.
+	if debug {
+		f := func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case r.Method == verb:
+				h(w, r)
+			default:
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}
+		http.DefaultServeMux.HandleFunc("/debug"+path, f)
+		return
+	}
 	a.mux.MethodFunc(verb, path, h)
 }

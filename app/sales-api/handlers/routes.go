@@ -20,15 +20,15 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 	// Construct the web.App which holds all routes as well as common Middleware.
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))
 
-	// Register health check endpoint. This route is not authenticated.
+	// Register debug check endpoints. This routes are not authenticated.
 	cg := checkGroup{
 		build: build,
 		db:    db,
 		log:   log,
 	}
 
-	app.Handle(http.MethodGet, "/v1/readiness", cg.readiness)
-	app.Handle(http.MethodGet, "/v1/liveness", cg.liveness)
+	app.HandleDebug(http.MethodGet, "/readiness", cg.readiness)
+	app.HandleDebug(http.MethodGet, "/liveness", cg.liveness)
 
 	// Register user management and authentication endpoints.
 	ug := userGroup{
