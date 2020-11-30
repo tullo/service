@@ -1,5 +1,5 @@
 # Build the Go Binary.
-FROM golang:1.15.3-alpine3.12 as build_stage
+FROM golang:1.15.5-alpine3.12 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 
