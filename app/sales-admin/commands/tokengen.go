@@ -76,10 +76,11 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	// to the corresponding public key, the algorithms to use (RS256), and the
 	// key lookup function to perform the actual retrieve of the KID to public
 	// key lookup.
-	a, err := auth.New(algorithm, lookup, keyID, privateKey)
+	a, err := auth.New(algorithm, lookup)
 	if err != nil {
 		return errors.Wrap(err, "constructing authenticator")
 	}
+	a.AddKey(keyID, privateKey)
 
 	// Generating a token requires defining a set of claims. In this applications
 	// case, we only care about defining the subject and the user in question and
@@ -106,7 +107,7 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	// with need to be configured with the information found in the public key
 	// file to validate these claims. Dgraph does not support key rotate at
 	// this time.
-	token, err := a.GenerateToken(claims)
+	token, err := a.GenerateToken(keyID, claims)
 	if err != nil {
 		return errors.Wrap(err, "generating token")
 	}
