@@ -136,12 +136,18 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 }
 
 // Delete removes a user from the database.
-func (u User) Delete(ctx context.Context, traceID string, userID string) error {
+func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, userID string) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.delete")
 	defer span.End()
 
 	if _, err := uuid.Parse(userID); err != nil {
 		return ErrInvalidID
+	}
+
+	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
+		if claims.Subject != userID { // and looking to delete someone other than yourself.
+			return ErrForbidden
+		}
 	}
 
 	const q = `

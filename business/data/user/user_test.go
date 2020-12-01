@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -24,7 +25,7 @@ func TestUser(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling a single User.", testID)
 		{
-			ctx := tests.Context()
+			ctx := context.Background()
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 			traceID := "00000000-0000-0000-0000-000000000000"
 
@@ -53,7 +54,7 @@ func TestUser(t *testing.T) {
 				Roles: []string{auth.RoleUser},
 			}
 
-			// query own user while having USER claims
+			// Query own user while having USER authz.
 			saved, err := u.QueryByID(ctx, traceID, claims, usr.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user by ID: %s.", tests.Failed, testID, err)
@@ -85,7 +86,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to update user.", tests.Success, testID)
 
-			// query updated user while having ADMIN claims
+			// Query updated user while having ADMIN authz.
 			saved, err = u.QueryByEmail(ctx, traceID, claims, *upd.Email)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve user by Email : %s.", tests.Failed, testID, err)
@@ -108,12 +109,12 @@ func TestUser(t *testing.T) {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Email.", tests.Success, testID)
 			}
 
-			if err := u.Delete(ctx, traceID, usr.ID); err != nil {
+			if err := u.Delete(ctx, traceID, claims, usr.ID); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete user : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete user.", tests.Success, testID)
 
-			// query deleted user while having ADMIN claims
+			// Query deleted user while having ADMIN authz.
 			_, err = u.QueryByID(ctx, traceID, claims, usr.ID)
 			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve user : %s.", tests.Failed, testID, err)
@@ -136,7 +137,7 @@ func TestUserPaging(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen paging through 2 users.", testID)
 		{
-			ctx := tests.Context()
+			ctx := context.Background()
 			traceID := "00000000-0000-0000-0000-000000000000"
 
 			users1, err := u.Query(ctx, traceID, 1, 1)
@@ -170,6 +171,7 @@ func TestUserPaging(t *testing.T) {
 		}
 	}
 }
+
 func TestAuthenticate(t *testing.T) {
 	log, db, teardown := tests.NewUnit(t)
 	t.Cleanup(teardown)
@@ -181,7 +183,7 @@ func TestAuthenticate(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling a single User.", testID)
 		{
-			ctx := tests.Context()
+			ctx := context.Background()
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 			traceID := "00000000-0000-0000-0000-000000000000"
 
