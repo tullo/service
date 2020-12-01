@@ -108,7 +108,7 @@ func run(log *log.Logger) error {
 			return errors.Wrap(err, "key generation")
 		}
 
-	case "gentoken":
+	case "tokengen":
 		userID := cfg.Args.Num(1)
 		privateKeyFile := cfg.Args.Num(2)
 		algorithm := cfg.Args.Num(3)
@@ -122,7 +122,7 @@ func run(log *log.Logger) error {
 		fmt.Println("useradd: add a new user to the database")
 		fmt.Println("users: get a list of users from the database")
 		fmt.Println("keygen: generate a set of private/public key files")
-		fmt.Println("gentoken: generate a JWT for a user with claims")
+		fmt.Println("tokengen: generate a JWT for a user with claims")
 		fmt.Println("provide a command to get more help.")
 		return commands.ErrHelp
 	}

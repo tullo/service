@@ -18,7 +18,7 @@ import (
 // TokenGen generates a JWT for the specified user.
 func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID string, privateKeyFile string, algorithm string) error {
 	if userID == "" || privateKeyFile == "" || algorithm == "" {
-		fmt.Println("help: gentoken <id> <private_key_file> <algorithm>")
+		fmt.Println("help: tokengen <id> <private_key_file> <algorithm>")
 		fmt.Println("algorithm: RS256, HS256")
 		return ErrHelp
 	}
