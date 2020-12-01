@@ -15,7 +15,7 @@ services:
     container_name: zipkin
     networks:
       - shared-network
-    image: openzipkin/zipkin-slim:2.21
+    image: openzipkin/zipkin-slim:2.22
     ports:
       - 9411:9411
     user: "1000"
