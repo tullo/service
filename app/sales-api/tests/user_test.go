@@ -23,6 +23,7 @@ import (
 // subtests are registered.
 type UserTests struct {
 	app        http.Handler
+	kid        string
 	userToken  string
 	adminToken string
 }
@@ -35,6 +36,7 @@ func TestUsers(t *testing.T) {
 	shutdown := make(chan os.Signal, 1)
 	tests := UserTests{
 		app:        handlers.API("develop", shutdown, test.Log, test.DB, test.Auth),
+		kid:        test.KID,
 		userToken:  test.Token("user@example.com", "gophers"),
 		adminToken: test.Token("admin@example.com", "gophers"),
 	}
@@ -77,7 +79,7 @@ func (ut *UserTests) getToken401(t *testing.T) {
 // getToken200
 func (ut *UserTests) getToken200(t *testing.T) {
 
-	r := httptest.NewRequest(http.MethodGet, "/v1/users/token", nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/users/token/"+ut.kid, nil)
 	w := httptest.NewRecorder()
 
 	r.SetBasicAuth("admin@example.com", "gophers")

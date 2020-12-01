@@ -133,10 +133,11 @@ func run(log *log.Logger) error {
 		}
 		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 	}
-	auth, err := auth.New(cfg.Auth.Algorithm, lookup, cfg.Auth.KeyID, privateKey)
+	auth, err := auth.New(cfg.Auth.Algorithm, lookup)
 	if err != nil {
 		return errors.Wrap(err, "constructing authenticator")
 	}
+	auth.AddKey(cfg.Auth.KeyID, privateKey)
 
 	// =========================================================================
 	// Start Database

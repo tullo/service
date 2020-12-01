@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/api/trace"
 )
 
-// Product represents the Product API method handler set.
+// productGroup represents the Product API method handler set.
 type productGroup struct {
 	product product.Product
 	sale    sale.Sale
@@ -96,7 +96,7 @@ func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *htt
 
 	var np product.NewProduct
 	if err := web.Decode(r, &np); err != nil {
-		return errors.Wrap(err, "decoding new product")
+		return errors.Wrapf(err, "unable to decode payload")
 	}
 
 	prod, err := pg.product.Create(ctx, v.TraceID, claims, np, v.Now)
@@ -157,8 +157,13 @@ func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *htt
 		return web.NewShutdownError("web value missing from context")
 	}
 
+	claims, ok := ctx.Value(auth.Key).(auth.Claims)
+	if !ok {
+		return errors.New("claims missing from context")
+	}
+
 	id := web.Param(r, "id")
-	if err := pg.product.Delete(ctx, v.TraceID, id); err != nil {
+	if err := pg.product.Delete(ctx, v.TraceID, claims, id); err != nil {
 		switch err {
 		case product.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)

@@ -155,8 +155,13 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 		return web.NewShutdownError("web value missing from context")
 	}
 
+	claims, ok := ctx.Value(auth.Key).(auth.Claims)
+	if !ok {
+		return errors.New("claims missing from context")
+	}
+
 	id := web.Param(r, "id")
-	err := ug.user.Delete(ctx, v.TraceID, id)
+	err := ug.user.Delete(ctx, v.TraceID, claims, id)
 	if err != nil {
 		switch err {
 		case user.ErrInvalidID:
@@ -201,10 +206,11 @@ func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	kid := web.Param(r, "kid")
 	var tkn struct {
 		Token string `json:"token"`
 	}
-	tkn.Token, err = ug.auth.GenerateToken(claims)
+	tkn.Token, err = ug.auth.GenerateToken(kid, claims)
 	if err != nil {
 		return errors.Wrap(err, "generating token")
 	}
