@@ -144,12 +144,18 @@ curl-liveness-check:
 	@curl -i --silent --show-error http://0.0.0.0:3000/v1/liveness
 	@echo
 
+curl-jwt-token:
+	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
+	curl --no-progress-meter --user "admin@example.com:gophers" http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq
+
 curl-users:
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token | jq -r '.token'); \
+	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
 	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/users/1/50 | jq
 
 curl-products:
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token | jq -r '.token'); \
+	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
 	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/products/1/50 | jq
 
 .PHONY: generate-load
