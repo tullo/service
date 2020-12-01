@@ -115,7 +115,7 @@ func TestProduct(t *testing.T) {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updated Name field.", tests.Success, testID)
 			}
 
-			if err := p.Delete(ctx, traceID, prd.ID); err != nil {
+			if err := p.Delete(ctx, traceID, claims, prd.ID); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete product : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to delete product.", tests.Success, testID)
@@ -142,10 +142,12 @@ func TestProductPaging(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen paging through 2 products.", testID)
 		{
-			ctx := tests.Context()
+			ctx := context.Background()
 			traceID := "00000000-0000-0000-0000-000000000000"
 
-			products1, err := p.Query(ctx, traceID, 1, 1)
+			pageNumber := 1
+			rowsPerPage := 1
+			products1, err := p.Query(ctx, traceID, pageNumber, rowsPerPage)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve products for page 1 : %s.", tests.Failed, testID, err)
 			}
@@ -156,7 +158,8 @@ func TestProductPaging(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould have a single product.", tests.Success, testID)
 
-			products2, err := p.Query(ctx, traceID, 2, 1)
+			pageNumber = 2
+			products2, err := p.Query(ctx, traceID, pageNumber, rowsPerPage)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to retrieve products for page 2 : %s.", tests.Failed, testID, err)
 			}
