@@ -10,7 +10,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // userGroup represents the User API method handler set.

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel/api/global"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/trace/zipkin"
 	"go.opentelemetry.io/otel/sdk/trace"
 )
@@ -37,7 +37,7 @@ func Init(serviceName string, reporterURI string, probability float64, log *log.
 		),
 	)
 
-	global.SetTracerProvider(tp)
+	otel.SetTracerProvider(tp)
 
 	//	var b3 trace.B3
 	//	props := propagation.New(propagation.WithExtractors(b3))

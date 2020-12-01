@@ -9,8 +9,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Check provides support for orchestration health checks.
@@ -39,7 +39,7 @@ func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *ht
 		status = "db not ready"
 		statusCode = http.StatusInternalServerError
 		span.SetStatus(codes.Error, web.CheckErr(err))
-		span.AddEvent(ctx, "Database is not ready!")
+		span.AddEvent("Database is not ready!")
 	}
 
 	readiness := struct {
