@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
+	"sync"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
@@ -53,6 +54,9 @@ func (c Claims) Authorized(roles ...string) bool {
 	return false
 }
 
+// Keys represents an in memory store of keys.
+type Keys map[string]*rsa.PrivateKey
+
 // PublicKeyLookup defines the signature of a function to lookup public keys.
 //
 // In a production system, a key id (KID) is used to retrieve the correct
@@ -67,16 +71,17 @@ func (c Claims) Authorized(roles ...string) bool {
 //
 // * KID to public key resolution is usually accomplished via a public JWKS
 // endpoint. See https://auth0.com/docs/jwks for more details.
-type PublicKeyLookup func(publicKID string) (*rsa.PublicKey, error)
+type PublicKeyLookup func(kid string) (*rsa.PublicKey, error)
 
 // Auth is used to authenticate clients. It can generate a token for a
 // set of user claims and recreate the claims by parsing the token.
 type Auth struct {
-	algorithm  string
-	keyFunc    func(t *jwt.Token) (interface{}, error)
-	parser     *jwt.Parser
-	publicKID  string
-	privateKey *rsa.PrivateKey
+	algorithm string
+	keyFunc   func(t *jwt.Token) (interface{}, error)
+	keys      Keys
+	method    jwt.SigningMethod
+	mu        sync.RWMutex
+	parser    *jwt.Parser
 }
 
 // New creates an *Auth for use. It will error if:
@@ -84,17 +89,14 @@ type Auth struct {
 // - The public key func is nil.
 // - The key ID is blank.
 // - The specified algorithm is unsupported.
-func New(algorithm string, lookup PublicKeyLookup, publicKID string, privateKey *rsa.PrivateKey) (*Auth, error) {
-
-	if publicKID == "" {
-		return nil, errors.New("public kid cannot be blank")
-	}
-
-	if privateKey == nil {
-		return nil, errors.New("private key cannot be nil")
-	}
-	if jwt.GetSigningMethod(algorithm) == nil {
+func New(algorithm string, lookup PublicKeyLookup) (*Auth, error) {
+	method := jwt.GetSigningMethod(algorithm)
+	if method == nil {
 		return nil, errors.Errorf("unknown algorithm %v", algorithm)
+	}
+
+	if lookup == nil {
+		return nil, errors.New("public key lookup function cannot be nil")
 	}
 
 	// keyFunc is a function that returns the public key for validating a token.
@@ -112,10 +114,6 @@ func New(algorithm string, lookup PublicKeyLookup, publicKID string, privateKey 
 		return lookup(publicKID)
 	}
 
-	if lookup == nil {
-		return nil, errors.New("public key function cannot be nil")
-	}
-
 	// Create the token parser to use. The algorithm used to sign the JWT must be
 	// validated to avoid a critical vulnerability:
 	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
@@ -124,24 +122,51 @@ func New(algorithm string, lookup PublicKeyLookup, publicKID string, privateKey 
 	}
 
 	a := Auth{
-		algorithm:  algorithm,
-		keyFunc:    keyFunc,
-		parser:     &parser,
-		privateKey: privateKey,
-		publicKID:  publicKID,
+		algorithm: algorithm,
+		keyFunc:   keyFunc,
+		keys:      make(map[string]*rsa.PrivateKey),
+		method:    method,
+		parser:    &parser,
 	}
 
 	return &a, nil
 }
 
+// AddKey adds a kid and private key combination to our local store. It returns
+// the updated size if the key store.
+func (a *Auth) AddKey(kid string, privateKey *rsa.PrivateKey) int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.keys[kid] = privateKey
+	return len(a.keys)
+}
+
+// RemoveKey removes a kid and private key combination from our local store. It
+// returns the updated size if the key store.
+func (a *Auth) RemoveKey(kid string) int {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	delete(a.keys, kid)
+	return len(a.keys)
+}
+
 // GenerateToken generates a signed JWT token string representing the user Claims.
-func (a *Auth) GenerateToken(claims Claims) (string, error) {
-	method := jwt.GetSigningMethod(a.algorithm)
+func (a *Auth) GenerateToken(kid string, claims Claims) (string, error) {
+	token := jwt.NewWithClaims(a.method, claims)
+	token.Header["kid"] = kid
 
-	tkn := jwt.NewWithClaims(method, claims)
-	tkn.Header["kid"] = a.publicKID
+	var privateKey *rsa.PrivateKey
+	a.mu.RLock()
+	{
+		var ok bool
+		privateKey, ok = a.keys[kid]
+		if !ok {
+			return "", errors.New("kid lookup failed")
+		}
+	}
+	a.mu.RUnlock()
 
-	str, err := tkn.SignedString(a.privateKey)
+	str, err := token.SignedString(privateKey)
 	if err != nil {
 		return "", errors.Wrap(err, "signing token")
 	}

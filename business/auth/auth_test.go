@@ -3,11 +3,11 @@ package auth_test
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 )
 
@@ -20,31 +20,49 @@ const (
 )
 
 func TestAuth(t *testing.T) {
-	t.Log("Given the need to be able to authenticate and authorize access.")
+	t.Log("Given the need to be able to AuthN and AuthZ access.")
 	{
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling a single user.", testID)
 		{
-			// Parse the private key used to generate the token.
 			privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create a private key: %v", failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create a private key.", success, testID)
 
-			// Create a key lookup function that returns the public key for the test KID.
 			lookup := func(kid string) (*rsa.PublicKey, error) {
-				if kid != publicTestKID {
-					return nil, errors.New("no public key found")
+				switch kid {
+				case publicTestKID:
+					return &privateKey.PublicKey, nil
 				}
-				return &privateKey.PublicKey, nil
+				return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
 			}
 
-			authenticator, err := auth.New("RS256", lookup, publicTestKID, privateKey)
+			a, err := auth.New("RS256", lookup)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create an authenticator: %v", failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create an authenticator.", success, testID)
+
+			keys := a.AddKey(publicTestKID, privateKey)
+			if keys != 1 {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination.", success, testID)
+
+			kid := "a-signing-key-id"
+			keys = a.AddKey(kid, privateKey)
+			if keys != 2 {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination.", success, testID)
+
+			keys = a.RemoveKey(kid)
+			if keys != 1 {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to remove a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
+			}
+			t.Logf("\t%s\tTest %d:\tShould be able to remove a [kid:private-key] combination.", success, testID)
 
 			claims := auth.Claims{
 				StandardClaims: jwt.StandardClaims{
@@ -57,13 +75,13 @@ func TestAuth(t *testing.T) {
 				Roles: []string{auth.RoleAdmin},
 			}
 
-			token, err := authenticator.GenerateToken(claims)
+			token, err := a.GenerateToken(publicTestKID, claims)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to generate a JWT: %v", failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to generate a JWT.", success, testID)
 
-			parsedClaims, err := authenticator.ValidateToken(token)
+			parsedClaims, err := a.ValidateToken(token)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to parse the claims: %v", failed, testID, err)
 			}
