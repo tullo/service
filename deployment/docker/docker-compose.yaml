@@ -2,7 +2,7 @@
 # docker-compose up
 # docker-compose stop
 # docker-compose down
-version: '3'
+version: '3.8'
 
 networks:
   shared-network:
@@ -10,55 +10,64 @@ networks:
 
 services:
 
-  # This sidecar allows for the viewing of traces.
-  zipkin:
-    container_name: zipkin
+  # This starts a local PostgreSQL DB.
+  db:
+    container_name: sales_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+    image: postgres:13.0-alpine
     networks:
-      - shared-network
-    image: openzipkin/zipkin-slim:2.22
+      shared-network:
     ports:
-      - 9411:9411
-    user: "1000"
+    - published: 5432
+      target: 5432
 
   # This sidecar publishes metrics to the console by default.
   metrics:
     container_name: metrics
-    networks:
-      - shared-network
     image: ${REGISTRY_ACCOUNT}/metrics-amd64:${VERSION}
-    ports:
-      - 3001:3001 # EXPVAR API
-      - 4001:4001 # DEBUG API
-    user: "100000"
-
-  # This starts a local PostgreSQL DB.
-  db:
-    container_name: sales_db
     networks:
-      - shared-network
-    image: postgres:13.0-alpine
+      shared-network:
     ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_PASSWORD=postgres
+    - published: 3001 # EXPVAR API
+      target: 3001
+    - published: 4001 # DEBUG API
+      target: 4001
+    user: '100000'
 
   # This is the core CRUD based service.
   sales-api:
     container_name: sales-api
-    networks:
-      - shared-network
-    image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
-    ports:
-      - 3000:3000 # CRUD API
-      - 4000:4000 # DEBUG API
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - SALES_DB_HOST=db
-      - SALES_DB_DISABLE_TLS=1 # This is only disabled for our development enviroment.
-      - SALES_ZIPKIN_PROBABILITY=1 # 100% recording and sampling
-      # - GODEBUG=gctrace=1
     depends_on:
-      - metrics
-      - zipkin
-      - db
-    user: "100000"
+      db:
+        condition: service_started
+      metrics:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      #GODEBUG=gctrace: '1'
+      POSTGRES_PASSWORD: postgres
+      SALES_DB_DISABLE_TLS: '1' # This is only disabled for our development enviroment.
+      SALES_DB_HOST: db
+      SALES_ZIPKIN_PROBABILITY: '1' # 100% recording and sampling
+    image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
+    networks:
+      shared-network:
+    ports:
+    - published: 3000 # CRUD API
+      target: 3000
+    - published: 4000 # DEBUG API
+      target: 4000
+    user: '100000'
+
+  # This sidecar allows for examination of traces.
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin-slim:2.22
+    networks:
+      shared-network:
+    ports:
+    - published: 9411
+      target: 9411
+    user: '1000'
