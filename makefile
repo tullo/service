@@ -114,6 +114,9 @@ go-test: check
 #	@go test -v -run TestProducts ./app/sales-api/tests/ -count=1
 #	@go test -v -run TestProducts/crudProductUser ./app/sales-api/tests/ -count=1
 
+compose-config:
+	@docker-compose -f $(COMPOSE_FILE) config
+
 compose-down:
 	@docker-compose -f $(COMPOSE_FILE) down --remove-orphans --volumes
 
@@ -137,11 +140,11 @@ compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
 curl-readiness-check:
-	@curl -i --silent --show-error http://0.0.0.0:3000/v1/readiness
+	@curl -i --silent --show-error http://0.0.0.0:4000/debug/readiness
 	@echo
 
 curl-liveness-check:
-	@curl -i --silent --show-error http://0.0.0.0:3000/v1/liveness
+	@curl -i --silent --show-error http://0.0.0.0:4000/debug/liveness
 	@echo
 
 curl-jwt-token:
