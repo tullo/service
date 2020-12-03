@@ -1,23 +1,60 @@
 {
 	"info": {
-		"_postman_id": "bad2a874-7fb5-41b5-a8e9-9a335599d788",
+		"_postman_id": "cc900a79-86f6-4a8e-a191-80a69747f065",
 		"name": "Garage Sale Service",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
+		{
+			"name": "Readiness Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}:{{DEBUG_PORT}}/debug/readiness",
+					"host": [
+						"{{SERVER}}"
+					],
+					"port": "{{DEBUG_PORT}}",
+					"path": [
+						"debug",
+						"readiness"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Liveness Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}:{{DEBUG_PORT}}/debug/liveness",
+					"host": [
+						"{{SERVER}}"
+					],
+					"port": "{{DEBUG_PORT}}",
+					"path": [
+						"debug",
+						"liveness"
+					]
+				}
+			},
+			"response": []
+		},
 		{
 			"name": "Get Token",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"type": "text/javascript",
+						"id": "ab51a112-ebc2-41cc-9a90-4a4834d6cc8a",
 						"exec": [
 							"var jsonData = JSON.parse(responseBody);",
-							"postman.setEnvironmentVariable(\"Token\", jsonData.token);",
-							""
+							"postman.setEnvironmentVariable(\"Token\", jsonData.token);"
 						],
-						"id": "eea7f327-b6c6-4197-a565-eadd1362ac45"
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -49,44 +86,16 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/users/token",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/users/token/{{SIGNING_KEY_ID}}",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
 						"users",
-						"token"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List Products",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "{{SERVER}}/v1/products/{{page_number}}/{{rows_per_page}}",
-					"host": [
-						"{{SERVER}}"
-					],
-					"path": [
-						"v1",
-						"products",
-						"{{page_number}}",
-						"{{rows_per_page}}"
+						"token",
+						"{{SIGNING_KEY_ID}}"
 					]
 				}
 			},
@@ -108,10 +117,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/users/{{page_number}}/{{rows_per_page}}",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/users/{{page_number}}/{{rows_per_page}}",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
 						"users",
@@ -123,16 +133,18 @@
 			"response": []
 		},
 		{
-			"name": "Get Product",
+			"name": "List Products",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
-						"id": "26f9d4ad-6f57-4adf-85f3-03090d379273",
+						"id": "3c2982aa-9aa6-46af-8e06-16f2e139cf62",
 						"exec": [
-							"var jsonData = JSON.parse(responseBody);",
-							"pm.environment.set(\"product_id\", jsonData.id);",
-							"console.log(jsonData.id)"
+							"products = pm.response.json()",
+							"if (products instanceof Array && products.length>0) {",
+							"    // Use ID of 1. product in the collection.",
+							"    pm.environment.set(\"product_id\", products[0].id);",
+							"}"
 						],
 						"type": "text/javascript"
 					}
@@ -152,130 +164,28 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/products/a2b0639f-2cc6-44b8-b97b-15d69dbb511e",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/{{page_number}}/{{rows_per_page}}",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
 						"products",
-						"a2b0639f-2cc6-44b8-b97b-15d69dbb511e"
+						"{{page_number}}",
+						"{{rows_per_page}}"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Create Product",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"name\": \"Puzzles\",\n\t\"cost\": 75,\n\t\"quantity\": 12\n}"
-				},
-				"url": {
-					"raw": "{{SERVER}}/v1/products",
-					"host": [
-						"{{SERVER}}"
-					],
-					"path": [
-						"v1",
-						"products"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Update Product",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "PUT",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n\t\"name\": \"comics\"\n}"
-				},
-				"url": {
-					"raw": "{{SERVER}}/v1/products/{{product_id}}",
-					"host": [
-						"{{SERVER}}"
-					],
-					"path": [
-						"v1",
-						"products",
-						"{{product_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Delete McDonalds Toys",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{Token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "DELETE",
-				"header": [],
-				"url": {
-					"raw": "{{SERVER}}/v1/products/72f8b983-3eb4-48db-9ed0-e45cc6bd716b",
-					"host": [
-						"{{SERVER}}"
-					],
-					"path": [
-						"v1",
-						"products",
-						"72f8b983-3eb4-48db-9ed0-e45cc6bd716b"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List Sales",
+			"name": "Get Product",
 			"event": [
 				{
-					"listen": "prerequest",
+					"listen": "test",
 					"script": {
-						"id": "caba8464-78c6-49b0-9c44-e50b229c1108",
+						"id": "e1b83960-6647-4cd2-8c2c-7193fe94b306",
 						"exec": [
 							""
 						],
@@ -297,10 +207,53 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{SERVER}}/v1/products/{{product_id}}/sales",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/a2b0639f-2cc6-44b8-b97b-15d69dbb511e",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
+					"path": [
+						"v1",
+						"products",
+						"a2b0639f-2cc6-44b8-b97b-15d69dbb511e"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List Sales",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "b7d4200f-4056-470b-a17e-b0b48308a974",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/{{product_id}}/sales",
+					"host": [
+						"{{SERVER}}"
+					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
 						"products",
@@ -338,10 +291,11 @@
 					"raw": "{\n\t\"quantity\": 2,\n\t\"paid\": 40\n}"
 				},
 				"url": {
-					"raw": "{{SERVER}}/v1/products/{{product_id}}/sales",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/{{product_id}}/sales",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
 						"products",
@@ -353,36 +307,123 @@
 			"response": []
 		},
 		{
-			"name": "Readiness Check",
+			"name": "Create Product",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e5200750-c60e-4891-aac7-938830138af6",
+						"exec": [
+							"prod = pm.response.json()",
+							"if (prod instanceof Object) {",
+							"    pm.environment.set(\"product_id\", prod.id);",
+							"}",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
-				"method": "GET",
-				"header": [],
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"Puzzles\",\n\t\"cost\": 75,\n\t\"quantity\": 12\n}"
+				},
 				"url": {
-					"raw": "{{SERVER}}/v1/readiness",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
-						"readiness"
+						"products"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Liveness Check",
+			"name": "Update Product",
 			"request": {
-				"method": "GET",
-				"header": [],
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"comics\"\n}"
+				},
 				"url": {
-					"raw": "{{SERVER}}/v1/liveness",
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/{{product_id}}",
 					"host": [
 						"{{SERVER}}"
 					],
+					"port": "{{API_PORT}}",
 					"path": [
 						"v1",
-						"liveness"
+						"products",
+						"{{product_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete McDonalds Toys",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{SERVER}}:{{API_PORT}}/v1/products/{{product_id}}",
+					"host": [
+						"{{SERVER}}"
+					],
+					"port": "{{API_PORT}}",
+					"path": [
+						"v1",
+						"products",
+						"{{product_id}}"
 					]
 				}
 			},
