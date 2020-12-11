@@ -25,7 +25,7 @@ const (
 
 // Configuration for running tests.
 var (
-	dbImage = "postgres:13.0-alpine"
+	dbImage = "postgres:13.1-alpine"
 	dbPort  = "5432"
 	dbArgs  = []string{
 		"-e", "POSTGRES_USER=postgres",
