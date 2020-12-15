@@ -29,8 +29,8 @@ func Seed(db *sqlx.DB) error {
 const seeds = `
 -- Create admin and regular User with password "gophers"
 INSERT INTO users (user_id, name, email, roles, password_hash, date_created, date_updated) VALUES
-	('5cf37266-3473-4006-984f-9325122678b7', 'Admin Gopher', 'admin@example.com', '{ADMIN,USER}', '$2a$10$1ggfMVZV6Js0ybvJufLRUOWHS5f6KneuP0XwwHpJ8L8ipdry9f2/a', '2019-03-24 00:00:00', '2019-03-24 00:00:00'),
-	('45b5fbd3-755f-4379-8f07-a58d4a30fa2f', 'User Gopher', 'user@example.com', '{USER}', '$2a$10$9/XASPKBbJKVfCAZKDH.UuhsuALDr5vVm6VrYA9VFR8rccK86C1hW', '2019-03-24 00:00:00', '2019-03-24 00:00:00')
+	('5cf37266-3473-4006-984f-9325122678b7', 'Admin Gopher', 'admin@example.com', '{ADMIN,USER}', '$argon2id$v=19$m=65536,t=1,p=2$zmJAMbPo2O7YFZVEcUlZhg$HY1hXN2XpgZqaQtC7vnYGXCMQGKMBXvjM9H+ky1yRzg', '2020-12-15 00:00:00', '2020-12-15 00:00:00'),
+	('45b5fbd3-755f-4379-8f07-a58d4a30fa2f', 'User Gopher', 'user@example.com', '{USER}', '$argon2id$v=19$m=65536,t=1,p=2$tFDffN5qzHM8B7kDj79D1A$wqoKncU0NqYf6dtsjBfnuOQR7Bx9HNTGkpS/SNSAnFI', '2020-12-15 00:00:00', '2020-12-15 00:00:00')
 	ON CONFLICT DO NOTHING;
 
 INSERT INTO products (product_id, user_id, name, cost, quantity, date_created, date_updated) VALUES

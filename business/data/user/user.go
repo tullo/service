@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -14,7 +15,6 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/foundation/database"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -51,7 +51,7 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "internal.data.user.create")
 	defer span.End()
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(nu.Password), bcrypt.DefaultCost)
+	hash, err := argon2id.CreateHash(nu.Password, argon2id.DefaultParams)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "generating password hash")
 	}
@@ -103,11 +103,11 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 		usr.Roles = uu.Roles
 	}
 	if uu.Password != nil {
-		pw, err := bcrypt.GenerateFromPassword([]byte(*uu.Password), bcrypt.DefaultCost)
+		hash, err := argon2id.CreateHash(*uu.Password, argon2id.DefaultParams)
 		if err != nil {
 			return errors.Wrap(err, "generating password hash")
 		}
-		usr.PasswordHash = pw
+		usr.PasswordHash = hash
 	}
 
 	usr.DateUpdated = now
@@ -300,7 +300,8 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
-	if err := bcrypt.CompareHashAndPassword(usr.PasswordHash, []byte(password)); err != nil {
+	if match, err := argon2id.ComparePasswordAndHash(password, usr.PasswordHash); err != nil || !match {
+		log.Println("=================", match, password)
 		return auth.Claims{}, ErrAuthenticationFailure
 	}
 
