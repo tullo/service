@@ -40,5 +40,5 @@ jobs:
     - name: Upload coverage
       uses: codecov/codecov-action@v1
       with:
-        file: coverage.txt
+        file: coverprofile.cov
         token: ${{ secrets.CODECOV_TOKEN }}

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -e
-echo "" > coverage.txt
+echo "" > coverprofile.cov
 
-for d in $(go list ./... | grep -v vendor); do
-    go test -v -race -failfast -test.timeout=90s -coverprofile=profile.out -covermode=atomic "$d"
-    if [ -f profile.out ]; then
-        cat profile.out >> coverage.txt
-        rm profile.out
-    fi
-done
+go test -mod=vendor -failfast -test.timeout=90s \
+    -covermode=count -coverprofile=coverprofile.cov -run="^Test" \
+    -coverpkg=$(go list -mod=vendor ./... | grep -v "/test" | tr '\n' ',') \
+    ./...
+# go tool cover -func=coverprofile.cov
+# go tool cover -html=coverprofile.cov
