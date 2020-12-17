@@ -61,7 +61,7 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	// public key to parse a JWT for auth and claims. A key lookup function is
 	// provided to perform the task of retrieving a KID for a given public key.
 	// In this code, I am writing a lookup function that will return the public
-	// key for the private key provided with an arbitary KID.
+	// key for the private key provided with an arbitrary KID.
 	keyID := "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
 	lookup := func(kid string) (*rsa.PublicKey, error) {
 		switch kid {
