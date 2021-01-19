@@ -1,7 +1,6 @@
 SHELL = /bin/bash -o pipefail
 # make -n
 # make -np 2>&1 | less
-export PROJECT = tullo-starter-kit
 export REGISTRY_HOSTNAME = docker.io
 export REGISTRY_ACCOUNT = tullo
 export VERSION = 1.0
