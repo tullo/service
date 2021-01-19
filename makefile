@@ -161,12 +161,13 @@ curl-products:
 	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/products/1/50 | jq
 
 .PHONY: generate-load
+generate-load: export SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
+generate-load: export TOKEN=$(shell curl --no-progress-meter --user 'admin@example.com:gophers' \
+	http://localhost:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token')
 generate-load:
-	@$(eval TOKEN=`curl --no-progress-meter --user 'admin@example.com:gophers' \
-		http://localhost:3000/v1/users/token | jq -r '.token'`)
-	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products | jq
-	@echo "Running 'hey' tool: sending 10'000 requests via 100 concurrent workers."
-	@$(shell go env GOPATH)/bin/hey -c 10 -n 10000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products
+	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50 | jq
+	@echo "Running 'hey' tool: sending 100'000 requests via 50 concurrent workers."
+	@$(shell go env GOPATH)/bin/hey -c 50 -n 100000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50
 
 .PHONY: hey-upgrade
 hey-upgrade:
