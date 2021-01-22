@@ -301,7 +301,6 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
 	if match, err := argon2id.ComparePasswordAndHash(password, usr.PasswordHash); err != nil || !match {
-		log.Println("=================", match, password)
 		return auth.Claims{}, ErrAuthenticationFailure
 	}
 
