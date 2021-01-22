@@ -12,13 +12,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-api/handlers"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/foundation/config"
 	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/tracer"
 )
@@ -47,55 +47,12 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Configuration
 
-	var cfg struct {
-		conf.Version
-		Web struct {
-			APIHost         string        `conf:"default:0.0.0.0:3000"`
-			DebugHost       string        `conf:"default:0.0.0.0:4000"`
-			ReadTimeout     time.Duration `conf:"default:5s"`
-			WriteTimeout    time.Duration `conf:"default:5s"`
-			ShutdownTimeout time.Duration `conf:"default:5s"`
-		}
-		DB struct {
-			User       string `conf:"default:postgres"`
-			Password   string `conf:"default:postgres,noprint"`
-			Host       string `conf:"default:0.0.0.0"`
-			Name       string `conf:"default:postgres"`
-			DisableTLS bool   `conf:"default:false"`
-		}
-		Auth struct {
-			KeyID          string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
-			PrivateKeyFile string `conf:"default:/service/private.pem"`
-			Algorithm      string `conf:"default:RS256"`
-		}
-		Zipkin struct {
-			ReporterURI string  `conf:"default:http://zipkin:9411/api/v2/spans"`
-			ServiceName string  `conf:"default:sales-api"`
-			Probability float64 `conf:"default:0.05"`
-		}
+	var cfg config.AppConfig
+	if err := config.Parse(&cfg, config.SalesPrefix); err != nil {
+		return err
 	}
 	cfg.Version.Version = build
 	cfg.Version.Description = "copyright information here"
-
-	if err := conf.Parse(os.Args[1:], "SALES", &cfg); err != nil {
-		switch err {
-		case conf.ErrHelpWanted:
-			usage, err := conf.Usage("SALES", &cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config usage")
-			}
-			fmt.Println(usage)
-			return nil
-		case conf.ErrVersionWanted:
-			version, err := conf.VersionString("SALES", &cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config version")
-			}
-			fmt.Println(version)
-			return nil
-		}
-		return errors.Wrap(err, "parsing config")
-	}
 
 	// =========================================================================
 	// App Starting

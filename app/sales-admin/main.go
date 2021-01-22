@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-admin/commands"
+	"github.com/tullo/service/foundation/config"
 	"github.com/tullo/service/foundation/database"
 )
 
@@ -30,40 +30,12 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Configuration
 
-	var cfg struct {
-		conf.Version
-		Args conf.Args
-		DB   struct {
-			User       string `conf:"default:postgres"`
-			Password   string `conf:"default:postgres,noprint"`
-			Host       string `conf:"default:0.0.0.0"`
-			Name       string `conf:"default:postgres"`
-			DisableTLS bool   `conf:"default:false"`
-		}
+	var cfg config.CmdConfig
+	if err := config.Parse(&cfg, config.SalesPrefix); err != nil {
+		return err
 	}
 	cfg.Version.Version = build
 	cfg.Version.Description = "copyright information here"
-
-	const prefix = "SALES"
-	if err := conf.Parse(os.Args[1:], prefix, &cfg); err != nil {
-		switch err {
-		case conf.ErrHelpWanted:
-			usage, err := conf.Usage(prefix, &cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config usage")
-			}
-			fmt.Println(usage)
-			return nil
-		case conf.ErrVersionWanted:
-			version, err := conf.VersionString(prefix, &cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config version")
-			}
-			fmt.Println(version)
-			return nil
-		}
-		return errors.Wrap(err, "parsing config")
-	}
 
 	// =========================================================================
 	// Commands
