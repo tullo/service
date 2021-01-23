@@ -50,6 +50,7 @@ func TestProducts(t *testing.T) {
 	t.Run("getProduct400", tests.getProduct400)
 	t.Run("deleteProductNotFound", tests.deleteProductNotFound)
 	t.Run("putProduct404", tests.putProduct404)
+	t.Run("getProducts200", tests.getProducts200)
 	t.Run("crudProductAdmin", tests.crudProductAdmin)
 
 	// USER role
@@ -206,6 +207,45 @@ func (pt *ProductTests) getProduct404(t *testing.T) {
 				t.Fatalf("\t%s\tTest %d:\tShould get the expected result.", tests.Failed, testID)
 			}
 			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
+		}
+	}
+}
+
+// getProducts200 gets all existing products by paging.
+func (pt *ProductTests) getProducts200(t *testing.T) {
+	page := "1"
+	rows := "50"
+	target := "/v1/products/" + page + "/" + rows
+	r := httptest.NewRequest(http.MethodGet, target, nil)
+	w := httptest.NewRecorder()
+
+	r.Header.Set("Authorization", "Bearer "+pt.userToken)
+
+	pt.app.ServeHTTP(w, r)
+
+	t.Log("Given the need to validate getting all products that exsits.")
+	{
+		testID := 0
+		t.Logf("\tTest %d:\tWhen retrieving all products.", testID)
+		{
+			if w.Code != http.StatusOK {
+				t.Fatalf("\t%s\tTest %d:\tShould receive a status code of 200 for the response : %v", tests.Failed, testID, w.Code)
+			}
+			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
+
+			var products []product.Info
+			if err := json.NewDecoder(w.Body).Decode(&products); err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
+			}
+
+			// Define what we wanted to receive.
+			exp := 2 // number of seeded products
+
+			if diff := cmp.Diff(exp, len(products)); diff != "" {
+				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
+			}
+			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
+
 		}
 	}
 }
