@@ -414,8 +414,8 @@ func (ut *UserTests) crudUser(t *testing.T) {
 // postUser201 validates a user can be created with the endpoint.
 func (ut *UserTests) postUser201(t *testing.T) user.Info {
 	nu := user.NewUser{
-		Name:            "Bill Kennedy",
-		Email:           "bill@ardanlabs.com",
+		Name:            "Andreas Amstutz",
+		Email:           "tullo@users.noreply.github.com",
 		Roles:           []string{auth.RoleAdmin},
 		Password:        "gophers",
 		PasswordConfirm: "gophers",
@@ -453,8 +453,8 @@ func (ut *UserTests) postUser201(t *testing.T) user.Info {
 			// Define what we wanted to receive. We will just trust the generated
 			// fields like ID and Dates so we copy u.
 			exp := u
-			exp.Name = "Bill Kennedy"
-			exp.Email = "bill@ardanlabs.com"
+			exp.Name = "Andreas Amstutz"
+			exp.Email = "tullo@users.noreply.github.com"
 			exp.Roles = []string{auth.RoleAdmin}
 
 			if diff := cmp.Diff(exp, u); diff != "" {
@@ -517,8 +517,8 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 			// fields like Dates so we copy p.
 			exp := u
 			exp.ID = id
-			exp.Name = "Bill Kennedy"
-			exp.Email = "bill@ardanlabs.com"
+			exp.Name = "Andreas Amstutz"
+			exp.Email = "tullo@users.noreply.github.com"
 			exp.Roles = []string{auth.RoleAdmin}
 
 			if diff := cmp.Diff(exp, u); diff != "" {
@@ -531,7 +531,7 @@ func (ut *UserTests) getUser200(t *testing.T, id string) {
 
 // putUser204 validates updating a user that does exist.
 func (ut *UserTests) putUser204(t *testing.T, id string) {
-	body := `{"name": "Jacob Walker"}`
+	body := `{"name": "Andreas Amstutz"}`
 
 	r := httptest.NewRequest(http.MethodPut, "/v1/users/"+id, strings.NewReader(body))
 	w := httptest.NewRecorder()
@@ -567,13 +567,13 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
 			}
 
-			if ru.Name != "Jacob Walker" {
-				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q exp %q", tests.Failed, testID, ru.Name, "Jacob Walker")
+			if ru.Name != "Andreas Amstutz" {
+				t.Fatalf("\t%s\tTest %d:\tShould see an updated Name : got %q exp %q", tests.Failed, testID, ru.Name, "Andreas Amstutz")
 			}
 			t.Logf("\t%s\tTest %d:\tShould see an updated Name.", tests.Success, testID)
 
-			if ru.Email != "bill@ardanlabs.com" {
-				t.Fatalf("\t%s\tTest %d:\tShould not affect other fields like Email : got %q want %q", tests.Failed, testID, ru.Email, "bill@ardanlabs.com")
+			if ru.Email != "tullo@users.noreply.github.com" {
+				t.Fatalf("\t%s\tTest %d:\tShould not affect other fields like Email : got %q want %q", tests.Failed, testID, ru.Email, "tullo@users.noreply.github.com")
 			}
 			t.Logf("\t%s\tTest %d:\tShould not affect other fields like Email.", tests.Success, testID)
 		}
@@ -582,7 +582,7 @@ func (ut *UserTests) putUser204(t *testing.T, id string) {
 
 // putUser403 validates that a user can't modify users unless they are an admin.
 func (ut *UserTests) putUser403(t *testing.T, id string) {
-	body := `{"name": "Anna Walker"}`
+	body := `{"name": "Andreas Amstutz"}`
 
 	r := httptest.NewRequest(http.MethodPut, "/v1/users/"+id, strings.NewReader(body))
 	w := httptest.NewRecorder()

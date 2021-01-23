@@ -30,8 +30,8 @@ func TestUser(t *testing.T) {
 			traceID := "00000000-0000-0000-0000-000000000000"
 
 			nu := user.NewUser{
-				Name:            "Bill Kennedy",
-				Email:           "bill@ardanlabs.com",
+				Name:            "Andreas Amstutz",
+				Email:           "tullo@users.noreply.github.com",
 				Roles:           []string{auth.RoleAdmin},
 				Password:        "gophers",
 				PasswordConfirm: "gophers",
@@ -67,8 +67,8 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould get back the same user.", tests.Success, testID)
 
 			upd := user.UpdateUser{
-				Name:  tests.StringPointer("Jacob Walker"),
-				Email: tests.StringPointer("jacob@ardanlabs.com"),
+				Name:  tests.StringPointer("Andreas Amstutz"),
+				Email: tests.StringPointer("tullo@users.noreply.github.com"),
 			}
 
 			claims = auth.Claims{
@@ -188,8 +188,8 @@ func TestAuthenticate(t *testing.T) {
 			traceID := "00000000-0000-0000-0000-000000000000"
 
 			nu := user.NewUser{
-				Name:            "Anna Walker",
-				Email:           "anna@ardanlabs.com",
+				Name:            "Andreas Amstutz",
+				Email:           "tullo@users.noreply.github.com",
 				Roles:           []string{auth.RoleAdmin},
 				Password:        "goroutines",
 				PasswordConfirm: "goroutines",
@@ -202,7 +202,7 @@ func TestAuthenticate(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create user.", tests.Success, testID)
 
-			claims, err := u.Authenticate(ctx, traceID, now, "anna@ardanlabs.com", "goroutines")
+			claims, err := u.Authenticate(ctx, traceID, now, "tullo@users.noreply.github.com", "goroutines")
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to generate claims : %s.", tests.Failed, testID, err)
 			}
