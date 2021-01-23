@@ -2,8 +2,6 @@
 package config
 
 import (
-	"fmt"
-	"os"
 	"time"
 
 	"github.com/pkg/errors"
@@ -24,6 +22,14 @@ type CmdConfig struct {
 		Name       string `conf:"default:postgres"`
 		DisableTLS bool   `conf:"default:false"`
 	}
+}
+
+// NewCmdConfig
+func NewCmdConfig(build, desc string) CmdConfig {
+	var cfg CmdConfig
+	cfg.Version.Version = build
+	cfg.Version.Description = desc
+	return cfg
 }
 
 // AppConfig holds application configuration properties.
@@ -55,27 +61,62 @@ type AppConfig struct {
 	}
 }
 
+// NewAppConfig
+func NewAppConfig(build, desc string) AppConfig {
+	var cfg AppConfig
+	cfg.Version.Version = build
+	cfg.Version.Description = desc
+	return cfg
+}
+
 // Parse parses configuration into the provided struct.
-func Parse(cfg interface{}, prefix string) error {
-	if err := conf.Parse(os.Args[1:], prefix, cfg); err != nil {
-		switch err {
-		case conf.ErrHelpWanted:
-			usage, err := conf.Usage(prefix, cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config usage")
-			}
-			fmt.Println(usage)
-			return nil
-		case conf.ErrVersionWanted:
-			version, err := conf.VersionString(prefix, cfg)
-			if err != nil {
-				return errors.Wrap(err, "generating config version")
-			}
-			fmt.Println(version)
-			return nil
+func Parse(cfg interface{}, prefix string, args []string) error {
+	switch cfg := cfg.(type) {
+	case *AppConfig:
+		if err := conf.Parse(args, prefix, cfg); err != nil {
+			return errors.Wrap(err, "parsing app config")
 		}
-		return errors.Wrap(err, "parsing config")
+	case *CmdConfig:
+		if err := conf.Parse(args, prefix, cfg); err != nil {
+			return errors.Wrap(err, "parsing cmd config")
+		}
 	}
 
 	return nil
+}
+
+// Usage ...
+func Usage(cfg interface{}, prefix string) (string, error) {
+	var err error
+	var help string
+	switch cfg := cfg.(type) {
+	case *AppConfig:
+		help, err = conf.Usage(prefix, cfg)
+	case *CmdConfig:
+		help, err = conf.Usage(prefix, cfg)
+	}
+
+	if err != nil {
+		return "", errors.Wrap(err, "generating config usage")
+	}
+
+	return help, nil
+}
+
+// VersionString ...
+func VersionString(cfg interface{}, prefix string) (string, error) {
+	var err error
+	var version string
+	switch cfg := cfg.(type) {
+	case *AppConfig:
+		version, err = conf.VersionString(prefix, cfg)
+	case *CmdConfig:
+		version, err = conf.VersionString(prefix, cfg)
+	}
+
+	if err != nil {
+		return "", errors.Wrap(err, "generating config version")
+	}
+
+	return version, nil
 }

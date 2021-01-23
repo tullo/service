@@ -12,8 +12,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-api/handlers"
@@ -33,6 +35,15 @@ symbols in profiles: https://github.com/golang/go/issues/23376 / https://github.
 // build is the git version of this program. It is set using build flags in the makefile.
 var build = "develop"
 
+type deps struct {
+	auth    *auth.Auth
+	db      *sqlx.DB
+	cfg     *config.AppConfig
+	log     *log.Logger
+	srverr  chan error
+	srvdown chan os.Signal
+}
+
 func main() {
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
@@ -44,60 +55,55 @@ func main() {
 
 func run(log *log.Logger) error {
 
-	// =========================================================================
-	// Configuration
-
-	var cfg config.AppConfig
-	if err := config.Parse(&cfg, config.SalesPrefix); err != nil {
-		return err
-	}
-	cfg.Version.Version = build
-	cfg.Version.Description = "copyright information here"
-
-	// =========================================================================
-	// App Starting
-
-	// Print the build version for our logs. Also expose it under /debug/vars.
-	expvar.NewString("build").Set(build)
+	// Print the build version for our logs.
 	log.Printf("main: Application initializing : version %q", build)
 	defer log.Println("main: Completed")
 
+	// Expose the build version under /debug/vars.
+	expvar.NewString("build").Set(build)
+
+	var err error
+
+	// =========================================================================
+	// Configuration
+
+	var cfg = config.NewAppConfig(build, "copyright information here")
+	if err := config.Parse(&cfg, config.SalesPrefix, os.Args[1:]); err != nil {
+		if errors.Is(err, conf.ErrHelpWanted) {
+			usage, err := config.Usage(&cfg, config.SalesPrefix)
+			if err != nil {
+				return errors.Wrap(err, "generating config usage")
+			}
+			fmt.Println(usage)
+			return nil
+		}
+		if errors.Is(err, conf.ErrVersionWanted) {
+			version, err := config.VersionString(&cfg, config.SalesPrefix)
+			if err != nil {
+				return errors.Wrap(err, "generating config version")
+			}
+			fmt.Println(version)
+			return nil
+		}
+		return errors.Wrap(err, "parsing config")
+	}
+
 	out, err := conf.String(&cfg)
 	if err != nil {
-		return errors.Wrap(err, "generating config for output")
+		return errors.Wrap(err, "generating output for config")
 	}
 	log.Printf("main: Config :\n%v\n", out)
 
 	// =========================================================================
 	// Initialize authentication support
 
-	log.Println("main: Initializing authentication support")
-
-	privatePEM, err := ioutil.ReadFile(cfg.Auth.PrivateKeyFile)
-	if err != nil {
-		return errors.Wrap(err, "reading auth private key")
+	var auth *auth.Auth
+	if auth, err = initAuthSupport(log, &cfg); err != nil {
+		return errors.Wrap(err, "init auth support")
 	}
-
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
-	if err != nil {
-		return errors.Wrap(err, "parsing auth private key")
-	}
-
-	lookup := func(kid string) (*rsa.PublicKey, error) {
-		switch kid {
-		case cfg.Auth.KeyID:
-			return &privateKey.PublicKey, nil
-		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
-	}
-	auth, err := auth.New(cfg.Auth.Algorithm, lookup)
-	if err != nil {
-		return errors.Wrap(err, "constructing authenticator")
-	}
-	auth.AddKey(cfg.Auth.KeyID, privateKey)
 
 	// =========================================================================
-	// Start Database
+	// Start Database Support
 
 	log.Println("main: Initializing database support")
 
@@ -121,18 +127,57 @@ func run(log *log.Logger) error {
 
 	log.Println("main: Initializing zipkin tracing support")
 
-	if err := tracer.Init(cfg.Zipkin.ServiceName, cfg.Zipkin.ReporterURI, cfg.Zipkin.Probability, log); err != nil {
+	tr := tracer.Config{
+		ServiceName: cfg.Zipkin.ServiceName,
+		ReporterURI: cfg.Zipkin.ReporterURI,
+		Probability: cfg.Zipkin.Probability,
+	}
+	if err = tracer.Init(log, &tr); err != nil {
 		return errors.Wrap(err, "starting tracer")
 	}
 
 	// =========================================================================
 	// Start Debug Service
-	//
-	// /debug/pprof - Added to the default mux by importing the net/http/pprof package.
-	// /debug/vars - Added to the default mux by importing the expvar package.
-	//
-	// Not concerned with shutting this down when the application is shutdown.
 
+	startDebugService(log, &cfg)
+
+	// =========================================================================
+	// Start API Service
+
+	log.Println("main: Initializing API support")
+
+	d := deps{
+		auth:    auth,
+		db:      db,
+		cfg:     &cfg,
+		log:     log,
+		srverr:  nil,
+		srvdown: nil,
+	}
+	api := initAPI(&d)
+
+	// Start the service listening for requests.
+	go func() {
+		log.Printf("main: API listening on %s", api.Addr)
+		d.srverr <- api.ListenAndServe()
+	}()
+
+	// =========================================================================
+	// Shutdown
+
+	timeout := &cfg.Web.ShutdownTimeout
+	appShutdown(api, d.srvdown, d.srverr, timeout)
+
+	return nil
+}
+
+// startDebugService launches a goroutine serving registered debug handlers.
+//
+// /debug/pprof - handler added to the default mux by importing the net/http/pprof package.
+// /debug/vars - handler added to the default mux by importing the expvar package.
+//
+// Not concerned with shutting this down when the application is shutdown.
+func startDebugService(log *log.Logger, cfg *config.AppConfig) {
 	log.Println("main: Initializing debugging support")
 
 	go func() {
@@ -141,47 +186,70 @@ func run(log *log.Logger) error {
 			log.Printf("main: Debug Listener closed : %v", err)
 		}
 	}()
+}
 
-	// =========================================================================
-	// Start API Service
+func initAuthSupport(log *log.Logger, cfg *config.AppConfig) (*auth.Auth, error) {
+	log.Println("main: Initializing authentication support")
 
-	log.Println("main: Initializing API support")
-
-	// Make a channel to listen for an interrupt or terminate signal from the OS.
-	// Use a buffered channel because the signal package requires it.
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	api := http.Server{
-		Addr:         cfg.Web.APIHost,
-		Handler:      handlers.API(build, shutdown, log, db, auth),
-		ReadTimeout:  cfg.Web.ReadTimeout,
-		WriteTimeout: cfg.Web.WriteTimeout,
+	privatePEM, err := ioutil.ReadFile(cfg.Auth.PrivateKeyFile)
+	if err != nil {
+		return nil, errors.Wrap(err, "reading auth private key")
 	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing auth private key")
+	}
+
+	lookup := func(kid string) (*rsa.PublicKey, error) {
+		switch kid {
+		case cfg.Auth.KeyID:
+			return &privateKey.PublicKey, nil
+		}
+		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
+	}
+	auth, err := auth.New(cfg.Auth.Algorithm, lookup)
+	if err != nil {
+		return nil, errors.Wrap(err, "constructing authenticator")
+	}
+	auth.AddKey(cfg.Auth.KeyID, privateKey)
+
+	return auth, nil
+}
+
+func initAPI(d *deps) *http.Server {
+	log.Println("main: Initializing API support")
 
 	// Make a channel to listen for errors coming from the listener. Use a
 	// buffered channel so the goroutine can exit if we don't collect this error.
-	serverErrors := make(chan error, 1)
+	d.srverr = make(chan error, 1)
 
-	// Start the service listening for requests.
-	go func() {
-		log.Printf("main: API listening on %s", api.Addr)
-		serverErrors <- api.ListenAndServe()
-	}()
+	// Make a channel to listen for an interrupt or terminate signal from the OS.
+	// Use a buffered channel because the signal package requires it.
+	d.srvdown = make(chan os.Signal, 1)
+	signal.Notify(d.srvdown, os.Interrupt, syscall.SIGTERM)
 
-	// =========================================================================
-	// Shutdown
+	api := http.Server{
+		Addr:         d.cfg.Web.APIHost,
+		Handler:      handlers.API(build, d.srvdown, d.log, d.db, d.auth),
+		ReadTimeout:  d.cfg.Web.ReadTimeout,
+		WriteTimeout: d.cfg.Web.WriteTimeout,
+	}
 
+	return &api
+}
+
+func appShutdown(api *http.Server, down chan os.Signal, srverr chan error, d *time.Duration) error {
 	// Blocking main and waiting for shutdown.
 	select {
-	case err := <-serverErrors:
+	case err := <-srverr:
 		return errors.Wrap(err, "server error")
 
-	case sig := <-shutdown:
+	case sig := <-down:
 		log.Printf("main: %v : Start shutdown", sig)
 
 		// Give outstanding requests a deadline for completion.
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), *d)
 		defer cancel()
 
 		// Asking listener to shutdown and shed load.

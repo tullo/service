@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-admin/commands"
 	"github.com/tullo/service/foundation/config"
 	"github.com/tullo/service/foundation/database"
@@ -30,12 +31,26 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Configuration
 
-	var cfg config.CmdConfig
-	if err := config.Parse(&cfg, config.SalesPrefix); err != nil {
-		return err
+	var cfg = config.NewCmdConfig(build, "copyright information here")
+	if err := config.Parse(&cfg, config.SalesPrefix, os.Args[1:]); err != nil {
+		if errors.Is(err, conf.ErrHelpWanted) {
+			usage, err := config.Usage(&cfg, config.SalesPrefix)
+			if err != nil {
+				return errors.Wrap(err, "generating config usage")
+			}
+			fmt.Println(usage)
+			return nil
+		}
+		if errors.Is(err, conf.ErrVersionWanted) {
+			version, err := config.VersionString(&cfg, config.SalesPrefix)
+			if err != nil {
+				return errors.Wrap(err, "generating config version")
+			}
+			fmt.Println(version)
+			return nil
+		}
+		return errors.Wrap(err, "parsing config")
 	}
-	cfg.Version.Version = build
-	cfg.Version.Description = "copyright information here"
 
 	// =========================================================================
 	// Commands
