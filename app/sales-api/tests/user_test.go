@@ -51,6 +51,7 @@ func TestUsers(t *testing.T) {
 	t.Run("getUser404", tests.getUser404)
 	t.Run("deleteUserNotFound", tests.deleteUserNotFound)
 	t.Run("putUser404", tests.putUser404)
+	t.Run("getUsers200", tests.getUsers200)
 	t.Run("crudUsers", tests.crudUser)
 }
 
@@ -485,6 +486,44 @@ func (ut *UserTests) deleteUser204(t *testing.T, id string) {
 				t.Fatalf("\t%s\tTest %d:\tShould receive a status code of 204 for the response : %v", tests.Failed, testID, w.Code)
 			}
 			t.Logf("\t%s\tTest %d:\tShould receive a status code of 204 for the response.", tests.Success, testID)
+		}
+	}
+}
+
+// getUsers200 retrieves all users by pages.
+func (ut *UserTests) getUsers200(t *testing.T) {
+	page := "1"
+	rows := "50"
+	target := "/v1/users/" + page + "/" + rows
+	r := httptest.NewRequest(http.MethodGet, target, nil)
+	w := httptest.NewRecorder()
+
+	r.Header.Set("Authorization", "Bearer "+ut.adminToken)
+
+	ut.app.ServeHTTP(w, r)
+
+	t.Log("Given the need to validate getting all users that exsits.")
+	{
+		testID := 0
+		t.Logf("\tTest %d:\tWhen retrieving all users.", testID)
+		{
+			if w.Code != http.StatusOK {
+				t.Fatalf("\t%s\tTest %d:\tShould receive a status code of 200 for the response : %v", tests.Failed, testID, w.Code)
+			}
+			t.Logf("\t%s\tTest %d:\tShould receive a status code of 200 for the response.", tests.Success, testID)
+
+			var users []user.Info
+			if err := json.NewDecoder(w.Body).Decode(&users); err != nil {
+				t.Fatalf("\t%s\tTest %d:\tShould be able to unmarshal the response : %v", tests.Failed, testID, err)
+			}
+
+			// Define what we wanted to receive.
+			exp := 2 // number of seeded users
+
+			if diff := cmp.Diff(exp, len(users)); diff != "" {
+				t.Fatalf("\t%s\tTest %d:\tShould get the expected result. Diff:\n%s", tests.Failed, testID, diff)
+			}
+			t.Logf("\t%s\tTest %d:\tShould get the expected result.", tests.Success, testID)
 		}
 	}
 }
