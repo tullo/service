@@ -1,0 +1,6 @@
+name: "CodeQL config"
+#queries:
+#  - security-and-quality
+#  - uses: +go/hardcoded-credentials
+# https://codeql.github.com/codeql-query-help/go/
+# https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/automatically-scanning-your-code-for-vulnerabilities-and-errors
