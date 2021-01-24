@@ -109,9 +109,9 @@ func VersionString(cfg interface{}, prefix string) (string, error) {
 	var version string
 	switch cfg := cfg.(type) {
 	case *AppConfig:
-		version, err = conf.VersionString(prefix, cfg)
+		version, err = conf.VersionString(cfg)
 	case *CmdConfig:
-		version, err = conf.VersionString(prefix, cfg)
+		version, err = conf.VersionString(cfg)
 	}
 
 	if err != nil {

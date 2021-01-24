@@ -48,7 +48,7 @@ install:
 .PHONY: staticcheck
 staticcheck: clone install
 
-deps-reset:
+go-deps-reset:
 	@git checkout -- go.mod
 	@go mod tidy
 	@go mod vendor

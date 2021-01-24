@@ -121,4 +121,4 @@ Then you can set these values at run time for display.
 		fmt.Println("parsing config", err)
 	}
 */
-package conf
+package conf // import "github.com/tullo/conf"
