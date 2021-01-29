@@ -24,9 +24,11 @@ jobs:
     - name: Run go vet & static checks
       run: |
         go vet ./...
+        export WORK=${PWD}
         export PATH=$PATH:$(go env GOPATH)/bin
-        GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
-        staticcheck -go 1.15 ./...
+        cd && GO111MODULE=on go get honnef.co/go/tools/cmd/staticcheck@2020.2.1
+        staticcheck -debug.version
+        cd ${WORK} && staticcheck -go 1.15 ./...
 
     - name: Run builds
       run: |
