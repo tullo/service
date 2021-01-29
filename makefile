@@ -32,21 +32,19 @@ down: compose-down
 
 run: compose-up compose-seed compose-status
 
-check:
+staticcheck:
 	$(shell go env GOPATH)/bin/staticcheck -go 1.15 \
 		-tests ./app/... ./business/... ./foundation/...
 
-clone:
-	@git clone git@github.com:dominikh/go-tools.git /tmp/go-tools \
-		&& cd /tmp/go-tools \
-		&& git checkout "2020.1.6" \
-
-install:
-	@cd /tmp/go-tools && go install -v ./cmd/staticcheck
+staticcheck-install:
+	set -e ; \
+	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
+	cd /tmp/go-tools ; \
+	git checkout 2020.2.1 ; \
+	go get ./...; \
+	go install ./... ; \
+	rm -fr /tmp/go-tools
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
-
-.PHONY: staticcheck
-staticcheck: clone install
 
 go-deps-reset:
 	@git checkout -- go.mod
@@ -106,7 +104,7 @@ go-pprof-profile:
 	@go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
 #   (pprof) top10 -cum
 
-go-test: check
+go-test: staticcheck
 	@go vet ./app/... ./business/... ./foundation/...
 	@go test ./... -count=1
 #	@go test -v ./... -count=1
