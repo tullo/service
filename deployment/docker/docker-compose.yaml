@@ -15,7 +15,7 @@ services:
     container_name: sales_db
     environment:
       POSTGRES_PASSWORD: postgres
-    image: postgres:13.1-alpine
+    image: postgres:13.2-alpine
     networks:
       shared-network:
     ports:
