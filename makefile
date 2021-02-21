@@ -19,9 +19,6 @@ export COMPOSE_FILE = deployment/docker/docker-compose.yaml
 # 1. openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
 # 2. openssl rsa -pubout -in private.pem -out public.pem
 
-# https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
-hey-upgrade: export GO111MODULE := off
-
 .DEFAULT_GOAL := run
 
 all: go-run-keygen images run down
@@ -33,7 +30,7 @@ down: compose-down
 run: compose-up compose-seed compose-status
 
 staticcheck:
-	$(shell go env GOPATH)/bin/staticcheck -go 1.15 \
+	$$(go env GOPATH)/bin/staticcheck -go 1.15 \
 		-tests ./app/... ./business/... ./foundation/...
 
 staticcheck-install:
@@ -44,7 +41,7 @@ staticcheck-install:
 	go get ./...; \
 	go install ./... ; \
 	rm -fr /tmp/go-tools
-	$(shell go env GOPATH)/bin/staticcheck -debug.version
+	$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-deps-reset:
 	@git checkout -- go.mod
@@ -160,18 +157,20 @@ curl-products:
 
 .PHONY: generate-load
 generate-load: export SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
-generate-load: export TOKEN=$(shell curl --no-progress-meter --user 'admin@example.com:gophers' \
+generate-load: export TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' \
 	http://localhost:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token')
 generate-load:
 	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50 | jq
 	@echo "Running 'hey' tool: sending 100'000 requests via 50 concurrent workers."
-	@$(shell go env GOPATH)/bin/hey -c 50 -n 100000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50
+	@$$(go env GOPATH)/bin/hey -c 50 -n 100000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50
 
-.PHONY: hey-upgrade
+# https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
+
+hey-upgrade: GO111MODULE := on
 hey-upgrade:
 	@echo GO111MODULE=$(GO111MODULE)
-	@go get -u -v github.com/rakyll/hey
-	$(shell go env GOPATH)/bin/hey
+	@cd && go get -u -v github.com/rakyll/hey
+	$$(go env GOPATH)/bin/hey
 
 metrics:
 	@docker buildx build \
