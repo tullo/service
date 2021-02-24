@@ -96,7 +96,7 @@ func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *htt
 
 	var np product.NewProduct
 	if err := web.Decode(r, &np); err != nil {
-		return errors.Wrapf(err, "unable to decode payload")
+		return errors.Wrap(err, "unable to decode payload")
 	}
 
 	prod, err := pg.product.Create(ctx, v.TraceID, claims, np, v.Now)
