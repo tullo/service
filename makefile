@@ -30,18 +30,13 @@ down: compose-down
 run: compose-up compose-seed compose-status
 
 staticcheck:
-	$$(go env GOPATH)/bin/staticcheck -go 1.15 \
-		-tests ./app/... ./business/... ./foundation/...
+	$$(go env GOPATH)/bin/staticcheck -go 1.16 -tests \
+		./app/... ./business/... ./foundation/...
 
+staticcheck-install: GO111MODULE := on
 staticcheck-install:
-	set -e ; \
-	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
-	cd /tmp/go-tools ; \
-	git checkout 2020.2.1 ; \
-	go get ./...; \
-	go install ./... ; \
-	rm -fr /tmp/go-tools
-	$$(go env GOPATH)/bin/staticcheck -debug.version
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.1.2
+	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-deps-reset:
 	@git checkout -- go.mod
@@ -168,8 +163,7 @@ generate-load:
 
 hey-upgrade: GO111MODULE := on
 hey-upgrade:
-	@echo GO111MODULE=$(GO111MODULE)
-	@cd && go get -u -v github.com/rakyll/hey
+	@go install -v github.com/rakyll/hey@latest
 	$$(go env GOPATH)/bin/hey
 
 metrics:
