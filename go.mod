@@ -1,6 +1,6 @@
 module github.com/tullo/service
 
-go 1.15
+go 1.16
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
@@ -12,7 +12,6 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/google/uuid v1.2.0
 	github.com/jmoiron/sqlx v1.2.0
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.9.0
 	github.com/pkg/errors v0.9.1
@@ -23,7 +22,6 @@ require (
 	go.opentelemetry.io/otel/sdk v0.16.0
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
