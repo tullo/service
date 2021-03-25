@@ -54,6 +54,13 @@ services:
       SALES_DB_DISABLE_TLS: '1' # Disabled for development.
       SALES_DB_HOST: db
       SALES_ZIPKIN_PROBABILITY: '1' # 100% recording and sampling
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget --spider http://localhost:4000/debug/readiness
+      interval: 10s
+      retries: 3
+      timeout: 5s
     image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
     networks:
       shared-network:
