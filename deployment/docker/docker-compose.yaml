@@ -1,8 +1,5 @@
-# https://docs.docker.com/compose/compose-file
-# docker-compose up
-# docker-compose stop
-# docker-compose down
-version: '3.8'
+# https://github.com/compose-spec/compose-spec/blob/master/spec.md
+version: '3.9' # optional since Compose v1.27.0
 
 networks:
   shared-network:
@@ -10,11 +7,17 @@ networks:
 
 services:
 
-  # This starts a local PostgreSQL DB.
   db:
     container_name: sales_db
     environment:
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U postgres
+      interval: 10s
+      retries: 5
+      timeout: 5s
     image: postgres:13.2-alpine
     networks:
       shared-network:
@@ -22,7 +25,7 @@ services:
     - published: 5432
       target: 5432
 
-  # This sidecar publishes metrics to the console by default.
+  # Publishes metrics to the console by default.
   metrics:
     container_name: metrics
     image: ${REGISTRY_ACCOUNT}/metrics-amd64:${VERSION}
@@ -48,7 +51,7 @@ services:
     environment:
       #GODEBUG=gctrace: '1'
       POSTGRES_PASSWORD: postgres
-      SALES_DB_DISABLE_TLS: '1' # This is only disabled for our development enviroment.
+      SALES_DB_DISABLE_TLS: '1' # Disabled for development.
       SALES_DB_HOST: db
       SALES_ZIPKIN_PROBABILITY: '1' # 100% recording and sampling
     image: ${REGISTRY_ACCOUNT}/sales-api-amd64:${VERSION}
@@ -61,7 +64,7 @@ services:
       target: 4000
     user: '100000'
 
-  # This sidecar allows for examination of traces.
+  # Examination of traces.
   zipkin:
     container_name: zipkin
     image: openzipkin/zipkin-slim:2.22
