@@ -43,11 +43,11 @@ services:
     container_name: sales-api
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
       metrics:
         condition: service_started
       zipkin:
-        condition: service_started
+        condition: service_healthy
     environment:
       #GODEBUG=gctrace: '1'
       POSTGRES_PASSWORD: postgres
