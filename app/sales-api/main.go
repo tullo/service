@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"

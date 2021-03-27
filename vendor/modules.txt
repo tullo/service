@@ -1,9 +1,9 @@
 # github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
 ## explicit
 github.com/alexedwards/argon2id
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+# github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
-github.com/dgrijalva/jwt-go
+github.com/dgrijalva/jwt-go/v4
 # github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 ## explicit
 github.com/dimiro1/darwin
@@ -35,8 +35,6 @@ github.com/google/uuid
 ## explicit
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
-# github.com/kr/pretty v0.1.0
-## explicit
 # github.com/leodido/go-urn v1.2.1
 ## explicit
 github.com/leodido/go-urn
@@ -95,8 +93,6 @@ golang.org/x/sys/cpu
 ## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
-## explicit
 # gopkg.in/go-playground/assert.v1 v1.2.1
 ## explicit
 # gopkg.in/go-playground/validator.v9 v9.31.0

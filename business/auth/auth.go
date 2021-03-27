@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/pkg/errors"
 )
 
@@ -28,7 +28,7 @@ type Claims struct {
 }
 
 // Valid is called during the parsing of a token.
-func (c Claims) Valid() error {
+func (c Claims) Valid(h *jwt.ValidationHelper) error {
 	for _, r := range c.Roles {
 		switch r {
 		case RoleAdmin, RoleUser: // Role is valid.
@@ -36,7 +36,7 @@ func (c Claims) Valid() error {
 			return fmt.Errorf("invalid role %q", r)
 		}
 	}
-	if err := c.StandardClaims.Valid(); err != nil {
+	if err := c.StandardClaims.Valid(h); err != nil {
 		return errors.Wrap(err, "validating standard claims")
 	}
 	return nil
@@ -117,16 +117,16 @@ func New(algorithm string, lookup PublicKeyLookup) (*Auth, error) {
 	// Create the token parser to use. The algorithm used to sign the JWT must be
 	// validated to avoid a critical vulnerability:
 	// https://auth0.com/blog/critical-vulnerabilities-in-json-web-token-libraries/
-	parser := jwt.Parser{
-		ValidMethods: []string{algorithm},
-	}
-
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{algorithm}),
+		jwt.WithAudience("students"),
+	)
 	a := Auth{
 		algorithm: algorithm,
 		keyFunc:   keyFunc,
 		keys:      make(map[string]*rsa.PrivateKey),
 		method:    method,
-		parser:    &parser,
+		parser:    parser,
 	}
 
 	return &a, nil

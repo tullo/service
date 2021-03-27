@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 	github.com/go-chi/chi v1.5.1
 	github.com/go-playground/locales v0.13.0

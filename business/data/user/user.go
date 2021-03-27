@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -309,10 +309,10 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	claims := auth.Claims{
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "service project",
+			Audience:  jwt.ClaimStrings{"students"},
 			Subject:   usr.ID,
-			Audience:  "students",
-			ExpiresAt: now.Add(time.Hour).Unix(),
-			IssuedAt:  now.Unix(),
+			ExpiresAt: jwt.At(now.Add(time.Hour)),
+			IssuedAt:  jwt.At(now),
 		},
 		Roles: usr.Roles,
 	}

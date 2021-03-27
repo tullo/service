@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
@@ -47,9 +47,9 @@ func TestUser(t *testing.T) {
 				StandardClaims: jwt.StandardClaims{
 					Issuer:    "service project",
 					Subject:   usr.ID,
-					Audience:  "students",
-					ExpiresAt: now.Add(time.Hour).Unix(),
-					IssuedAt:  now.Unix(),
+					Audience:  jwt.ClaimStrings{"students"},
+					ExpiresAt: jwt.At(now.Add(time.Hour)),
+					IssuedAt:  jwt.At(now),
 				},
 				Roles: []string{auth.RoleUser},
 			}
@@ -74,9 +74,9 @@ func TestUser(t *testing.T) {
 			claims = auth.Claims{
 				StandardClaims: jwt.StandardClaims{
 					Issuer:    "service project",
-					Audience:  "students",
-					ExpiresAt: now.Add(time.Hour).Unix(),
-					IssuedAt:  now.Unix(),
+					Audience:  jwt.ClaimStrings{"students"},
+					ExpiresAt: jwt.At(now.Add(time.Hour)),
+					IssuedAt:  jwt.At(now),
 				},
 				Roles: []string{auth.RoleAdmin},
 			}
@@ -213,9 +213,9 @@ func TestAuthenticate(t *testing.T) {
 				StandardClaims: jwt.StandardClaims{
 					Issuer:    "service project",
 					Subject:   usr.ID,
-					Audience:  "students",
-					ExpiresAt: now.Add(time.Hour).Unix(),
-					IssuedAt:  now.Unix(),
+					Audience:  jwt.ClaimStrings{"students"},
+					ExpiresAt: jwt.At(now.Add(time.Hour)),
+					IssuedAt:  jwt.At(now),
 				},
 			}
 

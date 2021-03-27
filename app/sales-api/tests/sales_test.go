@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
@@ -29,9 +29,9 @@ func Test_Sales(t *testing.T) {
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "service project",
 			Subject:   "718ffbea-f4a1-4667-8ae3-b349da52675e", // This is just some random UUID.
-			Audience:  "students",
-			ExpiresAt: now.Add(time.Hour).Unix(),
-			IssuedAt:  now.Unix(),
+			Audience:  jwt.ClaimStrings{"students"},
+			ExpiresAt: jwt.At(now.Add(time.Hour)),
+			IssuedAt:  jwt.At(now),
 		},
 		Roles: []string{auth.RoleAdmin, auth.RoleUser},
 	}

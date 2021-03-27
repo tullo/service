@@ -8,7 +8,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/user"
@@ -97,8 +97,9 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "service project",
 			Subject:   user.ID,
-			ExpiresAt: time.Now().Add(8760 * time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
+			Audience:  jwt.ClaimStrings{"students"},
+			ExpiresAt: jwt.At(time.Now().Add(8760 * time.Hour)),
+			IssuedAt:  jwt.Now(),
 		},
 		Roles: user.Roles,
 	}
