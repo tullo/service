@@ -13,6 +13,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/database"
+	"github.com/tullo/service/foundation/keystore"
 )
 
 // TokenGen generates a JWT for the specified user.
@@ -57,30 +58,19 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 		return errors.Wrap(err, "parsing PEM into private key")
 	}
 
-	// In a production system, a key id (KID) is used to retrieve the correct
-	// public key to parse a JWT for auth and claims. A key lookup function is
-	// provided to perform the task of retrieving a KID for a given public key.
-	// In this code, I am writing a lookup function that will return the public
-	// key for the private key provided with an arbitrary KID.
 	keyID := "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
-	lookup := func(kid string) (*rsa.PublicKey, error) {
-		switch kid {
-		case keyID:
-			return &privateKey.PublicKey, nil
-		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
-	}
 
 	// An authenticator maintains the state required to handle JWT processing.
 	// It requires the private key for generating tokens. The KID for access
 	// to the corresponding public key, the algorithms to use (RS256), and the
 	// key lookup function to perform the actual retrieve of the KID to public
 	// key lookup.
-	a, err := auth.New(algorithm, lookup)
+	keyPair := map[string]*rsa.PrivateKey{keyID: privateKey}
+	keyStore := keystore.NewMap(keyPair)
+	a, err := auth.New(algorithm, keyStore)
 	if err != nil {
 		return errors.Wrap(err, "constructing authenticator")
 	}
-	a.AddKey(keyID, privateKey)
 
 	// Generating a token requires defining a set of claims. In this applications
 	// case, we only care about defining the subject and the user in question and

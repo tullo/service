@@ -3,12 +3,12 @@ package auth_test
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/foundation/keystore"
 )
 
 const publicTestKID = "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
@@ -31,38 +31,13 @@ func TestAuth(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create a private key.", success, testID)
 
-			lookup := func(kid string) (*rsa.PublicKey, error) {
-				switch kid {
-				case publicTestKID:
-					return &privateKey.PublicKey, nil
-				}
-				return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
-			}
-
-			a, err := auth.New("RS256", lookup)
+			keyPair := map[string]*rsa.PrivateKey{publicTestKID: privateKey}
+			keyStore := keystore.NewMap(keyPair)
+			a, err := auth.New("RS256", keyStore)
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create an authenticator: %v", failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to create an authenticator.", success, testID)
-
-			keys := a.AddKey(publicTestKID, privateKey)
-			if keys != 1 {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination.", success, testID)
-
-			kid := "a-signing-key-id"
-			keys = a.AddKey(kid, privateKey)
-			if keys != 2 {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to add a [kid:private-key] combination.", success, testID)
-
-			keys = a.RemoveKey(kid)
-			if keys != 1 {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to remove a [kid:private-key] combination: keys in store (%d)", failed, testID, keys)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to remove a [kid:private-key] combination.", success, testID)
 
 			claims := auth.Claims{
 				StandardClaims: jwt.StandardClaims{

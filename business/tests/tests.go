@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
-	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -15,6 +14,7 @@ import (
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/database"
+	"github.com/tullo/service/foundation/keystore"
 )
 
 // Success and failure markers.
@@ -135,28 +135,21 @@ func NewIntegration(t *testing.T) *Test {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The corresponding public key ID.
+	keyID := "4754d86b-7a6d-4df5-9c65-224741361492"
 
-	// Build an authenticator using this key lookup function to retrieve
-	// the corresponding public key.
-	KID := "4754d86b-7a6d-4df5-9c65-224741361492"
-	lookup := func(kid string) (*rsa.PublicKey, error) {
-		switch kid {
-		case KID:
-			return &privateKey.PublicKey, nil
-		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
-	}
-
-	auth, err := auth.New("RS256", lookup)
+	// Build an authenticator using this private key and id for the key store.
+	keyPair := map[string]*rsa.PrivateKey{keyID: privateKey}
+	keyStore := keystore.NewMap(keyPair)
+	auth, err := auth.New("RS256", keyStore)
 	if err != nil {
 		t.Fatal(err)
 	}
-	auth.AddKey(KID, privateKey)
 
 	test := Test{
 		Auth:     auth,
 		DB:       db,
-		KID:      KID,
+		KID:      keyID,
 		Log:      log,
 		Teardown: teardown,
 		TraceID:  "00000000-0000-0000-0000-000000000000",

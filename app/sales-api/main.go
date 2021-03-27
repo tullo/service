@@ -22,6 +22,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/foundation/config"
 	"github.com/tullo/service/foundation/database"
+	"github.com/tullo/service/foundation/keystore"
 	"github.com/tullo/service/foundation/tracer"
 )
 
@@ -201,18 +202,12 @@ func initAuthSupport(log *log.Logger, cfg *config.AppConfig) (*auth.Auth, error)
 		return nil, errors.Wrap(err, "parsing auth private key")
 	}
 
-	lookup := func(kid string) (*rsa.PublicKey, error) {
-		switch kid {
-		case cfg.Auth.KeyID:
-			return &privateKey.PublicKey, nil
-		}
-		return nil, fmt.Errorf("no public key found for the specified kid: %s", kid)
-	}
-	auth, err := auth.New(cfg.Auth.Algorithm, lookup)
+	keyPair := map[string]*rsa.PrivateKey{cfg.Auth.KeyID: privateKey}
+	keyStore := keystore.NewMap(keyPair)
+	auth, err := auth.New(cfg.Auth.Algorithm, keyStore)
 	if err != nil {
 		return nil, errors.Wrap(err, "constructing authenticator")
 	}
-	auth.AddKey(cfg.Auth.KeyID, privateKey)
 
 	return auth, nil
 }
