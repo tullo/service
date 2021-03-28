@@ -58,6 +58,10 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 		return errors.Wrap(err, "parsing PEM into private key")
 	}
 
+	// In a production system, a key id (KID) is used to retrieve the correct
+	// public key to parse a JWT for auth and claims. A key store is provided
+	// to the auth package for storage and lookup purpose. This id will be
+	// assigned to the private key just constructed.
 	keyID := "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
 
 	// An authenticator maintains the state required to handle JWT processing.

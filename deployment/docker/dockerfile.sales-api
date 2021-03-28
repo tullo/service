@@ -28,7 +28,7 @@ ARG VCS_REF
 RUN apk --no-cache add ca-certificates
 RUN addgroup -g 3000 -S sales-api && adduser -u 100000 -S sales-api -G sales-api --no-create-home --disabled-password
 USER 100000
-COPY --from=build_stage --chown=sales-api:sales-api /service/private.pem /service/private.pem
+COPY --from=build_stage --chown=sales-api:sales-api /service/private.pem /service/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
 COPY --from=build_stage --chown=sales-api:sales-api /service/app/sales-admin/sales-admin /service/admin
 COPY --from=build_stage --chown=sales-api:sales-api /service/app/sales-api/sales-api /service/sales-api
 WORKDIR /service

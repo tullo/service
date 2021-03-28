@@ -59,7 +59,7 @@ go-tidy:
 go-run-api:
 	@go run ./app/sales-api \
 		--db-disable-tls=1 \
-		--auth-private-key-file=private.pem \
+		--auth-keys-folder=deployment/keys \
 		--zipkin-reporter-uri=http://0.0.0.0:9411/api/v2/spans \
 		--zipkin-probability=1
 
@@ -69,9 +69,12 @@ go-run-config:
 go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
+go-run-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
+go-run-tokengen: PRIVATE_KEY_FILE=deployment/keys/development.pem
+go-run-tokengen: ALGORITHM=RS256
 go-run-tokengen: go-run-migrate
 	@echo tokengen \(userID, privateKeyPEM, algorithm\)
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen '5cf37266-3473-4006-984f-9325122678b7' private.pem 'RS256'
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${PRIVATE_KEY_FILE} ${ALGORITHM}
 
 go-run-migrate: compose-db-up
 	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'

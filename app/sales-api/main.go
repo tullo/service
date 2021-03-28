@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"crypto/rsa"
 	"expvar" // Register the expvar handlers
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // Register the pprof handlers
@@ -14,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
@@ -192,19 +189,14 @@ func startDebugService(log *log.Logger, cfg *config.AppConfig) {
 func initAuthSupport(log *log.Logger, cfg *config.AppConfig) (*auth.Auth, error) {
 	log.Println("main: Initializing authentication support")
 
-	privatePEM, err := ioutil.ReadFile(cfg.Auth.PrivateKeyFile)
+	// Construct a key store based on the key files stored in the specified
+	// directory.
+	ks, err := keystore.NewFS(os.DirFS(cfg.Auth.KeysFolder))
 	if err != nil {
-		return nil, errors.Wrap(err, "reading auth private key")
+		return nil, errors.Wrap(err, "reading keys")
 	}
 
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
-	if err != nil {
-		return nil, errors.Wrap(err, "parsing auth private key")
-	}
-
-	keyPair := map[string]*rsa.PrivateKey{cfg.Auth.KeyID: privateKey}
-	keyStore := keystore.NewMap(keyPair)
-	auth, err := auth.New(cfg.Auth.Algorithm, keyStore)
+	auth, err := auth.New(cfg.Auth.Algorithm, ks)
 	if err != nil {
 		return nil, errors.Wrap(err, "constructing authenticator")
 	}

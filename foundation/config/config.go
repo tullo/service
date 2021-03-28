@@ -50,9 +50,8 @@ type AppConfig struct {
 		DisableTLS bool   `conf:"default:false"`
 	}
 	Auth struct {
-		KeyID          string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
-		PrivateKeyFile string `conf:"default:/service/private.pem"`
-		Algorithm      string `conf:"default:RS256"`
+		KeysFolder string `conf:"default:/service/keys"`
+		Algorithm  string `conf:"default:RS256"`
 	}
 	Zipkin struct {
 		ReporterURI string  `conf:"default:http://zipkin:9411/api/v2/spans"`

@@ -83,23 +83,22 @@ OPTIONS
 var appConfigHelp string = `Usage: config.test [options] [arguments]
 
 OPTIONS
-  --web-api-host/$TEST_WEB_API_HOST                    <string>    (default: 0.0.0.0:3000)
-  --web-debug-host/$TEST_WEB_DEBUG_HOST                <string>    (default: 0.0.0.0:4000)
-  --web-read-timeout/$TEST_WEB_READ_TIMEOUT            <duration>  (default: 5s)
-  --web-write-timeout/$TEST_WEB_WRITE_TIMEOUT          <duration>  (default: 5s)
-  --web-shutdown-timeout/$TEST_WEB_SHUTDOWN_TIMEOUT    <duration>  (default: 5s)
-  --db-user/$TEST_DB_USER                              <string>    (default: postgres)
-  --db-password/$TEST_DB_PASSWORD                      <string>    (noprint,default: postgres)
-  --db-host/$TEST_DB_HOST                              <string>    (default: 0.0.0.0)
-  --db-name/$TEST_DB_NAME                              <string>    (default: postgres)
-  --db-disable-tls/$TEST_DB_DISABLE_TLS                <bool>      (default: false)
-  --auth-key-id/$TEST_AUTH_KEY_ID                      <string>    (default: 54bb2165-71e1-41a6-af3e-7da4a0e1e2c1)
-  --auth-private-key-file/$TEST_AUTH_PRIVATE_KEY_FILE  <string>    (default: /service/private.pem)
-  --auth-algorithm/$TEST_AUTH_ALGORITHM                <string>    (default: RS256)
-  --zipkin-reporter-uri/$TEST_ZIPKIN_REPORTER_URI      <string>    (default: http://zipkin:9411/api/v2/spans)
-  --zipkin-service-name/$TEST_ZIPKIN_SERVICE_NAME      <string>    (default: sales-api)
-  --zipkin-probability/$TEST_ZIPKIN_PROBABILITY        <float>     (default: 0.05)
-  --help/-h                                            
+  --web-api-host/$TEST_WEB_API_HOST                  <string>    (default: 0.0.0.0:3000)
+  --web-debug-host/$TEST_WEB_DEBUG_HOST              <string>    (default: 0.0.0.0:4000)
+  --web-read-timeout/$TEST_WEB_READ_TIMEOUT          <duration>  (default: 5s)
+  --web-write-timeout/$TEST_WEB_WRITE_TIMEOUT        <duration>  (default: 5s)
+  --web-shutdown-timeout/$TEST_WEB_SHUTDOWN_TIMEOUT  <duration>  (default: 5s)
+  --db-user/$TEST_DB_USER                            <string>    (default: postgres)
+  --db-password/$TEST_DB_PASSWORD                    <string>    (noprint,default: postgres)
+  --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0)
+  --db-name/$TEST_DB_NAME                            <string>    (default: postgres)
+  --db-disable-tls/$TEST_DB_DISABLE_TLS              <bool>      (default: false)
+  --auth-keys-folder/$TEST_AUTH_KEYS_FOLDER          <string>    (default: /service/keys)
+  --auth-algorithm/$TEST_AUTH_ALGORITHM              <string>    (default: RS256)
+  --zipkin-reporter-uri/$TEST_ZIPKIN_REPORTER_URI    <string>    (default: http://zipkin:9411/api/v2/spans)
+  --zipkin-service-name/$TEST_ZIPKIN_SERVICE_NAME    <string>    (default: sales-api)
+  --zipkin-probability/$TEST_ZIPKIN_PROBABILITY      <float>     (default: 0.05)
+  --help/-h                                          
   display this help message
   --version/-v  
   display version information
@@ -142,6 +141,7 @@ func TestParse(t *testing.T) {
 --db-host='HOST'
 --db-name='DB'
 --db-disable-tls=false`
+
 	var appConfig string = `--version=
 --description='testing app config'
 --web-api-host=0.0.0.0:80
@@ -153,8 +153,7 @@ func TestParse(t *testing.T) {
 --db-host=0.0.0.0
 --db-name=postgres
 --db-disable-tls=false
---auth-key-id=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
---auth-private-key-file=/service/private.pem
+--auth-keys-folder=/service/keys
 --auth-algorithm=RS256
 --zipkin-reporter-uri=http://zipkin:9411/api/v2/spans
 --zipkin-service-name=sales-api
