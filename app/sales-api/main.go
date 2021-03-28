@@ -142,8 +142,6 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Start API Service
 
-	log.Println("main: Initializing API support")
-
 	d := deps{
 		auth:    auth,
 		db:      db,
@@ -164,7 +162,7 @@ func run(log *log.Logger) error {
 	// Shutdown
 
 	timeout := &cfg.Web.ShutdownTimeout
-	appShutdown(api, d.srvdown, d.srverr, timeout)
+	appShutdown(api, &d, timeout)
 
 	return nil
 }
@@ -205,7 +203,7 @@ func initAuthSupport(log *log.Logger, cfg *config.AppConfig) (*auth.Auth, error)
 }
 
 func initAPI(d *deps) *http.Server {
-	log.Println("main: Initializing API support")
+	d.log.Println("main: Initializing API support")
 
 	// Make a channel to listen for errors coming from the listener. Use a
 	// buffered channel so the goroutine can exit if we don't collect this error.
@@ -226,14 +224,14 @@ func initAPI(d *deps) *http.Server {
 	return &api
 }
 
-func appShutdown(api *http.Server, down chan os.Signal, srverr chan error, d *time.Duration) error {
+func appShutdown(api *http.Server, deps *deps, d *time.Duration) error {
 	// Blocking main and waiting for shutdown.
 	select {
-	case err := <-srverr:
+	case err := <-deps.srverr:
 		return errors.Wrap(err, "server error")
 
-	case sig := <-down:
-		log.Printf("main: %v : Start shutdown", sig)
+	case sig := <-deps.srvdown:
+		deps.log.Printf("main: %v : Start shutdown", sig)
 
 		// Give outstanding requests a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), *d)
@@ -244,6 +242,8 @@ func appShutdown(api *http.Server, down chan os.Signal, srverr chan error, d *ti
 			api.Close()
 			return errors.Wrap(err, "could not stop server gracefully")
 		}
+
+		deps.log.Printf("main: %v: Completed shutdown", sig)
 	}
 
 	return nil
