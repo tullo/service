@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/schema"
+	"github.com/tullo/service/business/data/tests"
 	"github.com/tullo/service/business/data/user"
-	"github.com/tullo/service/business/tests"
 )
 
 func TestUser(t *testing.T) {

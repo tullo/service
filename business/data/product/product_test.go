@@ -11,7 +11,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/schema"
-	"github.com/tullo/service/business/tests"
+	"github.com/tullo/service/business/data/tests"
 )
 
 func TestProduct(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
-	"github.com/tullo/service/business/tests"
+	"github.com/tullo/service/business/data/tests"
 )
 
 func Test_Sales(t *testing.T) {

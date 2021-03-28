@@ -13,8 +13,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/tullo/service/app/sales-api/handlers"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data/tests"
 	"github.com/tullo/service/business/data/user"
-	"github.com/tullo/service/business/tests"
 	"github.com/tullo/service/foundation/web"
 )
 
