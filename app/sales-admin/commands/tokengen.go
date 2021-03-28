@@ -65,10 +65,8 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	keyID := "54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"
 
 	// An authenticator maintains the state required to handle JWT processing.
-	// It requires the private key for generating tokens. The KID for access
-	// to the corresponding public key, the algorithms to use (RS256), and the
-	// key lookup function to perform the actual retrieve of the KID to public
-	// key lookup.
+	// It requires a keystore to lookup private and public keys based on a key
+	// id. There is a keystore implementation in the project.
 	keyPair := map[string]*rsa.PrivateKey{keyID: privateKey}
 	keyStore := keystore.NewMap(keyPair)
 	a, err := auth.New(algorithm, keyStore)
