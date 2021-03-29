@@ -17,7 +17,7 @@ type CmdConfig struct {
 	Args conf.Args
 	DB   struct {
 		User       string `conf:"default:postgres"`
-		Password   string `conf:"default:postgres,noprint"`
+		Password   string `conf:"default:postgres,mask"`
 		Host       string `conf:"default:0.0.0.0"`
 		Name       string `conf:"default:postgres"`
 		DisableTLS bool   `conf:"default:false"`
@@ -44,7 +44,7 @@ type AppConfig struct {
 	}
 	DB struct {
 		User       string `conf:"default:postgres"`
-		Password   string `conf:"default:postgres,noprint"`
+		Password   string `conf:"default:postgres,mask"`
 		Host       string `conf:"default:0.0.0.0"`
 		Name       string `conf:"default:postgres"`
 		DisableTLS bool   `conf:"default:false"`
@@ -108,9 +108,9 @@ func VersionString(cfg interface{}, prefix string) (string, error) {
 	var version string
 	switch cfg := cfg.(type) {
 	case *AppConfig:
-		version, err = conf.VersionString(cfg)
+		version, err = conf.VersionString(prefix, cfg)
 	case *CmdConfig:
-		version, err = conf.VersionString(cfg)
+		version, err = conf.VersionString(prefix, cfg)
 	}
 
 	if err != nil {

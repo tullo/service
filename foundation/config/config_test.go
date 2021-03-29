@@ -70,7 +70,7 @@ var cmdConfigHelp string = `Usage: config.test [options] [arguments]
 
 OPTIONS
   --db-user/$TEST_DB_USER                <string>  (default: postgres)
-  --db-password/$TEST_DB_PASSWORD        <string>  (noprint,default: postgres)
+  --db-password/$TEST_DB_PASSWORD        <string>  (default: postgres)
   --db-host/$TEST_DB_HOST                <string>  (default: 0.0.0.0)
   --db-name/$TEST_DB_NAME                <string>  (default: postgres)
   --db-disable-tls/$TEST_DB_DISABLE_TLS  <bool>    (default: false)
@@ -89,7 +89,7 @@ OPTIONS
   --web-write-timeout/$TEST_WEB_WRITE_TIMEOUT        <duration>  (default: 5s)
   --web-shutdown-timeout/$TEST_WEB_SHUTDOWN_TIMEOUT  <duration>  (default: 5s)
   --db-user/$TEST_DB_USER                            <string>    (default: postgres)
-  --db-password/$TEST_DB_PASSWORD                    <string>    (noprint,default: postgres)
+  --db-password/$TEST_DB_PASSWORD                    <string>    (default: postgres)
   --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0)
   --db-name/$TEST_DB_NAME                            <string>    (default: postgres)
   --db-disable-tls/$TEST_DB_DISABLE_TLS              <bool>      (default: false)
@@ -138,6 +138,7 @@ func TestParse(t *testing.T) {
 --description='testing cmd config'
 --args=[migrate]
 --db-user='USER'
+--db-password=xxxxxx
 --db-host='HOST'
 --db-name='DB'
 --db-disable-tls=false`
@@ -150,6 +151,7 @@ func TestParse(t *testing.T) {
 --web-write-timeout=5s
 --web-shutdown-timeout=5s
 --db-user=postgres
+--db-password=xxxxxx
 --db-host=0.0.0.0
 --db-name=postgres
 --db-disable-tls=false
@@ -159,8 +161,16 @@ func TestParse(t *testing.T) {
 --zipkin-service-name=sales-api
 --zipkin-probability=0.01`
 
-	cmdConf := []string{"--description='testing cmd config'", "--db-user='USER'", "--db-host='HOST'", "--db-name='DB'", "--db-disable-tls=false", "migrate"}
-	appConf := []string{"--description='testing app config'", "--web-api-host=0.0.0.0:80", "--web-debug-host=0.0.0.0:4040", "--zipkin-probability=0.01"}
+	cmdConf := []string{
+		"--description='testing cmd config'", "--db-user='USER'",
+		"--db-password='V3ryS3cr3t!'", "--db-host='HOST'", "--db-name='DB'",
+		"--db-disable-tls=false", "migrate",
+	}
+	appConf := []string{
+		"--description='testing app config'", "--web-api-host=0.0.0.0:80",
+		"--web-debug-host=0.0.0.0:4040", "--zipkin-probability=0.01",
+		"--db-password='V3ryS3cr3t!'",
+	}
 	type args struct {
 		cfg    interface{}
 		prefix string
