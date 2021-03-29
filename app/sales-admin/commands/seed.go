@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/data/schema"
@@ -12,9 +14,16 @@ import (
 func Seed(cfg database.Config) error {
 	db, err := database.Open(cfg)
 	if err != nil {
-		return errors.Wrap(err, "connect database")
+		return errors.Wrap(err, "connect to database")
 	}
 	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := database.StatusCheck(ctx, db); err != nil {
+		return errors.Wrap(err, "database status check")
+	}
 
 	if err := schema.Seed(db); err != nil {
 		return errors.Wrap(err, "seed database")
