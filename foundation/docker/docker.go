@@ -1,4 +1,6 @@
-package tests
+// Package docker provides support for starting and stopping docker containers
+// for running tests.
+package docker
 
 import (
 	"bytes"
@@ -14,8 +16,8 @@ type Container struct {
 	Host string // IP:Port
 }
 
-// startContainer launches a container using the specified image and port.
-func startContainer(t *testing.T, image string, port string, args ...string) *Container {
+// StartContainer launches a container using the specified image and port.
+func StartContainer(t *testing.T, image string, port string, args ...string) *Container {
 	t.Helper() // marks this func as a test helper function
 
 	arg := []string{"run", "-P", "-d"}
@@ -57,8 +59,8 @@ func startContainer(t *testing.T, image string, port string, args ...string) *Co
 	return &c
 }
 
-// stopContainer stops and removes the specified container.
-func stopContainer(t *testing.T, id string) {
+// StopContainer stops and removes the specified container.
+func StopContainer(t *testing.T, id string) {
 	t.Helper()
 
 	if err := exec.Command("docker", "stop", id).Run(); err != nil {
@@ -72,8 +74,9 @@ func stopContainer(t *testing.T, id string) {
 	t.Log("Removed:", id)
 }
 
-// dumpContainerLogs sends the container log to t.Log.
-func dumpContainerLogs(t *testing.T, id string) {
+// DumpContainerLogs outputs logs from the running docker container identified
+// by container id.
+func DumpContainerLogs(t *testing.T, id string) {
 	t.Helper()
 
 	out, err := exec.Command("docker", "logs", id).CombinedOutput()

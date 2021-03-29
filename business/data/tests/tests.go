@@ -14,6 +14,7 @@ import (
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/database"
+	"github.com/tullo/service/foundation/docker"
 	"github.com/tullo/service/foundation/keystore"
 )
 
@@ -42,7 +43,7 @@ var (
 func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
 
 	// Start a DB container instance with dgraph running.
-	c := startContainer(t, dbImage, dbPort, dbArgs...)
+	c := docker.StartContainer(t, dbImage, dbPort, dbArgs...)
 
 	cfg := database.Config{
 		User:       "postgres",
@@ -72,13 +73,13 @@ func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
 	}
 
 	if pingError != nil {
-		dumpContainerLogs(t, c.ID)
-		stopContainer(t, c.ID)
+		docker.DumpContainerLogs(t, c.ID)
+		docker.StopContainer(t, c.ID)
 		t.Fatalf("Database never ready: %v", pingError)
 	}
 
 	if err := schema.Migrate(db); err != nil {
-		stopContainer(t, c.ID)
+		docker.StopContainer(t, c.ID)
 		t.Fatalf("Migrating error: %s", err)
 	}
 
@@ -87,26 +88,12 @@ func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
 	teardown := func() {
 		t.Helper()
 		db.Close()
-		stopContainer(t, c.ID)
+		docker.StopContainer(t, c.ID)
 	}
 
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	return log, db, teardown
-}
-
-// StringPointer is a helper to get a *string from a string. It is in the tests
-// package because we normally don't want to deal with pointers to basic types
-// but it's useful in some tests.
-func StringPointer(s string) *string {
-	return &s
-}
-
-// IntPointer is a helper to get a *int from a int. It is in the tests package
-// because we normally don't want to deal with pointers to basic types but it's
-// useful in some tests.
-func IntPointer(i int) *int {
-	return &i
 }
 
 // Test owns state for running and shutting down tests.
@@ -174,4 +161,18 @@ func (test *Test) Token(email, pass string) string {
 	}
 
 	return token
+}
+
+// StringPointer is a helper to get a *string from a string. It is in the tests
+// package because we normally don't want to deal with pointers to basic types
+// but it's useful in some tests.
+func StringPointer(s string) *string {
+	return &s
+}
+
+// IntPointer is a helper to get a *int from a int. It is in the tests package
+// because we normally don't want to deal with pointers to basic types but it's
+// useful in some tests.
+func IntPointer(i int) *int {
+	return &i
 }
