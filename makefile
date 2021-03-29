@@ -87,7 +87,7 @@ go-run-seed: go-run-migrate
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 seed
 
 go-run-useradd: go-run-migrate
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 useradd admin@example.com gophers
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 useradd admin admin@example.com gophers
 
 go-run-users: go-run-migrate
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 users 1 50

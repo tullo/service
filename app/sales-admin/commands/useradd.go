@@ -13,9 +13,10 @@ import (
 )
 
 // UserAdd adds new users into the database.
-func UserAdd(traceID string, log *log.Logger, cfg database.Config, email, password string) error {
-	if email == "" || password == "" {
-		fmt.Println("help: useradd <email> <password>")
+func UserAdd(traceID string, log *log.Logger, cfg database.Config, name, email, password string) error {
+
+	if name == "" || email == "" || password == "" {
+		fmt.Println("help: useradd <name> <email> <password>")
 		return ErrHelp
 	}
 
@@ -31,6 +32,7 @@ func UserAdd(traceID string, log *log.Logger, cfg database.Config, email, passwo
 	defer cancel()
 
 	nu := user.NewUser{
+		Name:            name,
 		Email:           email,
 		Password:        password,
 		PasswordConfirm: password,
