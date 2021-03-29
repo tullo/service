@@ -60,22 +60,13 @@ func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
 
 	t.Log("Waiting for database to be ready ...")
 
-	// Wait for the database to be ready. Wait 100ms longer between each attempt.
-	// Do not try more than 20 times.
-	var pingError error
-	maxAttempts := 20
-	for attempts := 1; attempts <= maxAttempts; attempts++ {
-		pingError = db.Ping()
-		if pingError == nil {
-			break
-		}
-		time.Sleep(time.Duration(attempts) * 100 * time.Millisecond)
-	}
-
-	if pingError != nil {
+	// Wait for the database to be ready.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := database.StatusCheck(ctx, db); err != nil {
 		docker.DumpContainerLogs(t, c.ID)
 		docker.StopContainer(t, c.ID)
-		t.Fatalf("Database never ready: %v", pingError)
+		t.Fatalf("Database never ready: %v", err)
 	}
 
 	if err := schema.Migrate(db); err != nil {

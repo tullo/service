@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/foundation/database"
@@ -28,14 +29,12 @@ func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *ht
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.check.readiness")
 	defer span.End()
 
-	v, ok := ctx.Value(web.KeyValues).(*web.Values)
-	if !ok {
-		return web.NewShutdownError("web value missing from context")
-	}
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
 
 	status := "ok"
 	statusCode := http.StatusOK
-	if err := database.StatusCheck(ctx, v.TraceID, cg.log, cg.db); err != nil {
+	if err := database.StatusCheck(ctx, cg.db); err != nil {
 		status = "db not ready"
 		statusCode = http.StatusInternalServerError
 		span.SetStatus(codes.Error, web.CheckErr(err))
