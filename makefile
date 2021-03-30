@@ -134,6 +134,10 @@ compose-up:
 compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
+compose-db-shell: USER=postgres
+compose-db-shell: compose-db-up
+	@docker-compose -f $(COMPOSE_FILE) exec db psql --username=${USER} --dbname=${USER}
+
 curl-readiness-check:
 	@curl -i --silent --show-error http://0.0.0.0:4000/debug/readiness
 	@echo
