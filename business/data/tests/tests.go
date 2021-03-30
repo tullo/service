@@ -26,24 +26,25 @@ const (
 
 // Configuration for running tests.
 var (
-	dbImage = "postgres:13.2-alpine"
-	dbPort  = "5432"
-	dbArgs  = []string{
-		"-e", "POSTGRES_USER=postgres",
-		"-e", "POSTGRES_PASSWORD=postgres",
-	}
 	// IDs from the seed data for admin@example.com and user@example.com.
 	AdminID = "5cf37266-3473-4006-984f-9325122678b7"
 	UserID  = "45b5fbd3-755f-4379-8f07-a58d4a30fa2f"
 )
 
+// Container provides configuration for a docker container to run.
+type Container struct {
+	Image string
+	Port  string
+	Args  []string
+}
+
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty. It returns
 // the database to use as well as a function to call at the end of the test.
-func NewUnit(t *testing.T) (*log.Logger, *sqlx.DB, func()) {
+func NewUnit(t *testing.T, ctr Container) (*log.Logger, *sqlx.DB, func()) {
 
 	// Start a DB container instance with dgraph running.
-	c := docker.StartContainer(t, dbImage, dbPort, dbArgs...)
+	c := docker.StartContainer(t, ctr.Image, ctr.Port, ctr.Args...)
 
 	cfg := database.Config{
 		User:       "postgres",
@@ -99,10 +100,10 @@ type Test struct {
 }
 
 // NewIntegration creates a database, seeds it, constructs an authenticator.
-func NewIntegration(t *testing.T) *Test {
+func NewIntegration(t *testing.T, ctr Container) *Test {
 
 	// Initialize and seed database. Store the cleanup function call later.
-	log, db, teardown := NewUnit(t)
+	log, db, teardown := NewUnit(t, ctr)
 
 	if err := schema.Seed(db); err != nil {
 		t.Fatal(err)

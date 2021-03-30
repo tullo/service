@@ -30,7 +30,14 @@ type UserTests struct {
 
 // TestUsers is the entry point for testing user management functions.
 func TestUsers(t *testing.T) {
-	test := tests.NewIntegration(t)
+	test := tests.NewIntegration(t, tests.Container{
+		Image: "postgres:13.2-alpine",
+		Port:  "5432",
+		Args: []string{
+			"-e", "POSTGRES_USER=postgres",
+			"-e", "POSTGRES_PASSWORD=postgres",
+		},
+	})
 	t.Cleanup(test.Teardown)
 
 	shutdown := make(chan os.Signal, 1)

@@ -13,7 +13,14 @@ import (
 )
 
 func Test_Sales(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t)
+	log, db, teardown := tests.NewUnit(t, tests.Container{
+		Image: "postgres:13.2-alpine",
+		Port:  "5432",
+		Args: []string{
+			"-e", "POSTGRES_USER=postgres",
+			"-e", "POSTGRES_PASSWORD=postgres",
+		},
+	})
 	defer teardown()
 
 	p := product.New(log, db)

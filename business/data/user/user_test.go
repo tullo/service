@@ -15,8 +15,17 @@ import (
 	"github.com/tullo/service/business/data/user"
 )
 
+var container = tests.Container{
+	Image: "postgres:13.2-alpine",
+	Port:  "5432",
+	Args: []string{
+		"-e", "POSTGRES_USER=postgres",
+		"-e", "POSTGRES_PASSWORD=postgres",
+	},
+}
+
 func TestUser(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t)
+	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
 	u := user.New(log, db)
@@ -126,7 +135,7 @@ func TestUser(t *testing.T) {
 }
 
 func TestUserPaging(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t)
+	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
 	schema.Seed(db)
@@ -174,7 +183,7 @@ func TestUserPaging(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t)
+	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
 	u := user.New(log, db)
