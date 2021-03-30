@@ -13,23 +13,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/foundation/database"
 	"go.opentelemetry.io/otel/trace"
-)
-
-var (
-	// ErrNotFound is used when a specific User is requested but does not exist.
-	ErrNotFound = errors.New("not found")
-
-	// ErrInvalidID occurs when an ID is not in a valid form.
-	ErrInvalidID = errors.New("ID is not in its proper form")
-
-	// ErrAuthenticationFailure occurs when a user attempts to authenticate but
-	// anything goes wrong.
-	ErrAuthenticationFailure = errors.New("authentication failed")
-
-	// ErrForbidden occurs when a user tries to do something that is forbidden to them according to our access control policies.
-	ErrForbidden = errors.New("attempted action is not allowed")
 )
 
 // User manages the set of API's for user access.
@@ -141,12 +127,12 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 	defer span.End()
 
 	if _, err := uuid.Parse(userID); err != nil {
-		return ErrInvalidID
+		return data.ErrInvalidID
 	}
 
 	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
 		if claims.Subject != userID { // and looking to delete someone other than yourself.
-			return ErrForbidden
+			return data.ErrForbidden
 		}
 	}
 
@@ -201,12 +187,12 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	defer span.End()
 
 	if _, err := uuid.Parse(userID); err != nil {
-		return Info{}, ErrInvalidID
+		return Info{}, data.ErrInvalidID
 	}
 
 	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
 		if claims.Subject != userID { // and looking to retrieve someone other than yourself.
-			return Info{}, ErrForbidden
+			return Info{}, data.ErrForbidden
 		}
 	}
 
@@ -225,7 +211,7 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	var usr Info
 	if err := u.db.GetContext(ctx, &usr, q, userID); err != nil {
 		if err == sql.ErrNoRows {
-			return Info{}, ErrNotFound
+			return Info{}, data.ErrNotFound
 		}
 		return Info{}, errors.Wrapf(err, "selecting user %q", userID)
 	}
@@ -253,14 +239,14 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	var usr Info
 	if err := u.db.GetContext(ctx, &usr, q, email); err != nil {
 		if err == sql.ErrNoRows {
-			return Info{}, ErrNotFound
+			return Info{}, data.ErrNotFound
 		}
 		return Info{}, errors.Wrapf(err, "selecting user %q", email)
 	}
 
 	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
 		if claims.Subject != usr.ID { // and looking to retrieve someone other than yourself.
-			return Info{}, ErrForbidden
+			return Info{}, data.ErrForbidden
 		}
 	}
 
@@ -292,7 +278,7 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
 		if err == sql.ErrNoRows {
-			return auth.Claims{}, ErrAuthenticationFailure
+			return auth.Claims{}, data.ErrAuthenticationFailure
 		}
 
 		return auth.Claims{}, errors.Wrap(err, "selecting single user")
@@ -301,7 +287,7 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
 	if match, err := argon2id.ComparePasswordAndHash(password, usr.PasswordHash); err != nil || !match {
-		return auth.Claims{}, ErrAuthenticationFailure
+		return auth.Claims{}, data.ErrAuthenticationFailure
 	}
 
 	// If we are this far the request is valid. Create some claims for the user

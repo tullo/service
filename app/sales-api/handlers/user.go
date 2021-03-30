@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/web"
 	"go.opentelemetry.io/otel/trace"
@@ -67,11 +68,11 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 	usr, err := ug.user.QueryByID(ctx, v.TraceID, claims, id)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -130,11 +131,11 @@ func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.R
 	err := ug.user.Update(ctx, v.TraceID, claims, id, upd, v.Now)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %s  User: %+v", id, &upd)
@@ -164,11 +165,11 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 	err := ug.user.Delete(ctx, v.TraceID, claims, id)
 	if err != nil {
 		switch err {
-		case user.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case user.ErrNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case user.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -199,7 +200,7 @@ func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Re
 	claims, err := ug.user.Authenticate(ctx, v.TraceID, v.Now, email, pass)
 	if err != nil {
 		switch err {
-		case user.ErrAuthenticationFailure:
+		case data.ErrAuthenticationFailure:
 			return web.NewRequestError(err, http.StatusUnauthorized)
 		default:
 			return errors.Wrap(err, "authenticating")

@@ -11,19 +11,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/foundation/database"
 	"go.opentelemetry.io/otel/trace"
-)
-
-var (
-	// ErrNotFound is used when a specific Product is requested but does not exist.
-	ErrNotFound = errors.New("not found")
-
-	// ErrInvalidID occurs when an ID is not in a valid form.
-	ErrInvalidID = errors.New("ID is not in its proper form")
-
-	// ErrForbidden occurs when a user tries to do something that is forbidden to them according to our access control policies.
-	ErrForbidden = errors.New("attempted action is not allowed")
 )
 
 // Product manages the set of API's for product access.
@@ -86,7 +76,7 @@ func (p Product) Update(ctx context.Context, traceID string, claims auth.Claims,
 
 	if !claims.Authorized(auth.RoleAdmin) { // If you are not an admin
 		if prd.UserID != claims.Subject { // and looking to retrieve someone elses product.
-			return ErrForbidden
+			return data.ErrForbidden
 		}
 	}
 
@@ -129,12 +119,12 @@ func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims,
 	defer span.End()
 
 	if _, err := uuid.Parse(productID); err != nil {
-		return ErrInvalidID
+		return data.ErrInvalidID
 	}
 
 	// If you are not an admin.
 	if !claims.Authorized(auth.RoleAdmin) {
-		return ErrForbidden
+		return data.ErrForbidden
 	}
 
 	const q = `
@@ -193,7 +183,7 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 	defer span.End()
 
 	if _, err := uuid.Parse(productID); err != nil {
-		return Info{}, ErrInvalidID
+		return Info{}, data.ErrInvalidID
 	}
 
 	const q = `
@@ -217,7 +207,7 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 	var prd Info
 	if err := p.db.GetContext(ctx, &prd, q, productID); err != nil {
 		if err == sql.ErrNoRows {
-			return Info{}, ErrNotFound
+			return Info{}, data.ErrNotFound
 		}
 		return Info{}, errors.Wrap(err, "selecting single product")
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/tests"
@@ -121,7 +122,7 @@ func TestProduct(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould be able to delete product.", tests.Success, testID)
 
 			_, err = p.QueryByID(ctx, traceID, prd.ID)
-			if errors.Cause(err) != product.ErrNotFound {
+			if errors.Cause(err) != data.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve deleted product.", tests.Success, testID)

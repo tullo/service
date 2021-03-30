@@ -9,6 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/foundation/web"
@@ -65,9 +66,9 @@ func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *
 	prod, err := pg.product.QueryByID(ctx, v.TraceID, id)
 	if err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case product.ErrNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)
@@ -132,11 +133,11 @@ func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *htt
 	id := web.Param(r, "id")
 	if err := pg.product.Update(ctx, v.TraceID, claims, id, up, v.Now); err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
-		case product.ErrNotFound:
+		case data.ErrNotFound:
 			return web.NewRequestError(err, http.StatusNotFound)
-		case product.ErrForbidden:
+		case data.ErrForbidden:
 			return web.NewRequestError(err, http.StatusForbidden)
 		default:
 			return errors.Wrapf(err, "ID: %q Product: %+v", id, up)
@@ -165,7 +166,7 @@ func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *htt
 	id := web.Param(r, "id")
 	if err := pg.product.Delete(ctx, v.TraceID, claims, id); err != nil {
 		switch err {
-		case product.ErrInvalidID:
+		case data.ErrInvalidID:
 			return web.NewRequestError(err, http.StatusBadRequest)
 		default:
 			return errors.Wrapf(err, "ID: %s", id)

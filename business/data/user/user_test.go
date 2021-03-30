@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
+	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/tests"
 	"github.com/tullo/service/business/data/user"
@@ -116,7 +117,7 @@ func TestUser(t *testing.T) {
 
 			// Query deleted user while having ADMIN authz.
 			_, err = u.QueryByID(ctx, traceID, claims, usr.ID)
-			if errors.Cause(err) != user.ErrNotFound {
+			if errors.Cause(err) != data.ErrNotFound {
 				t.Fatalf("\t%s\tTest %d:\tShould NOT be able to retrieve user : %s.", tests.Failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould NOT be able to retrieve user.", tests.Success, testID)
