@@ -106,11 +106,13 @@ func run(log *log.Logger) error {
 	log.Println("main: Initializing database support")
 
 	db, err := database.Open(database.Config{
-		User:       cfg.DB.User,
-		Password:   cfg.DB.Password,
-		Host:       cfg.DB.Host,
-		Name:       cfg.DB.Name,
-		DisableTLS: cfg.DB.DisableTLS,
+		User:         cfg.DB.User,
+		Password:     cfg.DB.Password,
+		Host:         cfg.DB.Host,
+		Name:         cfg.DB.Name,
+		DisableTLS:   cfg.DB.DisableTLS,
+		MaxIdleConns: cfg.DB.MaxIdleConns,
+		MaxOpenConns: cfg.DB.MaxOpenConns,
 	})
 	if err != nil {
 		return errors.Wrap(err, "connecting to db")

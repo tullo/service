@@ -43,11 +43,15 @@ type AppConfig struct {
 		ShutdownTimeout time.Duration `conf:"default:5s"`
 	}
 	DB struct {
-		User       string `conf:"default:postgres"`
-		Password   string `conf:"default:postgres,mask"`
-		Host       string `conf:"default:0.0.0.0"`
-		Name       string `conf:"default:postgres"`
-		DisableTLS bool   `conf:"default:false"`
+		User         string `conf:"default:postgres"`
+		Password     string `conf:"default:postgres,mask"`
+		Host         string `conf:"default:0.0.0.0"`
+		Name         string `conf:"default:postgres"`
+		DisableTLS   bool   `conf:"default:false"`
+		MaxIdleConns int    `conf:"default:2"`
+		MaxOpenConns int    `conf:"default:0"`
+		// If MaxIdleConns <= 0, no idle connections are retained.
+		// If MaxOpenConns <= 0, no limit on the number of open connections.
 	}
 	Auth struct {
 		KeysFolder string `conf:"default:/service/keys"`

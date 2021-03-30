@@ -15,11 +15,13 @@ import (
 
 // Config is the required properties to use the database.
 type Config struct {
-	User       string
-	Password   string
-	Host       string
-	Name       string
-	DisableTLS bool
+	User         string
+	Password     string
+	Host         string
+	Name         string
+	DisableTLS   bool
+	MaxIdleConns int
+	MaxOpenConns int
 }
 
 // Open knows how to open a database connection based on the configuration.
@@ -45,7 +47,14 @@ func Open(cfg Config) (*sqlx.DB, error) {
 		RawQuery: q.Encode(),
 	}
 
-	return sqlx.Open("postgres", u.String())
+	db, err := sqlx.Open("postgres", u.String())
+	if err != nil {
+		return nil, err
+	}
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+
+	return db, nil
 }
 
 // StatusCheck returns nil if it can successfully talk to the database. It

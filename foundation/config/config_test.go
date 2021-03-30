@@ -93,6 +93,8 @@ OPTIONS
   --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0)
   --db-name/$TEST_DB_NAME                            <string>    (default: postgres)
   --db-disable-tls/$TEST_DB_DISABLE_TLS              <bool>      (default: false)
+  --db-max-idle-conns/$TEST_DB_MAX_IDLE_CONNS        <int>       (default: 2)
+  --db-max-open-conns/$TEST_DB_MAX_OPEN_CONNS        <int>       (default: 0)
   --auth-keys-folder/$TEST_AUTH_KEYS_FOLDER          <string>    (default: /service/keys)
   --auth-algorithm/$TEST_AUTH_ALGORITHM              <string>    (default: RS256)
   --zipkin-reporter-uri/$TEST_ZIPKIN_REPORTER_URI    <string>    (default: http://zipkin:9411/api/v2/spans)
@@ -155,6 +157,8 @@ func TestParse(t *testing.T) {
 --db-host=0.0.0.0
 --db-name=postgres
 --db-disable-tls=false
+--db-max-idle-conns=2
+--db-max-open-conns=0
 --auth-keys-folder=/service/keys
 --auth-algorithm=RS256
 --zipkin-reporter-uri=http://zipkin:9411/api/v2/spans
