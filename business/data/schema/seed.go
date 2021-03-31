@@ -11,16 +11,6 @@ import (
 	"github.com/tullo/service/foundation/database"
 )
 
-// seeds is a string containing all of the queries needed to get the db seeded
-// to a useful state for development.
-//
-// Note that database servers besides PostgreSQL may not support running
-// multiple queries as part of the same execution so this single large constant
-// may need to be broken up.
-//
-//go:embed sql/seed/data.sql
-var seeds string
-
 // Seed runs the set of seed-data queries against db. The queries are ran in a
 // transaction and rolled back if any fail.
 func Seed(ctx context.Context, db *sqlx.DB) error {
@@ -33,7 +23,7 @@ func Seed(ctx context.Context, db *sqlx.DB) error {
 		return err
 	}
 
-	if _, err := tx.Exec(seeds); err != nil {
+	if _, err := tx.Exec(seedSQL); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return err
 		}

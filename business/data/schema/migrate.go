@@ -14,15 +14,6 @@ import (
 	"github.com/tullo/service/foundation/database"
 )
 
-var (
-	// schemaSQL contains the queries needed to construct
-	// the database schema. Entries should never be removed
-	// from this file once they have been run in production.
-	//
-	//go:embed sql/schema.sql
-	schemaSQL string
-)
-
 // Migrate attempts to bring the schema for db up to date with the migrations
 // defined in this package.
 func Migrate(ctx context.Context, db *sqlx.DB) error {
