@@ -40,13 +40,14 @@ func (s Sale) AddSale(ctx context.Context, traceID string, ns NewSale, productID
 	}
 
 	const q = `INSERT INTO sales
-		(sale_id, product_id, quantity, paid, date_created)
-		VALUES ($1, $2, $3, $4, $5)`
+			(sale_id, product_id, quantity, paid, date_created)
+		VALUES
+			(:sale_id, :product_id, :quantity, :paid, :date_created)`
 
 	s.log.Printf("%s : %s : query : %s", traceID, "sale.AddSale", database.Log(q,
 		sale.ID, sale.ProductID, sale.Quantity, sale.Paid, sale.DateCreated))
 
-	_, err := s.db.ExecContext(ctx, q, sale.ID, sale.ProductID, sale.Quantity, sale.Paid, sale.DateCreated)
+	_, err := s.db.NamedExecContext(ctx, q, sale)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "inserting sale")
 	}
@@ -59,13 +60,18 @@ func (s Sale) List(ctx context.Context, traceID string, productID string) ([]Inf
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.list")
 	defer span.End()
 
-	sales := []Info{}
+	const q = `SELECT * FROM sales WHERE product_id = :product_id`
 
-	const q = `SELECT * FROM sales WHERE product_id = $1`
+	ns, err := s.db.PrepareNamedContext(ctx, q)
+	if err != nil {
+		return nil, errors.Wrap(err, "prepare named context")
+	}
 
 	s.log.Printf("%s : %s : query : %s", traceID, "sale.List", database.Log(q, productID))
 
-	if err := s.db.SelectContext(ctx, &sales, q, productID); err != nil {
+	var sales []Info
+	prod := Info{ProductID: productID}
+	if err := ns.SelectContext(ctx, &sales, prod); err != nil {
 		return nil, errors.Wrap(err, "selecting sales")
 	}
 

@@ -184,8 +184,7 @@ func (p Product) Query(ctx context.Context, traceID string, pageNumber int, rows
 	defer ns.Close()
 
 	products := make([]Info, 0, page.RowsPerPage)
-	err = ns.SelectContext(ctx, &products, page)
-	if err != nil {
+	if err = ns.SelectContext(ctx, &products, page); err != nil {
 		return nil, errors.Wrap(err, "query products")
 	}
 
@@ -230,7 +229,8 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}
-		return Info{}, errors.Wrap(err, "selecting single product")
+
+		return Info{}, errors.Wrapf(err, "selecting product %q", productID)
 	}
 
 	return prd, nil
