@@ -9,15 +9,18 @@ export COMPOSE_DOCKER_CLI_BUILD = 1
 export COMPOSE_FILE = deployment/docker/docker-compose.yaml
 
 # ==============================================================================
-# Testing running system
+# Testing the running system: load, traces, metrics)
 #
 # hey tool: make generate-load
 # zipkin: http://localhost:9411
 # expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,mem:memstats.Alloc"
 #
+# To install expvarmon program for metrics dashboard:
+# $ go install github.com/divan/expvarmon@latest
+#
 # To manually generate a private/public key PEM file:
-# 1. openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
-# 2. openssl rsa -pubout -in private.pem -out public.pem
+# $ openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+# $ openssl rsa -pubout -in private.pem -out public.pem
 
 .DEFAULT_GOAL := run
 
