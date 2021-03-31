@@ -18,13 +18,14 @@ func Authenticate(a *auth.Auth) web.Middleware {
 	// This is the actual middleware function to be executed.
 	m := func(handler web.Handler) web.Handler {
 
-		// Wrap this handler around the next one provided.
+		// Handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.authenticate")
 			defer span.End()
 
-			parts := strings.Split(r.Header.Get("Authorization"), " ")
 			// Expecting header format `Bearer <token>`.
+			authStr := r.Header.Get("Authorization")
+			parts := strings.Split(authStr, " ")
 			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 				err := errors.New("expected authorization header format: Bearer <token>")
 				return web.NewRequestError(err, http.StatusUnauthorized)
@@ -56,14 +57,19 @@ func Authorize(roles ...string) web.Middleware {
 	// This is the actual middleware function to be executed.
 	m := func(handler web.Handler) web.Handler {
 
+		// Handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.hasrole")
+			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.authorize")
 			defer span.End()
 
+			// If the context is missing this value return failure.
 			claims, ok := ctx.Value(auth.Key).(auth.Claims)
 			if !ok {
-				return errors.New("claims missing from context")
+				return web.NewRequestError(
+					fmt.Errorf("you are not authorized for that action: no claims"),
+					http.StatusForbidden,
+				)
 			}
 
 			if !claims.Authorized(roles...) {
