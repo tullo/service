@@ -2,12 +2,25 @@
 package schema
 
 import (
+	"bufio"
 	"context"
+	_ "embed"
+	"strconv"
+	"strings"
 
 	"github.com/ardanlabs/darwin"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/foundation/database"
+)
+
+var (
+	// schemaSQL contains the queries needed to construct
+	// the database schema. Entries should never be removed
+	// from this file once they have been run in production.
+	//
+	//go:embed sql/schema.sql
+	schemaSQL string
 )
 
 // Migrate attempts to bring the schema for db up to date with the migrations
@@ -22,72 +35,40 @@ func Migrate(ctx context.Context, db *sqlx.DB) error {
 		return errors.Wrap(err, "construct darwin driver")
 	}
 
-	d := darwin.New(driver, migrations)
+	d := darwin.New(driver, parseMigrations(schemaSQL))
 	return d.Migrate()
 }
 
-// migrations contains the queries needed to construct the database schema.
-// Entries should never be removed from this slice once they have been run in
-// production.
-//
-// Using constants in a .go file is an easy way to ensure the schema is part
-// of the compiled executable and avoids pathing issues with the working
-// directory. It has the downside that it lacks syntax highlighting and may be
-// harder to read for some cases compared to using .sql files. You may also
-// consider a combined approach using a tool like packr or go-bindata.
-var migrations = []darwin.Migration{
-	{
-		Version:     1.1,
-		Description: "Create table users",
-		Script: `
-CREATE TABLE users (
-	user_id       UUID,
-	name          TEXT,
-	email         TEXT UNIQUE,
-	roles         TEXT[],
-	password_hash TEXT,
-	date_created  TIMESTAMP,
-	date_updated  TIMESTAMP,
+func parseMigrations(s string) []darwin.Migration {
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	scanner.Split(bufio.ScanLines)
 
-	PRIMARY KEY (user_id)
-);`,
-	},
-	{
-		Version:     1.2,
-		Description: "Create table products",
-		Script: `
-CREATE TABLE products (
-	product_id   UUID,
-	name         TEXT,
-	cost         INT,
-	quantity     INT,
-	date_created TIMESTAMP,
-	date_updated TIMESTAMP,
+	var migs []darwin.Migration
+	var mig darwin.Migration
+	var index int = -1
+	for scanner.Scan() {
+		v := strings.ToLower(scanner.Text())
+		switch {
+		// Migration version.
+		case len(v) >= 5 && (v[:6] == "-- ver" || v[:5] == "--ver"):
+			f, err := strconv.ParseFloat(strings.TrimSpace(v[11:]), 64)
+			if err != nil {
+				return nil
+			}
+			mig.Version = f
+			migs = append(migs, mig)
 
-	PRIMARY KEY (product_id)
-);`,
-	},
-	{
-		Version:     1.3,
-		Description: "Create table sales",
-		Script: `
-CREATE TABLE sales (
-	sale_id      UUID,
-	product_id   UUID,
-	quantity     INT,
-	paid         INT,
-	date_created TIMESTAMP,
+			index++
+			mig = darwin.Migration{}
 
-	PRIMARY KEY (sale_id),
-	FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
-);`,
-	},
-	{
-		Version:     2.1,
-		Description: "Alter table products with user column",
-		Script: `
-ALTER TABLE products
-	ADD COLUMN user_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
-`,
-	},
+		// Migration description.
+		case len(v) >= 5 && (v[:6] == "-- des" || v[:5] == "--des"):
+			migs[index].Description = strings.TrimSpace(v[15:])
+
+		default:
+			migs[index].Script += v + "\n"
+		}
+	}
+
+	return migs
 }
