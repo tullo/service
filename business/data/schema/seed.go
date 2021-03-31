@@ -1,10 +1,7 @@
-// +build go1.16
-
 package schema
 
 import (
 	"context"
-	_ "embed" // go1.16 content embedding
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -32,27 +29,3 @@ func Seed(ctx context.Context, db *sqlx.DB) error {
 
 	return tx.Commit()
 }
-
-// DeleteAll runs the set of drop-table queries against the database. The
-// queries are run in a transaction and rolled back if any fail.
-func DeleteAll(db *sqlx.DB) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-
-	if _, err := tx.Exec(deleteAll); err != nil {
-		if err := tx.Rollback(); err != nil {
-			return err
-		}
-		return err
-	}
-
-	return tx.Commit()
-}
-
-// deleteAll is used to clean the database between tests.
-const deleteAll = `
-DELETE FROM sales;
-DELETE FROM products;
-DELETE FROM users;`

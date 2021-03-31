@@ -1,12 +1,19 @@
+// Package schema contains the database schema, migrations and seeding data.
+
 // +build go1.16
 
 package schema
 
 import (
-	_ "embed"
+	_ "embed" // go1.16 content embedding
 )
 
 var (
+	// deleteSQL is used to clean the database between tests.
+	//
+	//go:embed sql/delete.sql
+	deleteSQL string
+
 	// schemaSQL contains the queries needed to construct
 	// the database schema. Entries should never be removed
 	// from this file once they have been run in production.

@@ -1,10 +1,8 @@
-// Package schema contains the database schema, migrations and seeding data.
 package schema
 
 import (
 	"bufio"
 	"context"
-	_ "embed"
 	"strconv"
 	"strings"
 
