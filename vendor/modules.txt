@@ -1,12 +1,12 @@
 # github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 ## explicit
 github.com/alexedwards/argon2id
+# github.com/ardanlabs/darwin v1.2.0
+## explicit
+github.com/ardanlabs/darwin
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
 github.com/dgrijalva/jwt-go/v4
-# github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
-## explicit
-github.com/dimiro1/darwin
 # github.com/felixge/httpsnoop v1.0.1
 github.com/felixge/httpsnoop
 # github.com/go-chi/chi v1.5.4

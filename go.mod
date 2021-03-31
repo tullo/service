@@ -4,8 +4,8 @@ go 1.16
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
+	github.com/ardanlabs/darwin v1.2.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
-	github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 	github.com/go-chi/chi v1.5.4
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0

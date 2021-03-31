@@ -2,17 +2,20 @@
 package schema
 
 import (
-	"github.com/dimiro1/darwin"
+	"github.com/ardanlabs/darwin"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // Migrate attempts to bring the schema for db up to date with the migrations
 // defined in this package.
 func Migrate(db *sqlx.DB) error {
-	driver := darwin.NewGenericDriver(db.DB, darwin.PostgresDialect{})
+	driver, err := darwin.NewGenericDriver(db.DB, darwin.PostgresDialect{})
+	if err != nil {
+		return errors.Wrap(err, "construct darwin driver")
+	}
 
-	d := darwin.New(driver, migrations, nil)
-
+	d := darwin.New(driver, migrations)
 	return d.Migrate()
 }
 
