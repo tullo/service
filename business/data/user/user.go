@@ -59,7 +59,7 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 		(:user_id, :name, :email, :password_hash, :roles, :date_created, :date_updated)`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Create",
-		database.Log(q, usr.ID, usr.Name, usr.Email, "***", usr.Roles, usr.DateCreated, usr.DateUpdated),
+		database.Log(q, usr),
 	)
 
 	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
@@ -111,7 +111,7 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Update",
-		database.Log(q, usr.ID, usr.Name, usr.Email, usr.Roles, "***", usr.DateCreated, usr.DateUpdated),
+		database.Log(q, usr),
 	)
 
 	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
@@ -136,6 +136,12 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 		}
 	}
 
+	filter := struct {
+		UserID string `db:"user_id"`
+	}{
+		UserID: userID,
+	}
+
 	const q = `
 	DELETE FROM
 		users
@@ -143,11 +149,10 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Delete",
-		database.Log(q, userID),
+		database.Log(q, filter),
 	)
 
-	usr := Info{ID: userID}
-	if _, err := u.db.NamedExecContext(ctx, q, usr); err != nil {
+	if _, err := u.db.NamedExecContext(ctx, q, filter); err != nil {
 		return errors.Wrapf(err, "deleting user %s", userID)
 	}
 
@@ -209,6 +214,12 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 		}
 	}
 
+	filter := struct {
+		UserID string `db:"user_id"`
+	}{
+		UserID: userID,
+	}
+
 	const q = `
 	SELECT
 		*
@@ -218,7 +229,7 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
-		database.Log(q, userID),
+		database.Log(q, filter),
 	)
 
 	ns, err := u.db.PrepareNamedContext(ctx, q)
@@ -228,7 +239,7 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	defer ns.Close()
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, Info{ID: userID}); err != nil {
+	if err := ns.GetContext(ctx, &usr, filter); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}
@@ -243,6 +254,12 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.querybyemail")
 	defer span.End()
 
+	filter := struct {
+		Email string `db:"email"`
+	}{
+		Email: email,
+	}
+
 	const q = `
 	SELECT
 		*
@@ -252,7 +269,7 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 		email = :email`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
-		database.Log(q, email),
+		database.Log(q, filter),
 	)
 
 	ns, err := u.db.PrepareNamedContext(ctx, q)
@@ -262,7 +279,7 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	defer ns.Close()
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, Info{Email: email}); err != nil {
+	if err := ns.GetContext(ctx, &usr, filter); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}
@@ -285,6 +302,12 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.authenticate")
 	defer span.End()
 
+	filter := struct {
+		Email string `db:"email"`
+	}{
+		Email: email,
+	}
+
 	const q = `
 	SELECT
 		*
@@ -294,7 +317,7 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 		email = :email`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
-		database.Log(q, email),
+		database.Log(q, filter),
 	)
 
 	ns, err := u.db.PrepareNamedContext(ctx, q)
@@ -304,7 +327,7 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	defer ns.Close()
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, Info{Email: email}); err != nil {
+	if err := ns.GetContext(ctx, &usr, filter); err != nil {
 
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.

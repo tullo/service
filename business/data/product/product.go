@@ -53,7 +53,7 @@ func (p Product) Create(ctx context.Context, traceID string, claims auth.Claims,
 		(:product_id, :user_id, :name, :cost, :quantity, :date_created, :date_updated)`
 
 	p.log.Printf("%s: %s: %s", traceID, "product.Create",
-		database.Log(q, prd.ID, prd.UserID, prd.Name, prd.Cost, prd.Quantity, prd.DateCreated, prd.DateUpdated),
+		database.Log(q, prd),
 	)
 
 	if _, err := p.db.NamedExecContext(ctx, q, prd); err != nil {
@@ -103,7 +103,7 @@ func (p Product) Update(ctx context.Context, traceID string, claims auth.Claims,
 		product_id = :product_id`
 
 	p.log.Printf("%s: %s: %s", traceID, "product.Update",
-		database.Log(q, productID, prd.Name, prd.Cost, prd.Quantity, prd.DateUpdated),
+		database.Log(q, prd),
 	)
 
 	if _, err = p.db.NamedExecContext(ctx, q, prd); err != nil {
@@ -127,6 +127,12 @@ func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims,
 		return data.ErrForbidden
 	}
 
+	filter := struct {
+		ProductID string `db:"product_id"`
+	}{
+		ProductID: productID,
+	}
+
 	const q = `
 	DELETE FROM
 		products
@@ -134,11 +140,10 @@ func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims,
 		product_id = :product_id`
 
 	p.log.Printf("%s: %s: %s", traceID, "product.Delete",
-		database.Log(q, productID),
+		database.Log(q, filter),
 	)
 
-	prd := Info{ID: productID}
-	if _, err := p.db.NamedExecContext(ctx, q, prd); err != nil {
+	if _, err := p.db.NamedExecContext(ctx, q, filter); err != nil {
 		return errors.Wrapf(err, "deleting product %s", productID)
 	}
 
@@ -200,6 +205,12 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 		return Info{}, data.ErrInvalidID
 	}
 
+	filter := struct {
+		ProductID string `db:"product_id"`
+	}{
+		ProductID: productID,
+	}
+
 	const q = `
 	SELECT
 		p.*,
@@ -215,7 +226,7 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 		p.product_id`
 
 	p.log.Printf("%s: %s: %s", traceID, "product.QueryByID",
-		database.Log(q, productID),
+		database.Log(q, filter),
 	)
 
 	ns, err := p.db.PrepareNamedContext(ctx, q)
@@ -225,7 +236,7 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 	defer ns.Close()
 
 	var prd Info
-	if err := ns.GetContext(ctx, &prd, Info{ID: productID}); err != nil {
+	if err := ns.GetContext(ctx, &prd, filter); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}

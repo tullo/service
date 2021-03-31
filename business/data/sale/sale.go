@@ -44,8 +44,7 @@ func (s Sale) AddSale(ctx context.Context, traceID string, ns NewSale, productID
 		VALUES
 			(:sale_id, :product_id, :quantity, :paid, :date_created)`
 
-	s.log.Printf("%s : %s : query : %s", traceID, "sale.AddSale", database.Log(q,
-		sale.ID, sale.ProductID, sale.Quantity, sale.Paid, sale.DateCreated))
+	s.log.Printf("%s : %s : query : %s", traceID, "sale.AddSale", database.Log(q, sale))
 
 	_, err := s.db.NamedExecContext(ctx, q, sale)
 	if err != nil {
@@ -67,11 +66,16 @@ func (s Sale) List(ctx context.Context, traceID string, productID string) ([]Inf
 		return nil, errors.Wrap(err, "prepare named context")
 	}
 
-	s.log.Printf("%s : %s : query : %s", traceID, "sale.List", database.Log(q, productID))
+	filter := struct {
+		ProductID string `db:"product_id"`
+	}{
+		ProductID: productID,
+	}
+
+	s.log.Printf("%s : %s : query : %s", traceID, "sale.List", database.Log(q, filter))
 
 	var sales []Info
-	prod := Info{ProductID: productID}
-	if err := ns.SelectContext(ctx, &sales, prod); err != nil {
+	if err := ns.SelectContext(ctx, &sales, filter); err != nil {
 		return nil, errors.Wrap(err, "selecting sales")
 	}
 

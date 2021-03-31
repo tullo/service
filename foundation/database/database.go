@@ -90,25 +90,26 @@ func StatusCheck(ctx context.Context, db *sqlx.DB) error {
 
 // Log provides a pretty print version of the query and parameters.
 func Log(query string, args ...interface{}) string {
-	for i, arg := range args {
-		n := fmt.Sprintf("$%d", i+1)
-
-		var a string
-		switch v := arg.(type) {
-		case string:
-			a = fmt.Sprintf("'%s'", v)
-		case []byte:
-			a = string(v)
-		case []string:
-			a = strings.Join(v, ",")
-		default:
-			a = fmt.Sprintf("%v", v)
-		}
-
-		query = strings.Replace(query, n, a, 1)
-		query = strings.Replace(query, "\t", "", -1)
-		query = strings.Replace(query, "\n", " ", -1)
+	query, params, err := sqlx.Named(query, args)
+	if err != nil {
+		return err.Error()
 	}
 
-	return query
+	for _, param := range params {
+		var value string
+		switch v := param.(type) {
+		case string:
+			value = fmt.Sprintf("%q", v)
+		case []byte:
+			value = fmt.Sprintf("%q", string(v))
+		default:
+			value = fmt.Sprintf("%v", v)
+		}
+		query = strings.Replace(query, "?", value, 1)
+	}
+
+	query = strings.Replace(query, "\t", "", -1)
+	query = strings.Replace(query, "\n", " ", -1)
+
+	return fmt.Sprintf("[%s]\n", strings.Trim(query, " "))
 }
