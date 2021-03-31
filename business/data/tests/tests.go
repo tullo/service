@@ -64,15 +64,11 @@ func NewUnit(t *testing.T, ctr Container) (*log.Logger, *sqlx.DB, func()) {
 	// Wait for the database to be ready.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := database.StatusCheck(ctx, db); err != nil {
-		docker.DumpContainerLogs(t, c.ID)
-		docker.StopContainer(t, c.ID)
-		t.Fatalf("Database never ready: %v", err)
-	}
 
 	if err := schema.Migrate(ctx, db); err != nil {
+		docker.DumpContainerLogs(t, c.ID)
 		docker.StopContainer(t, c.ID)
-		t.Fatalf("Migrating error: %s", err)
+		t.Fatalf("Migration error: %s", err)
 	}
 
 	// teardown is the function that should be invoked when the caller is done
