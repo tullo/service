@@ -24,11 +24,7 @@ func Migrate(cfg database.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := database.StatusCheck(ctx, db); err != nil {
-		return errors.Wrap(err, "database status check")
-	}
-
-	if err := schema.Migrate(db); err != nil {
+	if err := schema.Migrate(ctx, db); err != nil {
 		return errors.Wrap(err, "migrate database")
 	}
 

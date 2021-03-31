@@ -70,7 +70,7 @@ func NewUnit(t *testing.T, ctr Container) (*log.Logger, *sqlx.DB, func()) {
 		t.Fatalf("Database never ready: %v", err)
 	}
 
-	if err := schema.Migrate(db); err != nil {
+	if err := schema.Migrate(ctx, db); err != nil {
 		docker.StopContainer(t, c.ID)
 		t.Fatalf("Migrating error: %s", err)
 	}
@@ -105,7 +105,10 @@ func NewIntegration(t *testing.T, ctr Container) *Test {
 	// Initialize and seed database. Store the cleanup function call later.
 	log, db, teardown := NewUnit(t, ctr)
 
-	if err := schema.Seed(db); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := schema.Seed(ctx, db); err != nil {
 		t.Fatal(err)
 	}
 

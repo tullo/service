@@ -21,11 +21,7 @@ func Seed(cfg database.Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := database.StatusCheck(ctx, db); err != nil {
-		return errors.Wrap(err, "database status check")
-	}
-
-	if err := schema.Seed(db); err != nil {
+	if err := schema.Seed(ctx, db); err != nil {
 		return errors.Wrap(err, "seed database")
 	}
 
