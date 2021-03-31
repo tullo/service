@@ -12,22 +12,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Sale manages the set of API's for sales access.
-type Sale struct {
+// Store manages the set of API's for sales access.
+type Store struct {
 	log *log.Logger
 	db  *sqlx.DB
 }
 
-// New constructs a Product for api access.
-func New(log *log.Logger, db *sqlx.DB) Sale {
-	return Sale{
+// NewStore constructs a Store for api access.
+func NewStore(log *log.Logger, db *sqlx.DB) Store {
+	return Store{
 		log: log,
 		db:  db,
 	}
 }
 
 // AddSale records a sales transaction for a single Product.
-func (s Sale) AddSale(ctx context.Context, traceID string, ns NewSale, productID string, now time.Time) (Info, error) {
+func (s Store) AddSale(ctx context.Context, traceID string, ns NewSale, productID string, now time.Time) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.add")
 	defer span.End()
 
@@ -55,7 +55,7 @@ func (s Sale) AddSale(ctx context.Context, traceID string, ns NewSale, productID
 }
 
 // List gets all Sales from the database.
-func (s Sale) List(ctx context.Context, traceID string, productID string) ([]Info, error) {
+func (s Store) List(ctx context.Context, traceID string, productID string) ([]Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.list")
 	defer span.End()
 

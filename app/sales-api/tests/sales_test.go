@@ -23,8 +23,8 @@ func Test_Sales(t *testing.T) {
 	})
 	defer teardown()
 
-	p := product.New(log, db)
-	s := sale.New(log, db)
+	p := product.NewStore(log, db)
+	s := sale.NewStore(log, db)
 
 	t.Log("Given the need to work with product Sales records.")
 

@@ -18,22 +18,22 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// User manages the set of API's for user access.
-type User struct {
+// Store manages the set of API's for user access.
+type Store struct {
 	log *log.Logger
 	db  *sqlx.DB
 }
 
-// New constructs a User for api access.
-func New(log *log.Logger, db *sqlx.DB) User {
-	return User{
+// NewStore constructs a Store for api access.
+func NewStore(log *log.Logger, db *sqlx.DB) Store {
+	return Store{
 		log: log,
 		db:  db,
 	}
 }
 
 // Create inserts a new user into the database.
-func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.Time) (Info, error) {
+func (s Store) Create(ctx context.Context, traceID string, nu NewUser, now time.Time) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.create")
 	defer span.End()
 
@@ -58,11 +58,11 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 	VALUES
 		(:user_id, :name, :email, :password_hash, :roles, :date_created, :date_updated)`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.Create",
+	s.log.Printf("%s: %s: %s", traceID, "user.Create",
 		database.Log(q, usr),
 	)
 
-	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
+	if _, err = s.db.NamedExecContext(ctx, q, usr); err != nil {
 		return Info{}, errors.Wrap(err, "inserting user")
 	}
 
@@ -70,11 +70,11 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 }
 
 // Update replaces a user document in the database.
-func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, userID string, uu UpdateUser, now time.Time) error {
+func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, userID string, uu UpdateUser, now time.Time) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.update")
 	defer span.End()
 
-	usr, err := u.QueryByID(ctx, traceID, claims, userID)
+	usr, err := s.QueryByID(ctx, traceID, claims, userID)
 	if err != nil {
 		return err
 	}
@@ -110,11 +110,11 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 	WHERE
 		user_id = :user_id`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.Update",
+	s.log.Printf("%s: %s: %s", traceID, "user.Update",
 		database.Log(q, usr),
 	)
 
-	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
+	if _, err = s.db.NamedExecContext(ctx, q, usr); err != nil {
 		return errors.Wrap(err, "updating user")
 	}
 
@@ -122,7 +122,7 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 }
 
 // Delete removes a user from the database.
-func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, userID string) error {
+func (s Store) Delete(ctx context.Context, traceID string, claims auth.Claims, userID string) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.delete")
 	defer span.End()
 
@@ -148,11 +148,11 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 	WHERE
 		user_id = :user_id`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.Delete",
+	s.log.Printf("%s: %s: %s", traceID, "user.Delete",
 		database.Log(q, filter),
 	)
 
-	if _, err := u.db.NamedExecContext(ctx, q, filter); err != nil {
+	if _, err := s.db.NamedExecContext(ctx, q, filter); err != nil {
 		return errors.Wrapf(err, "deleting user %s", userID)
 	}
 
@@ -160,7 +160,7 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 }
 
 // Query retrieves a list of existing users from the database.
-func (u User) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
+func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.query")
 	defer span.End()
 
@@ -181,11 +181,11 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber int, rowsPer
 		RowsPerPage: rowsPerPage,
 	}
 
-	u.log.Printf("%s: %s: %s", traceID, "user.Query",
+	s.log.Printf("%s: %s: %s", traceID, "user.Query",
 		database.Log(q, page),
 	)
 
-	ns, err := u.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return nil, errors.Wrap(err, "prepare named context")
 	}
@@ -200,7 +200,7 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber int, rowsPer
 }
 
 // QueryByID gets the specified user from the database.
-func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims, userID string) (Info, error) {
+func (s Store) QueryByID(ctx context.Context, traceID string, claims auth.Claims, userID string) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.querybyid")
 	defer span.End()
 
@@ -228,11 +228,11 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	WHERE 
 		user_id = :user_id`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
+	s.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
 		database.Log(q, filter),
 	)
 
-	ns, err := u.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "prepare named context")
 	}
@@ -250,7 +250,7 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 }
 
 // QueryByEmail gets the specified user from the database by email.
-func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Claims, email string) (Info, error) {
+func (s Store) QueryByEmail(ctx context.Context, traceID string, claims auth.Claims, email string) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.querybyemail")
 	defer span.End()
 
@@ -268,11 +268,11 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	WHERE
 		email = :email`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
+	s.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
 		database.Log(q, filter),
 	)
 
-	ns, err := u.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "prepare named context")
 	}
@@ -298,7 +298,7 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 // Authenticate finds a user by their email and verifies their password. On
 // success it returns claims representing this user. The claims can be used to
 // generate a token for future authentication.
-func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, email, password string) (auth.Claims, error) {
+func (s Store) Authenticate(ctx context.Context, traceID string, now time.Time, email, password string) (auth.Claims, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.authenticate")
 	defer span.End()
 
@@ -316,11 +316,11 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	WHERE
 		email = :email`
 
-	u.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
+	s.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
 		database.Log(q, filter),
 	)
 
-	ns, err := u.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return auth.Claims{}, errors.Wrap(err, "prepare named context")
 	}

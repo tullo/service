@@ -16,15 +16,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Product manages the set of API's for product access.
-type Product struct {
+// Store manages the set of API's for product access.
+type Store struct {
 	log *log.Logger
 	db  *sqlx.DB
 }
 
-// New constructs a Product for api access.
-func New(log *log.Logger, db *sqlx.DB) Product {
-	return Product{
+// NewStore constructs a Store for api access.
+func NewStore(log *log.Logger, db *sqlx.DB) Store {
+	return Store{
 		log: log,
 		db:  db,
 	}
@@ -32,7 +32,7 @@ func New(log *log.Logger, db *sqlx.DB) Product {
 
 // Create adds a Product to the database. It returns the created Product with
 // fields like ID and DateCreated populated.
-func (p Product) Create(ctx context.Context, traceID string, claims auth.Claims, np NewProduct, now time.Time) (Info, error) {
+func (s Store) Create(ctx context.Context, traceID string, claims auth.Claims, np NewProduct, now time.Time) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.create")
 	defer span.End()
 
@@ -52,11 +52,11 @@ func (p Product) Create(ctx context.Context, traceID string, claims auth.Claims,
 	VALUES
 		(:product_id, :user_id, :name, :cost, :quantity, :date_created, :date_updated)`
 
-	p.log.Printf("%s: %s: %s", traceID, "product.Create",
+	s.log.Printf("%s: %s: %s", traceID, "product.Create",
 		database.Log(q, prd),
 	)
 
-	if _, err := p.db.NamedExecContext(ctx, q, prd); err != nil {
+	if _, err := s.db.NamedExecContext(ctx, q, prd); err != nil {
 		return Info{}, errors.Wrap(err, "inserting product")
 	}
 
@@ -65,11 +65,11 @@ func (p Product) Create(ctx context.Context, traceID string, claims auth.Claims,
 
 // Update modifies data about a Product. It will error if the specified ID is
 // invalid or does not reference an existing Product.
-func (p Product) Update(ctx context.Context, traceID string, claims auth.Claims, productID string, up UpdateProduct, now time.Time) error {
+func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, productID string, up UpdateProduct, now time.Time) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.update")
 	defer span.End()
 
-	prd, err := p.QueryByID(ctx, traceID, productID)
+	prd, err := s.QueryByID(ctx, traceID, productID)
 	if err != nil {
 		return err
 	}
@@ -102,11 +102,11 @@ func (p Product) Update(ctx context.Context, traceID string, claims auth.Claims,
 	WHERE
 		product_id = :product_id`
 
-	p.log.Printf("%s: %s: %s", traceID, "product.Update",
+	s.log.Printf("%s: %s: %s", traceID, "product.Update",
 		database.Log(q, prd),
 	)
 
-	if _, err = p.db.NamedExecContext(ctx, q, prd); err != nil {
+	if _, err = s.db.NamedExecContext(ctx, q, prd); err != nil {
 		return errors.Wrap(err, "updating product")
 	}
 
@@ -114,7 +114,7 @@ func (p Product) Update(ctx context.Context, traceID string, claims auth.Claims,
 }
 
 // Delete removes the product identified by a given ID.
-func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims, productID string) error {
+func (s Store) Delete(ctx context.Context, traceID string, claims auth.Claims, productID string) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.delete")
 	defer span.End()
 
@@ -139,11 +139,11 @@ func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims,
 	WHERE
 		product_id = :product_id`
 
-	p.log.Printf("%s: %s: %s", traceID, "product.Delete",
+	s.log.Printf("%s: %s: %s", traceID, "product.Delete",
 		database.Log(q, filter),
 	)
 
-	if _, err := p.db.NamedExecContext(ctx, q, filter); err != nil {
+	if _, err := s.db.NamedExecContext(ctx, q, filter); err != nil {
 		return errors.Wrapf(err, "deleting product %s", productID)
 	}
 
@@ -151,7 +151,7 @@ func (p Product) Delete(ctx context.Context, traceID string, claims auth.Claims,
 }
 
 // Query gets all Products from the database.
-func (p Product) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
+func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.query")
 	defer span.End()
 
@@ -178,11 +178,11 @@ func (p Product) Query(ctx context.Context, traceID string, pageNumber int, rows
 		RowsPerPage: rowsPerPage,
 	}
 
-	p.log.Printf("%s: %s: %s", traceID, "product.Query",
+	s.log.Printf("%s: %s: %s", traceID, "product.Query",
 		database.Log(q, page),
 	)
 
-	ns, err := p.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return nil, errors.Wrap(err, "prepare named context")
 	}
@@ -197,7 +197,7 @@ func (p Product) Query(ctx context.Context, traceID string, pageNumber int, rows
 }
 
 // QueryByID finds the product identified by a given ID.
-func (p Product) QueryByID(ctx context.Context, traceID string, productID string) (Info, error) {
+func (s Store) QueryByID(ctx context.Context, traceID string, productID string) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.querybyid")
 	defer span.End()
 
@@ -225,11 +225,11 @@ func (p Product) QueryByID(ctx context.Context, traceID string, productID string
 	GROUP BY
 		p.product_id`
 
-	p.log.Printf("%s: %s: %s", traceID, "product.QueryByID",
+	s.log.Printf("%s: %s: %s", traceID, "product.QueryByID",
 		database.Log(q, filter),
 	)
 
-	ns, err := p.db.PrepareNamedContext(ctx, q)
+	ns, err := s.db.PrepareNamedContext(ctx, q)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "prepare named context")
 	}

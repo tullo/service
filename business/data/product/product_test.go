@@ -28,7 +28,7 @@ func TestProduct(t *testing.T) {
 	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
-	p := product.New(log, db)
+	p := product.NewStore(log, db)
 
 	t.Log("Given the need to work with Product records.")
 	{
@@ -148,7 +148,7 @@ func TestProductPaging(t *testing.T) {
 
 	schema.Seed(ctx, db)
 
-	p := product.New(log, db)
+	p := product.NewStore(log, db)
 
 	t.Log("Given the need to page through Product records.")
 	{

@@ -16,7 +16,7 @@ import (
 
 // userGroup represents the User API method handler set.
 type userGroup struct {
-	user user.User
+	user user.Store
 	auth *auth.Auth
 }
 

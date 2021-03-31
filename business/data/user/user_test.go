@@ -28,7 +28,7 @@ func TestUser(t *testing.T) {
 	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
-	u := user.New(log, db)
+	u := user.NewStore(log, db)
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -143,7 +143,7 @@ func TestUserPaging(t *testing.T) {
 
 	schema.Seed(ctx, db)
 
-	u := user.New(log, db)
+	u := user.NewStore(log, db)
 
 	t.Log("Given the need to page through User records.")
 	{
@@ -189,7 +189,7 @@ func TestAuthenticate(t *testing.T) {
 	log, db, teardown := tests.NewUnit(t, container)
 	t.Cleanup(teardown)
 
-	u := user.New(log, db)
+	u := user.NewStore(log, db)
 
 	t.Log("Given the need to authenticate users")
 	{

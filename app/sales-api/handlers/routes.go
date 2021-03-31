@@ -32,7 +32,7 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 
 	// Register user management and authentication endpoints.
 	ug := userGroup{
-		user: user.New(log, db),
+		user: user.NewStore(log, db),
 		auth: a,
 	}
 
@@ -46,8 +46,8 @@ func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a 
 
 	// Register product and sale endpoints.
 	pg := productGroup{
-		product: product.New(log, db),
-		sale:    sale.New(log, db),
+		product: product.NewStore(log, db),
+		sale:    sale.NewStore(log, db),
 	}
 	app.Handle(http.MethodGet, "/v1/products/{page}/{rows}", pg.query, mid.Authenticate(a))
 	app.Handle(http.MethodPost, "/v1/products", pg.create, mid.Authenticate(a))

@@ -18,8 +18,8 @@ import (
 
 // productGroup represents the Product API method handler set.
 type productGroup struct {
-	product product.Product
-	sale    sale.Sale
+	product product.Store
+	sale    sale.Store
 }
 
 // Query gets all existing products in the system.

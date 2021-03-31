@@ -30,7 +30,7 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 	}
 	defer db.Close()
 
-	u := user.New(log, db)
+	u := user.NewStore(log, db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
