@@ -56,13 +56,13 @@ func (u User) Create(ctx context.Context, traceID string, nu NewUser, now time.T
 	INSERT INTO users
 		(user_id, name, email, password_hash, roles, date_created, date_updated)
 	VALUES
-		($1, $2, $3, $4, $5, $6, $7)`
+		(:user_id, :name, :email, :password_hash, :roles, :date_created, :date_updated)`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Create",
 		database.Log(q, usr.ID, usr.Name, usr.Email, "***", usr.Roles, usr.DateCreated, usr.DateUpdated),
 	)
 
-	if _, err = u.db.ExecContext(ctx, q, usr.ID, usr.Name, usr.Email, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
+	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
 		return Info{}, errors.Wrap(err, "inserting user")
 	}
 
@@ -102,19 +102,19 @@ func (u User) Update(ctx context.Context, traceID string, claims auth.Claims, us
 	UPDATE
 		users
 	SET 
-		"name" = $2,
-		"email" = $3,
-		"roles" = $4,
-		"password_hash" = $5,
-		"date_updated" = $6
+		"name" = :name,
+		"email" = :email,
+		"roles" = :roles,
+		"password_hash" = :password_hash,
+		"date_updated" = :date_updated
 	WHERE
-		user_id = $1`
+		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Update",
 		database.Log(q, usr.ID, usr.Name, usr.Email, usr.Roles, "***", usr.DateCreated, usr.DateUpdated),
 	)
 
-	if _, err = u.db.ExecContext(ctx, q, userID, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
+	if _, err = u.db.NamedExecContext(ctx, q, usr); err != nil {
 		return errors.Wrap(err, "updating user")
 	}
 
@@ -140,13 +140,14 @@ func (u User) Delete(ctx context.Context, traceID string, claims auth.Claims, us
 	DELETE FROM
 		users
 	WHERE
-		user_id = $1`
+		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Delete",
 		database.Log(q, userID),
 	)
 
-	if _, err := u.db.ExecContext(ctx, q, userID); err != nil {
+	usr := Info{ID: userID}
+	if _, err := u.db.NamedExecContext(ctx, q, usr); err != nil {
 		return errors.Wrapf(err, "deleting user %s", userID)
 	}
 
@@ -165,17 +166,29 @@ func (u User) Query(ctx context.Context, traceID string, pageNumber int, rowsPer
 		users
 	ORDER BY
 		user_id
-	OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY`
+	OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY`
 
-	offset := (pageNumber - 1) * rowsPerPage
+	page := struct {
+		Offset      int `db:"offset"`
+		RowsPerPage int `db:"rows_per_page"`
+	}{
+		Offset:      (pageNumber - 1) * rowsPerPage,
+		RowsPerPage: rowsPerPage,
+	}
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Query",
-		database.Log(q, offset, rowsPerPage),
+		database.Log(q, page),
 	)
 
-	users := []Info{}
-	if err := u.db.SelectContext(ctx, &users, q, offset, rowsPerPage); err != nil {
-		return nil, errors.Wrap(err, "selecting users")
+	ns, err := u.db.PrepareNamedContext(ctx, q)
+	if err != nil {
+		return nil, errors.Wrap(err, "prepare named context")
+	}
+	defer ns.Close()
+
+	users := make([]Info, 0, page.RowsPerPage)
+	if err = ns.SelectContext(ctx, &users, page); err != nil {
+		return nil, errors.Wrap(err, "query products")
 	}
 
 	return users, nil
@@ -202,14 +215,20 @@ func (u User) QueryByID(ctx context.Context, traceID string, claims auth.Claims,
 	FROM
 		users
 	WHERE 
-		user_id = $1`
+		user_id = :user_id`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
 		database.Log(q, userID),
 	)
 
+	ns, err := u.db.PrepareNamedContext(ctx, q)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "prepare named context")
+	}
+	defer ns.Close()
+
 	var usr Info
-	if err := u.db.GetContext(ctx, &usr, q, userID); err != nil {
+	if err := ns.GetContext(ctx, &usr, Info{ID: userID}); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}
@@ -230,14 +249,20 @@ func (u User) QueryByEmail(ctx context.Context, traceID string, claims auth.Clai
 	FROM
 		users
 	WHERE
-		email = $1`
+		email = :email`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
 		database.Log(q, email),
 	)
 
+	ns, err := u.db.PrepareNamedContext(ctx, q)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "prepare named context")
+	}
+	defer ns.Close()
+
 	var usr Info
-	if err := u.db.GetContext(ctx, &usr, q, email); err != nil {
+	if err := ns.GetContext(ctx, &usr, Info{Email: email}); err != nil {
 		if err == sql.ErrNoRows {
 			return Info{}, data.ErrNotFound
 		}
@@ -266,14 +291,20 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 	FROM
 		users
 	WHERE
-		email = $1`
+		email = :email`
 
 	u.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
 		database.Log(q, email),
 	)
 
+	ns, err := u.db.PrepareNamedContext(ctx, q)
+	if err != nil {
+		return auth.Claims{}, errors.Wrap(err, "prepare named context")
+	}
+	defer ns.Close()
+
 	var usr Info
-	if err := u.db.GetContext(ctx, &usr, q, email); err != nil {
+	if err := ns.GetContext(ctx, &usr, Info{Email: email}); err != nil {
 
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
@@ -281,7 +312,7 @@ func (u User) Authenticate(ctx context.Context, traceID string, now time.Time, e
 			return auth.Claims{}, data.ErrAuthenticationFailure
 		}
 
-		return auth.Claims{}, errors.Wrap(err, "selecting single user")
+		return auth.Claims{}, errors.Wrapf(err, "selecting user %q", email)
 	}
 
 	// Compare the provided password with the saved hash. Use the bcrypt
