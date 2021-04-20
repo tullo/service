@@ -214,7 +214,7 @@ func initAPI(d *deps) *http.Server {
 	// Make a channel to listen for an interrupt or terminate signal from the OS.
 	// Use a buffered channel because the signal package requires it.
 	d.srvdown = make(chan os.Signal, 1)
-	signal.Notify(d.srvdown, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(d.srvdown, syscall.SIGINT, syscall.SIGTERM)
 
 	api := http.Server{
 		Addr:         d.cfg.Web.APIHost,
