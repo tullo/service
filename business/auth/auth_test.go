@@ -75,6 +75,21 @@ func TestAuth(t *testing.T) {
 				t.Fatalf("\t%s\tTest %d:\tShould have the expected roles: %v", failed, testID, err)
 			}
 			t.Logf("\t%s\tTest %d:\tShould have the expected roles.", success, testID)
+
+			if authorized := claims.Authorized(auth.RoleAdmin); !authorized {
+				t.Logf("\t\tTest %d:\texp: authorized=%v", testID, !authorized)
+				t.Logf("\t\tTest %d:\tgot: authorized=%v", testID, authorized)
+				t.Fatalf("\t%s\tTest %d:\tShould have authorized role: %v", failed, testID, auth.RoleAdmin)
+			}
+			t.Logf("\t%s\tTest %d:\tShould have authorized role.", success, testID)
+
+			if authorized := claims.Authorized(auth.RoleUser); authorized {
+				t.Logf("\t\tTest %d:\texp: authorized=%v", testID, !authorized)
+				t.Logf("\t\tTest %d:\tgot: authorized=%v", testID, authorized)
+				t.Fatalf("\t%s\tTest %d:\tShould not have authorized role: %v", failed, testID, auth.RoleUser)
+			}
+			t.Logf("\t%s\tTest %d:\tShould not have authorized role.", success, testID)
+
 		}
 	}
 }
