@@ -77,8 +77,10 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tTest %d:\tShould get back the same user.", tests.Success, testID)
 
 			upd := user.UpdateUser{
-				Name:  tests.StringPointer("Andreas Amstutz"),
-				Email: tests.StringPointer("tullo@users.noreply.github.com"),
+				Name:     tests.StringPointer("Andreas Amstutz"),
+				Email:    tests.StringPointer("tullo@users.noreply.github.com"),
+				Password: tests.StringPointer("gophercon-2021"),
+				Roles:    []string{auth.RoleUser},
 			}
 
 			claims = auth.Claims{
@@ -119,6 +121,35 @@ func TestUser(t *testing.T) {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Email.", tests.Success, testID)
 			}
 
+			if saved.PasswordHash == usr.PasswordHash {
+				t.Errorf("\t%s\tTest %d:\tShould be able to see updates to PasswordHash.", tests.Failed, testID)
+				t.Logf("\t\tTest %d:\tGot: %v", testID, saved.PasswordHash)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, usr.PasswordHash)
+			} else {
+				t.Logf("\t%s\tTest %d:\tShould be able to see updates to PasswordHash.", tests.Success, testID)
+			}
+
+			if !(len(saved.Roles) == len(upd.Roles)) && saved.Roles[0] == upd.Roles[0] {
+				t.Errorf("\t%s\tTest %d:\tShould be able to see updates to Roles.", tests.Failed, testID)
+				t.Logf("\t\tTest %d:\tGot: %v", testID, saved.Roles)
+				t.Logf("\t\tTest %d:\tExp: %v", testID, upd.Roles)
+			} else {
+				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Roles.", tests.Success, testID)
+			}
+
+			if err := u.Delete(ctx, traceID, claims, "00000000-0000"); err == nil {
+				t.Fatalf("\t%s\tTest %d:\tShould not be able to delete user : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould not be able to delete user.", tests.Success, testID)
+
+			old := claims.Roles
+			claims.Roles = []string{auth.RoleUser}
+			if err := u.Delete(ctx, traceID, claims, usr.ID); err == nil {
+				t.Fatalf("\t%s\tTest %d:\tShould not be able to delete user : %s.", tests.Failed, testID, err)
+			}
+			t.Logf("\t%s\tTest %d:\tShould not be able to delete user.", tests.Success, testID)
+
+			claims.Roles = old
 			if err := u.Delete(ctx, traceID, claims, usr.ID); err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to delete user : %s.", tests.Failed, testID, err)
 			}
