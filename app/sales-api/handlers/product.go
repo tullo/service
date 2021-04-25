@@ -45,7 +45,7 @@ func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http
 
 	products, err := pg.product.Query(ctx, v.TraceID, pageNumber, rowsPerPage)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to query products")
 	}
 
 	return web.Respond(ctx, w, products, http.StatusOK)
