@@ -11,18 +11,13 @@ import (
 
 // Respond converts a Go value to JSON and sends it to the client.
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
-
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "foundation.web.respond")
 	defer span.End()
 
 	// Set the status code for the request logger middleware.
-	// If the context is missing this value, request the service
-	// to be shutdown gracefully.
-	v, ok := ctx.Value(KeyValues).(*Values)
-	if !ok {
-		return NewShutdownError("web value missing from context")
+	if v, ok := ctx.Value(KeyValues).(*Values); ok {
+		v.StatusCode = statusCode
 	}
-	v.StatusCode = statusCode
 
 	// If there is nothing to marshal then set status code and return.
 	if statusCode == http.StatusNoContent {
