@@ -38,7 +38,7 @@ staticcheck:
 
 staticcheck-install: GO111MODULE := on
 staticcheck-install:
-	@go install honnef.co/go/tools/cmd/staticcheck@v0.1.2
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.1.3
 	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-deps-list:
