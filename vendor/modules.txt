@@ -1,12 +1,34 @@
+# github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+github.com/Azure/go-ansiterm
+github.com/Azure/go-ansiterm/winterm
+# github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
+github.com/Microsoft/go-winio
+github.com/Microsoft/go-winio/pkg/guid
+# github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5
+github.com/Nvveen/Gotty
 # github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 ## explicit
 github.com/alexedwards/argon2id
+# github.com/cenkalti/backoff/v4 v4.1.0
+github.com/cenkalti/backoff/v4
+# github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6
+github.com/containerd/continuity/pathdriver
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
 github.com/dgrijalva/jwt-go/v4
+# github.com/docker/go-connections v0.4.0
+github.com/docker/go-connections/nat
+# github.com/docker/go-units v0.4.0
+github.com/docker/go-units
 # github.com/felixge/httpsnoop v1.0.2
 ## explicit
 github.com/felixge/httpsnoop
+# github.com/georgysavva/scany v0.2.8
+## explicit
+github.com/georgysavva/scany/dbscan
+github.com/georgysavva/scany/pgxscan
 # github.com/go-chi/chi v1.5.4
 ## explicit
 github.com/go-chi/chi
@@ -45,10 +67,29 @@ github.com/google/uuid
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.0
 github.com/hashicorp/go-multierror
-# github.com/jmoiron/sqlx v1.3.3
+# github.com/jackc/chunkreader/v2 v2.0.1
+github.com/jackc/chunkreader/v2
+# github.com/jackc/pgconn v1.8.1
+github.com/jackc/pgconn
+github.com/jackc/pgconn/internal/ctxwatch
+github.com/jackc/pgconn/stmtcache
+# github.com/jackc/pgio v1.0.0
+github.com/jackc/pgio
+# github.com/jackc/pgpassfile v1.0.0
+github.com/jackc/pgpassfile
+# github.com/jackc/pgproto3/v2 v2.0.6
+github.com/jackc/pgproto3/v2
+# github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b
+github.com/jackc/pgservicefile
+# github.com/jackc/pgtype v1.7.0
+github.com/jackc/pgtype
+# github.com/jackc/pgx/v4 v4.11.0
 ## explicit
-github.com/jmoiron/sqlx
-github.com/jmoiron/sqlx/reflectx
+github.com/jackc/pgx/v4
+github.com/jackc/pgx/v4/internal/sanitize
+github.com/jackc/pgx/v4/pgxpool
+# github.com/jackc/puddle v1.1.3
+github.com/jackc/puddle
 # github.com/leodido/go-urn v1.2.1
 ## explicit
 github.com/leodido/go-urn
@@ -57,13 +98,55 @@ github.com/leodido/go-urn
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/mattn/go-sqlite3 v2.0.1+incompatible
-## explicit
+# github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
+github.com/moby/term
+github.com/moby/term/windows
+# github.com/opencontainers/go-digest v1.0.0
+github.com/opencontainers/go-digest
+# github.com/opencontainers/image-spec v1.0.1
+github.com/opencontainers/image-spec/specs-go
+github.com/opencontainers/image-spec/specs-go/v1
+# github.com/opencontainers/runc v1.0.0-rc9
+github.com/opencontainers/runc/libcontainer/user
 # github.com/openzipkin/zipkin-go v0.2.5
 github.com/openzipkin/zipkin-go/model
+# github.com/ory/dockertest/v3 v3.6.5
+## explicit
+github.com/ory/dockertest/v3
+github.com/ory/dockertest/v3/docker
+github.com/ory/dockertest/v3/docker/opts
+github.com/ory/dockertest/v3/docker/pkg/archive
+github.com/ory/dockertest/v3/docker/pkg/fileutils
+github.com/ory/dockertest/v3/docker/pkg/homedir
+github.com/ory/dockertest/v3/docker/pkg/idtools
+github.com/ory/dockertest/v3/docker/pkg/ioutils
+github.com/ory/dockertest/v3/docker/pkg/jsonmessage
+github.com/ory/dockertest/v3/docker/pkg/longpath
+github.com/ory/dockertest/v3/docker/pkg/mount
+github.com/ory/dockertest/v3/docker/pkg/pools
+github.com/ory/dockertest/v3/docker/pkg/stdcopy
+github.com/ory/dockertest/v3/docker/pkg/system
+github.com/ory/dockertest/v3/docker/types
+github.com/ory/dockertest/v3/docker/types/blkiodev
+github.com/ory/dockertest/v3/docker/types/container
+github.com/ory/dockertest/v3/docker/types/filters
+github.com/ory/dockertest/v3/docker/types/mount
+github.com/ory/dockertest/v3/docker/types/network
+github.com/ory/dockertest/v3/docker/types/registry
+github.com/ory/dockertest/v3/docker/types/strslice
+github.com/ory/dockertest/v3/docker/types/versions
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.7.0
+github.com/sirupsen/logrus
+# github.com/stretchr/objx v0.2.0
+github.com/stretchr/objx
+# github.com/stretchr/testify v1.6.1
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/mock
 # github.com/tullo/conf v1.3.7
 ## explicit
 github.com/tullo/conf
@@ -103,16 +186,31 @@ go.opentelemetry.io/otel/sdk/trace
 ## explicit
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/sha3
+# golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+golang.org/x/net/context
 # golang.org/x/sys v0.0.0-20210507014357-30e306a8bba5
 ## explicit
 golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # golang.org/x/text v0.3.6
 ## explicit
+golang.org/x/text/cases
+golang.org/x/text/internal
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/language
+golang.org/x/text/runes
+golang.org/x/text/secure/bidirule
+golang.org/x/text/secure/precis
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+golang.org/x/text/width
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
@@ -122,3 +220,5 @@ golang.org/x/xerrors/internal
 ## explicit
 gopkg.in/go-playground/validator.v9
 gopkg.in/go-playground/validator.v9/translations/en
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3

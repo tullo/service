@@ -3,12 +3,11 @@ package product
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"time"
 
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
@@ -19,11 +18,11 @@ import (
 // Store manages the set of API's for product access.
 type Store struct {
 	log *log.Logger
-	db  *sqlx.DB
+	db  *database.DB
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(log *log.Logger, db *sqlx.DB) Store {
+func NewStore(log *log.Logger, db *database.DB) Store {
 	return Store{
 		log: log,
 		db:  db,
@@ -35,6 +34,12 @@ func NewStore(log *log.Logger, db *sqlx.DB) Store {
 func (s Store) Create(ctx context.Context, traceID string, claims auth.Claims, np NewProduct, now time.Time) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.create")
 	defer span.End()
+
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
 
 	prd := Info{
 		ID:          uuid.New().String(),
@@ -50,13 +55,9 @@ func (s Store) Create(ctx context.Context, traceID string, claims auth.Claims, n
 	INSERT INTO products
 		(product_id, user_id, name, cost, quantity, date_created, date_updated)
 	VALUES
-		(:product_id, :user_id, :name, :cost, :quantity, :date_created, :date_updated)`
+		($1, $2, $3, $4, $5, $6, $7)`
 
-	s.log.Printf("%s: %s: %s", traceID, "product.Create",
-		database.Log(q, prd),
-	)
-
-	if _, err := s.db.NamedExecContext(ctx, q, prd); err != nil {
+	if _, err := conn.Exec(ctx, q, prd.ID, prd.UserID, prd.Name, prd.Cost, prd.Quantity, prd.DateCreated, prd.DateUpdated); err != nil {
 		return Info{}, errors.Wrap(err, "inserting product")
 	}
 
@@ -80,6 +81,12 @@ func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, p
 		}
 	}
 
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
+
 	if up.Name != nil {
 		prd.Name = *up.Name
 	}
@@ -95,18 +102,14 @@ func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, p
 	UPDATE
 		products
 	SET
-		"name" = :name,
-		"cost" = :cost,
-		"quantity" = :quantity,
-		"date_updated" = :date_updated
+		"name" = $2,
+		"cost" = $3,
+		"quantity" = $4,
+		"date_updated" = $5
 	WHERE
-		product_id = :product_id`
+		product_id = $1`
 
-	s.log.Printf("%s: %s: %s", traceID, "product.Update",
-		database.Log(q, prd),
-	)
-
-	if _, err = s.db.NamedExecContext(ctx, q, prd); err != nil {
+	if _, err = conn.Exec(ctx, q, productID, prd.Name, prd.Cost, prd.Quantity, prd.DateUpdated); err != nil {
 		return errors.Wrap(err, "updating product")
 	}
 
@@ -127,23 +130,19 @@ func (s Store) Delete(ctx context.Context, traceID string, claims auth.Claims, p
 		return data.ErrForbidden
 	}
 
-	filter := struct {
-		ProductID string `db:"product_id"`
-	}{
-		ProductID: productID,
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return errors.Wrap(err, "acquire db connection")
 	}
+	defer conn.Release()
 
 	const q = `
 	DELETE FROM
 		products
 	WHERE
-		product_id = :product_id`
+		product_id = $1`
 
-	s.log.Printf("%s: %s: %s", traceID, "product.Delete",
-		database.Log(q, filter),
-	)
-
-	if _, err := s.db.NamedExecContext(ctx, q, filter); err != nil {
+	if _, err := conn.Exec(ctx, q, productID); err != nil {
 		return errors.Wrapf(err, "deleting product %s", productID)
 	}
 
@@ -154,6 +153,12 @@ func (s Store) Delete(ctx context.Context, traceID string, claims auth.Claims, p
 func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPerPage int) ([]Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.product.query")
 	defer span.End()
+
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
 
 	const q = `
 	SELECT
@@ -168,7 +173,7 @@ func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPe
 		p.product_id
 	ORDER BY
 		user_id
-	OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY`
+	OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY`
 
 	page := struct {
 		Offset      int `db:"offset"`
@@ -178,18 +183,8 @@ func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPe
 		RowsPerPage: rowsPerPage,
 	}
 
-	s.log.Printf("%s: %s: %s", traceID, "product.Query",
-		database.Log(q, page),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
-	if err != nil {
-		return nil, errors.Wrap(err, "prepare named context")
-	}
-	defer ns.Close()
-
 	products := make([]Info, 0, page.RowsPerPage)
-	if err = ns.SelectContext(ctx, &products, page); err != nil {
+	if err := pgxscan.Select(ctx, conn, &products, q, page.Offset, page.RowsPerPage); err != nil {
 		return nil, errors.Wrap(err, "query products")
 	}
 
@@ -205,11 +200,11 @@ func (s Store) QueryByID(ctx context.Context, traceID string, productID string) 
 		return Info{}, data.ErrInvalidID
 	}
 
-	filter := struct {
-		ProductID string `db:"product_id"`
-	}{
-		ProductID: productID,
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "acquire db connection")
 	}
+	defer conn.Release()
 
 	const q = `
 	SELECT
@@ -221,23 +216,13 @@ func (s Store) QueryByID(ctx context.Context, traceID string, productID string) 
 	LEFT JOIN
 		sales AS s ON p.product_id = s.product_id
 	WHERE
-		p.product_id = :product_id
+		p.product_id = $1
 	GROUP BY
 		p.product_id`
 
-	s.log.Printf("%s: %s: %s", traceID, "product.QueryByID",
-		database.Log(q, filter),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
-	if err != nil {
-		return Info{}, errors.Wrap(err, "prepare named context")
-	}
-	defer ns.Close()
-
 	var prd Info
-	if err := ns.GetContext(ctx, &prd, filter); err != nil {
-		if err == sql.ErrNoRows {
+	if err := pgxscan.Get(ctx, conn, &prd, q, productID); err != nil {
+		if pgxscan.NotFound(err) {
 			return Info{}, data.ErrNotFound
 		}
 

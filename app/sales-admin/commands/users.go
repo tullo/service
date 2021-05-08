@@ -15,14 +15,14 @@ import (
 
 // Users retrieves all users from the database.
 func Users(traceID string, log *log.Logger, cfg database.Config, pageNumber string, rowsPerPage string) error {
-	db, err := database.Open(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	db, err := database.Connect(ctx, cfg)
 	if err != nil {
 		return errors.Wrap(err, "connect database")
 	}
 	defer db.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	page, err := strconv.Atoi(pageNumber)
 	if err != nil {

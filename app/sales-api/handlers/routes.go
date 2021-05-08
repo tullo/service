@@ -5,17 +5,17 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/business/mid"
+	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/web"
 )
 
 // API constructs an http.Handler with all application routes defined.
-func API(build string, shutdown chan os.Signal, log *log.Logger, db *sqlx.DB, a *auth.Auth) http.Handler {
+func API(build string, shutdown chan os.Signal, log *log.Logger, db *database.DB, a *auth.Auth) http.Handler {
 
 	// Construct the web.App which holds all routes as well as common Middleware.
 	app := web.NewApp(shutdown, mid.Logger(log), mid.Errors(log), mid.Metrics(), mid.Panics(log))

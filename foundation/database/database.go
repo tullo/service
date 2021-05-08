@@ -5,13 +5,15 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // The database driver in use.
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 )
+
+type DB struct {
+	*pgxpool.Pool
+}
 
 // Config is the required properties to use the database.
 type Config struct {
@@ -22,6 +24,17 @@ type Config struct {
 	DisableTLS   bool
 	MaxIdleConns int
 	MaxOpenConns int
+}
+
+// Connect establishes a database connection based on the configuration.
+func Connect(ctx context.Context, cfg Config) (*DB, error) {
+	pool, err := pgxpool.Connect(ctx, ConnString(cfg))
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
+	db := DB{pool}
+
+	return &db, nil
 }
 
 // ConnString translates the config to a db connection string.
@@ -47,28 +60,16 @@ func ConnString(cfg Config) string {
 	return u.String()
 }
 
-// Open knows how to open a database connection based on the configuration.
-func Open(cfg Config) (*sqlx.DB, error) {
-	db, err := sqlx.Open("postgres", ConnString(cfg))
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxIdleConns(cfg.MaxIdleConns)
-	db.SetMaxOpenConns(cfg.MaxOpenConns)
-
-	return db, nil
-}
-
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, db *sqlx.DB) error {
+func StatusCheck(ctx context.Context, db *DB) error {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "foundation.database.statuscheck")
 	defer span.End()
 
 	// First check we can ping the database.
 	var pingError error
 	for attempts := 1; ; attempts++ {
-		pingError = db.Ping()
+		pingError = db.Ping(ctx)
 		if pingError == nil {
 			break
 		}
@@ -87,31 +88,5 @@ func StatusCheck(ctx context.Context, db *sqlx.DB) error {
 	// a round trip to the database.
 	const q = `SELECT true`
 	var tmp bool
-	return db.QueryRowContext(ctx, q).Scan(&tmp)
-}
-
-// Log provides a pretty print version of the query and parameters.
-func Log(query string, args ...interface{}) string {
-	query, params, err := sqlx.Named(query, args)
-	if err != nil {
-		return err.Error()
-	}
-
-	for _, param := range params {
-		var value string
-		switch v := param.(type) {
-		case string:
-			value = fmt.Sprintf("%q", v)
-		case []byte:
-			value = fmt.Sprintf("%q", string(v))
-		default:
-			value = fmt.Sprintf("%v", v)
-		}
-		query = strings.Replace(query, "?", value, 1)
-	}
-
-	query = strings.Replace(query, "\t", "", -1)
-	query = strings.Replace(query, "\n", " ", -1)
-
-	return fmt.Sprintf("[%s]\n", strings.Trim(query, " "))
+	return db.QueryRow(ctx, q).Scan(&tmp)
 }

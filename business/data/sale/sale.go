@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/foundation/database"
 	"go.opentelemetry.io/otel/trace"
@@ -15,11 +15,11 @@ import (
 // Store manages the set of API's for sales access.
 type Store struct {
 	log *log.Logger
-	db  *sqlx.DB
+	db  *database.DB
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(log *log.Logger, db *sqlx.DB) Store {
+func NewStore(log *log.Logger, db *database.DB) Store {
 	return Store{
 		log: log,
 		db:  db,
@@ -31,6 +31,12 @@ func (s Store) AddSale(ctx context.Context, traceID string, ns NewSale, productI
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.add")
 	defer span.End()
 
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
+
 	sale := Info{
 		ID:          uuid.New().String(),
 		ProductID:   productID,
@@ -39,14 +45,10 @@ func (s Store) AddSale(ctx context.Context, traceID string, ns NewSale, productI
 		DateCreated: now,
 	}
 
-	const q = `INSERT INTO sales
-			(sale_id, product_id, quantity, paid, date_created)
-		VALUES
-			(:sale_id, :product_id, :quantity, :paid, :date_created)`
+	const q = `INSERT INTO sales (sale_id, product_id, quantity, paid, date_created)
+		VALUES ($1, $2, $3, $4, $5)`
 
-	s.log.Printf("%s : %s : query : %s", traceID, "sale.AddSale", database.Log(q, sale))
-
-	_, err := s.db.NamedExecContext(ctx, q, sale)
+	_, err = conn.Exec(ctx, q, sale.ID, sale.ProductID, sale.Quantity, sale.Paid, sale.DateCreated)
 	if err != nil {
 		return Info{}, errors.Wrap(err, "inserting sale")
 	}
@@ -59,23 +61,16 @@ func (s Store) List(ctx context.Context, traceID string, productID string) ([]In
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.list")
 	defer span.End()
 
-	const q = `SELECT * FROM sales WHERE product_id = :product_id`
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
+	conn, err := s.db.Acquire(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "prepare named context")
+		return nil, errors.Wrap(err, "acquire db connection")
 	}
+	defer conn.Release()
 
-	filter := struct {
-		ProductID string `db:"product_id"`
-	}{
-		ProductID: productID,
-	}
-
-	s.log.Printf("%s : %s : query : %s", traceID, "sale.List", database.Log(q, filter))
+	const q = `SELECT * FROM sales WHERE product_id = $1`
 
 	var sales []Info
-	if err := ns.SelectContext(ctx, &sales, filter); err != nil {
+	if err := pgxscan.Select(ctx, conn, &sales, q, productID); err != nil {
 		return nil, errors.Wrap(err, "selecting sales")
 	}
 

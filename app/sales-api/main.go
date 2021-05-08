@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
 	"github.com/tullo/service/app/sales-api/handlers"
@@ -35,7 +34,7 @@ var build = "develop"
 
 type deps struct {
 	auth    *auth.Auth
-	db      *sqlx.DB
+	db      *database.DB
 	cfg     *config.AppConfig
 	log     *log.Logger
 	srverr  chan error
@@ -105,15 +104,17 @@ func run(log *log.Logger) error {
 
 	log.Println("main: Initializing database support")
 
-	db, err := database.Open(database.Config{
-		User:         cfg.DB.User,
-		Password:     cfg.DB.Password,
-		Host:         cfg.DB.Host,
-		Name:         cfg.DB.Name,
-		DisableTLS:   cfg.DB.DisableTLS,
-		MaxIdleConns: cfg.DB.MaxIdleConns,
-		MaxOpenConns: cfg.DB.MaxOpenConns,
-	})
+	db, err := database.Connect(
+		context.Background(),
+		database.Config{
+			User:         cfg.DB.User,
+			Password:     cfg.DB.Password,
+			Host:         cfg.DB.Host,
+			Name:         cfg.DB.Name,
+			DisableTLS:   cfg.DB.DisableTLS,
+			MaxIdleConns: cfg.DB.MaxIdleConns,
+			MaxOpenConns: cfg.DB.MaxOpenConns,
+		})
 	if err != nil {
 		return errors.Wrap(err, "connecting to db")
 	}

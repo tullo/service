@@ -34,13 +34,12 @@ type ProductTests struct {
 // subtest needs a fresh instance of the application it can make it or it
 // should be its own Test* function.
 func TestProducts(t *testing.T) {
-	test := tests.NewIntegration(t, tests.Container{
-		Image: "postgres:13.2-alpine",
-		Port:  "5432",
-		Args: []string{
-			"-e", "POSTGRES_USER=postgres",
-			"-e", "POSTGRES_PASSWORD=postgres",
-		},
+	//  repository, tag string, env []string
+	test := tests.NewIntegration(t, tests.ContainerSpec{
+		Repository: "postgres",
+		Tag:        "13.2-alpine",
+		Port:       "5432/tcp",
+		Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
 	})
 	t.Cleanup(test.Teardown)
 

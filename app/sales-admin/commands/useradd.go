@@ -20,16 +20,16 @@ func UserAdd(traceID string, log *log.Logger, cfg database.Config, name, email, 
 		return ErrHelp
 	}
 
-	db, err := database.Open(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	db, err := database.Connect(ctx, cfg)
 	if err != nil {
-		return errors.Wrap(err, "connect database")
+		return errors.Wrap(err, "connect to database")
 	}
 	defer db.Close()
 
 	u := user.NewStore(log, db)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	nu := user.NewUser{
 		Name:            name,

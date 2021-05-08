@@ -3,14 +3,13 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"time"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/dgrijalva/jwt-go/v4"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
@@ -21,11 +20,11 @@ import (
 // Store manages the set of API's for user access.
 type Store struct {
 	log *log.Logger
-	db  *sqlx.DB
+	db  *database.DB
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(log *log.Logger, db *sqlx.DB) Store {
+func NewStore(log *log.Logger, db *database.DB) Store {
 	return Store{
 		log: log,
 		db:  db,
@@ -36,6 +35,12 @@ func NewStore(log *log.Logger, db *sqlx.DB) Store {
 func (s Store) Create(ctx context.Context, traceID string, nu NewUser, now time.Time) (Info, error) {
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.create")
 	defer span.End()
+
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return Info{}, errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
 
 	hash, err := argon2id.CreateHash(nu.Password, argon2id.DefaultParams)
 	if err != nil {
@@ -56,13 +61,9 @@ func (s Store) Create(ctx context.Context, traceID string, nu NewUser, now time.
 	INSERT INTO users
 		(user_id, name, email, password_hash, roles, date_created, date_updated)
 	VALUES
-		(:user_id, :name, :email, :password_hash, :roles, :date_created, :date_updated)`
+		($1, $2, $3, $4, $5, $6, $7)`
 
-	s.log.Printf("%s: %s: %s", traceID, "user.Create",
-		database.Log(q, usr),
-	)
-
-	if _, err = s.db.NamedExecContext(ctx, q, usr); err != nil {
+	if _, err := conn.Exec(ctx, q, usr.ID, usr.Name, usr.Email, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
 		return Info{}, errors.Wrap(err, "inserting user")
 	}
 
@@ -78,6 +79,12 @@ func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, u
 	if err != nil {
 		return err
 	}
+
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
 
 	if uu.Name != nil {
 		usr.Name = *uu.Name
@@ -102,19 +109,15 @@ func (s Store) Update(ctx context.Context, traceID string, claims auth.Claims, u
 	UPDATE
 		users
 	SET 
-		"name" = :name,
-		"email" = :email,
-		"roles" = :roles,
-		"password_hash" = :password_hash,
-		"date_updated" = :date_updated
+		"name" = $2,
+		"email" = $3,
+		"roles" = $4,
+		"password_hash" = $5,
+		"date_updated" = $6
 	WHERE
-		user_id = :user_id`
+		user_id = $1`
 
-	s.log.Printf("%s: %s: %s", traceID, "user.Update",
-		database.Log(q, usr),
-	)
-
-	if _, err = s.db.NamedExecContext(ctx, q, usr); err != nil {
+	if _, err = conn.Exec(ctx, q, userID, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
 		return errors.Wrap(err, "updating user")
 	}
 
@@ -136,23 +139,19 @@ func (s Store) Delete(ctx context.Context, traceID string, claims auth.Claims, u
 		}
 	}
 
-	filter := struct {
-		UserID string `db:"user_id"`
-	}{
-		UserID: userID,
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return errors.Wrap(err, "acquire db connection")
 	}
+	defer conn.Release()
 
 	const q = `
 	DELETE FROM
 		users
 	WHERE
-		user_id = :user_id`
+		user_id = $1`
 
-	s.log.Printf("%s: %s: %s", traceID, "user.Delete",
-		database.Log(q, filter),
-	)
-
-	if _, err := s.db.NamedExecContext(ctx, q, filter); err != nil {
+	if _, err := conn.Exec(ctx, q, userID); err != nil {
 		return errors.Wrapf(err, "deleting user %s", userID)
 	}
 
@@ -164,6 +163,12 @@ func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPe
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.query")
 	defer span.End()
 
+	conn, err := s.db.Acquire(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "acquire db connection")
+	}
+	defer conn.Release()
+
 	const q = `
 	SELECT
 		*
@@ -171,7 +176,7 @@ func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPe
 		users
 	ORDER BY
 		user_id
-	OFFSET :offset ROWS FETCH NEXT :rows_per_page ROWS ONLY`
+		OFFSET $1 ROWS FETCH NEXT $2 ROWS ONLY`
 
 	page := struct {
 		Offset      int `db:"offset"`
@@ -181,19 +186,9 @@ func (s Store) Query(ctx context.Context, traceID string, pageNumber int, rowsPe
 		RowsPerPage: rowsPerPage,
 	}
 
-	s.log.Printf("%s: %s: %s", traceID, "user.Query",
-		database.Log(q, page),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
-	if err != nil {
-		return nil, errors.Wrap(err, "prepare named context")
-	}
-	defer ns.Close()
-
 	users := make([]Info, 0, page.RowsPerPage)
-	if err = ns.SelectContext(ctx, &users, page); err != nil {
-		return nil, errors.Wrap(err, "query products")
+	if err := pgxscan.Select(ctx, conn, &users, q, page.Offset, page.RowsPerPage); err != nil {
+		return nil, errors.Wrap(err, "query users")
 	}
 
 	return users, nil
@@ -214,33 +209,17 @@ func (s Store) QueryByID(ctx context.Context, traceID string, claims auth.Claims
 		}
 	}
 
-	filter := struct {
-		UserID string `db:"user_id"`
-	}{
-		UserID: userID,
-	}
-
-	const q = `
-	SELECT
-		*
-	FROM
-		users
-	WHERE 
-		user_id = :user_id`
-
-	s.log.Printf("%s: %s: %s", traceID, "user.QueryByID",
-		database.Log(q, filter),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
+	conn, err := s.db.Acquire(ctx)
 	if err != nil {
-		return Info{}, errors.Wrap(err, "prepare named context")
+		return Info{}, errors.Wrap(err, "acquire db connection")
 	}
-	defer ns.Close()
+	defer conn.Release()
+
+	const q = `SELECT * FROM users WHERE user_id = $1`
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, filter); err != nil {
-		if err == sql.ErrNoRows {
+	if err := pgxscan.Get(ctx, conn, &usr, q, userID); err != nil {
+		if pgxscan.NotFound(err) {
 			return Info{}, data.ErrNotFound
 		}
 		return Info{}, errors.Wrapf(err, "selecting user %q", userID)
@@ -254,33 +233,17 @@ func (s Store) QueryByEmail(ctx context.Context, traceID string, claims auth.Cla
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.querybyemail")
 	defer span.End()
 
-	filter := struct {
-		Email string `db:"email"`
-	}{
-		Email: email,
-	}
-
-	const q = `
-	SELECT
-		*
-	FROM
-		users
-	WHERE
-		email = :email`
-
-	s.log.Printf("%s: %s: %s", traceID, "user.QueryByEmail",
-		database.Log(q, filter),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
+	conn, err := s.db.Acquire(ctx)
 	if err != nil {
-		return Info{}, errors.Wrap(err, "prepare named context")
+		return Info{}, errors.Wrap(err, "acquire db connection")
 	}
-	defer ns.Close()
+	defer conn.Release()
+
+	const q = `SELECT *	FROM users WHERE email = $1`
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, filter); err != nil {
-		if err == sql.ErrNoRows {
+	if err := pgxscan.Get(ctx, conn, &usr, q, email); err != nil {
+		if pgxscan.NotFound(err) {
 			return Info{}, data.ErrNotFound
 		}
 		return Info{}, errors.Wrapf(err, "selecting user %q", email)
@@ -302,36 +265,19 @@ func (s Store) Authenticate(ctx context.Context, traceID string, now time.Time, 
 	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.user.authenticate")
 	defer span.End()
 
-	filter := struct {
-		Email string `db:"email"`
-	}{
-		Email: email,
-	}
-
-	const q = `
-	SELECT
-		*
-	FROM
-		users
-	WHERE
-		email = :email`
-
-	s.log.Printf("%s: %s: %s", traceID, "user.Authenticate",
-		database.Log(q, filter),
-	)
-
-	ns, err := s.db.PrepareNamedContext(ctx, q)
+	conn, err := s.db.Acquire(ctx)
 	if err != nil {
-		return auth.Claims{}, errors.Wrap(err, "prepare named context")
+		return auth.Claims{}, errors.Wrap(err, "acquire db connection")
 	}
-	defer ns.Close()
+	defer conn.Release()
+
+	const q = `SELECT * FROM users WHERE email = $1`
 
 	var usr Info
-	if err := ns.GetContext(ctx, &usr, filter); err != nil {
-
+	if err := pgxscan.Get(ctx, conn, &usr, q, email); err != nil {
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
-		if err == sql.ErrNoRows {
+		if pgxscan.NotFound(err) {
 			return auth.Claims{}, data.ErrAuthenticationFailure
 		}
 

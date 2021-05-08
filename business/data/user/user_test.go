@@ -15,13 +15,11 @@ import (
 	"github.com/tullo/service/business/data/user"
 )
 
-var container = tests.Container{
-	Image: "postgres:13.2-alpine",
-	Port:  "5432",
-	Args: []string{
-		"-e", "POSTGRES_USER=postgres",
-		"-e", "POSTGRES_PASSWORD=postgres",
-	},
+var container = tests.ContainerSpec{
+	Repository: "postgres",
+	Tag:        "13.2-alpine",
+	Port:       "5432/tcp",
+	Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
 }
 
 func TestUser(t *testing.T) {
@@ -240,6 +238,7 @@ func TestAuthenticate(t *testing.T) {
 			}
 
 			usr, err := u.Create(ctx, traceID, nu, now)
+			t.Logf("____________ %+v\n", usr)
 
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create user : %s.", tests.Failed, testID, err)

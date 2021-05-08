@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/web"
 	"go.opentelemetry.io/otel/codes"
@@ -17,7 +16,7 @@ import (
 // Check provides support for orchestration health checks.
 type checkGroup struct {
 	build string
-	db    *sqlx.DB
+	db    *database.DB
 	log   *log.Logger
 	// ADD OTHER STATE LIKE THE LOGGER IF NEEDED.
 }

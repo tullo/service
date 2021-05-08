@@ -1,21 +1,23 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/jmoiron/sqlx"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/database"
-	"github.com/tullo/service/foundation/docker"
 	"github.com/tullo/service/foundation/keystore"
 )
 
@@ -32,81 +34,135 @@ var (
 	UserID  = "45b5fbd3-755f-4379-8f07-a58d4a30fa2f"
 )
 
-// Container provides configuration for a docker container to run.
+// ContainerSpec provides configuration for a docker container to run.
+type ContainerSpec struct {
+	Repository string
+	Tag        string
+	Port       string
+	Args       []string
+}
+
 type Container struct {
-	Image string
-	Port  string
-	Args  []string
+	pool     *dockertest.Pool
+	resource *dockertest.Resource
+}
+
+func NewContainer(pool, repository, tag string, env []string) (*Container, error) {
+	p, err := dockertest.NewPool(pool)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to docker: %w", err)
+	}
+
+	hostConfig := func(hc *docker.HostConfig) {
+		hc.AutoRemove = true // Auto remove stopped container.
+		hc.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	}
+	r, err := p.RunWithOptions(
+		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env},
+		hostConfig,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not start docker container %w", err)
+	}
+
+	return &Container{
+		pool:     p,
+		resource: r,
+	}, nil
+}
+
+func (c *Container) TailLogs(ctx context.Context, w io.Writer, follow bool) error {
+	opts := docker.LogsOptions{
+		Context: ctx,
+
+		Stderr:      true,
+		Stdout:      true,
+		Follow:      follow,
+		Timestamps:  true,
+		RawTerminal: true,
+
+		Container: c.resource.Container.ID,
+
+		OutputStream: w,
+	}
+
+	return c.pool.Client.Logs(opts)
+}
+
+// Remove container and linked volumes from docker.
+func removeContainer(t *testing.T, c *Container) {
+	if err := c.pool.Purge(c.resource); err != nil {
+		t.Error("Could not purge container:", err)
+	}
+}
+
+func connect(c *Container, cfg database.Config) (*database.DB, error) {
+	var db *database.DB
+	// Connect using exponential backoff-retry.
+	if err := c.pool.Retry(func() error {
+		var (
+			err error
+			ctx = context.Background()
+		)
+		db, err = database.Connect(ctx, cfg)
+		if err != nil {
+			return err
+		}
+		return db.Ping(ctx)
+	}); err != nil {
+		return nil, fmt.Errorf("could not connect to database: %w", err)
+	}
+
+	return db, nil
+}
+
+func containerLog(t *testing.T, c *Container) {
+	var buf bytes.Buffer
+	c.TailLogs(context.Background(), &buf, false)
+	t.Log(buf.String())
 }
 
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty. It returns
 // the database to use as well as a function to call at the end of the test.
-func NewUnit(t *testing.T, ctr Container) (*log.Logger, *sqlx.DB, func()) {
+func NewUnit(t *testing.T, ctr ContainerSpec) (*log.Logger, *database.DB, func()) {
+	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	// Start a DB container instance with dgraph running.
-	c := docker.StartContainer(t, ctr.Image, ctr.Port, ctr.Args...)
+	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Args)
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	h := bytes.NewBufferString(c.resource.GetBoundIP(ctr.Port))
+	fmt.Fprintf(h, ":%s", c.resource.GetPort(ctr.Port))
 	cfg := database.Config{
 		User:       "postgres",
 		Password:   "postgres",
-		Host:       c.Host,
+		Host:       h.String(),
 		Name:       "postgres",
 		DisableTLS: true,
 	}
-	db, err := database.Open(cfg)
 
+	db, err := connect(c, cfg)
 	if err != nil {
-		docker.DumpContainerLogs(t, c.ID)
-		docker.StopContainer(t, c.ID)
+		containerLog(t, c)
+		removeContainer(t, c)
 		t.Fatalf("Opening database connection: %v", err)
 	}
 
-	t.Log("Waiting for database to be ready ...")
-
-	// Wait for the database to be ready.
-	tick := time.NewTicker(1 * time.Second)
-	defer tick.Stop()
-	timeout := time.NewTimer(10 * time.Second)
-	defer timeout.Stop()
-outer:
-	for {
-		select {
-		case <-tick.C:
-			if err := db.Ping(); err == nil {
-				break outer
-			}
-		case <-timeout.C:
-			docker.DumpContainerLogs(t, c.ID)
-			docker.StopContainer(t, c.ID)
-			t.Fatalf("Docker: Container not ready, timeout for %v.\n", timeout)
-		}
-	}
-
-	var conf postgres.Config
-	conf.StatementTimeout = 10 * time.Second
-	driver, err := postgres.WithInstance(db.DB, &conf)
-	if err != nil {
-		docker.DumpContainerLogs(t, c.ID)
-		docker.StopContainer(t, c.ID)
-		t.Fatalf("Constructing migration driver: %v", err)
-	}
-
-	if err := schema.Migrate(driver); err != nil {
-		docker.DumpContainerLogs(t, c.ID)
-		docker.StopContainer(t, c.ID)
+	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
+		containerLog(t, c)
+		removeContainer(t, c)
 		t.Fatalf("Migration error: %s", err)
 	}
 
-	// teardown is the function that should be invoked when the caller is done
-	// with the database.
+	// teardown is the function that should be invoked when
+	// the caller is done with the database.
 	teardown := func() {
 		t.Helper()
 		db.Close()
-		docker.StopContainer(t, c.ID)
+		removeContainer(t, c)
 	}
-
-	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	return log, db, teardown
 }
@@ -114,7 +170,7 @@ outer:
 // Test owns state for running and shutting down tests.
 type Test struct {
 	Auth     *auth.Auth
-	DB       *sqlx.DB
+	DB       *database.DB
 	KID      string
 	Log      *log.Logger
 	Teardown func()
@@ -123,7 +179,7 @@ type Test struct {
 }
 
 // NewIntegration creates a database, seeds it, constructs an authenticator.
-func NewIntegration(t *testing.T, ctr Container) *Test {
+func NewIntegration(t *testing.T, ctr ContainerSpec) *Test {
 
 	// Initialize and seed database. Store the cleanup function call later.
 	log, db, teardown := NewUnit(t, ctr)
