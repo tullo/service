@@ -1,9 +1,6 @@
 # github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 ## explicit
 github.com/alexedwards/argon2id
-# github.com/ardanlabs/darwin v1.2.0
-## explicit
-github.com/ardanlabs/darwin
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
 github.com/dgrijalva/jwt-go/v4
@@ -25,6 +22,14 @@ github.com/go-playground/universal-translator
 ## explicit
 github.com/go-playground/validator/v10
 github.com/go-playground/validator/v10/translations/en
+# github.com/golang-migrate/migrate/v4 v4.14.1
+## explicit
+github.com/golang-migrate/migrate/v4
+github.com/golang-migrate/migrate/v4/database
+github.com/golang-migrate/migrate/v4/database/postgres
+github.com/golang-migrate/migrate/v4/internal/url
+github.com/golang-migrate/migrate/v4/source
+github.com/golang-migrate/migrate/v4/source/httpfs
 # github.com/google/go-cmp v0.5.5
 ## explicit
 github.com/google/go-cmp/cmp
@@ -36,6 +41,10 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/google/uuid v1.2.0
 ## explicit
 github.com/google/uuid
+# github.com/hashicorp/errwrap v1.0.0
+github.com/hashicorp/errwrap
+# github.com/hashicorp/go-multierror v1.1.0
+github.com/hashicorp/go-multierror
 # github.com/jmoiron/sqlx v1.3.3
 ## explicit
 github.com/jmoiron/sqlx
@@ -48,6 +57,8 @@ github.com/leodido/go-urn
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/mattn/go-sqlite3 v2.0.1+incompatible
+## explicit
 # github.com/openzipkin/zipkin-go v0.2.5
 github.com/openzipkin/zipkin-go/model
 # github.com/pkg/errors v0.9.1
@@ -103,7 +114,6 @@ golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/language
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-## explicit
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gopkg.in/go-playground/assert.v1 v1.2.1

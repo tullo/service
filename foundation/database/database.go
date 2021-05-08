@@ -24,10 +24,8 @@ type Config struct {
 	MaxOpenConns int
 }
 
-// Open knows how to open a database connection based on the configuration.
-func Open(cfg Config) (*sqlx.DB, error) {
-
-	// Define SSL mode.
+// ConnString translates the config to a db connection string.
+func ConnString(cfg Config) string {
 	sslMode := "require"
 	if cfg.DisableTLS {
 		sslMode = "disable"
@@ -38,7 +36,6 @@ func Open(cfg Config) (*sqlx.DB, error) {
 	q.Set("sslmode", sslMode)
 	q.Set("timezone", "utc")
 
-	// Construct url.
 	u := url.URL{
 		Scheme:   "postgres",
 		User:     url.UserPassword(cfg.User, cfg.Password),
@@ -47,7 +44,12 @@ func Open(cfg Config) (*sqlx.DB, error) {
 		RawQuery: q.Encode(),
 	}
 
-	db, err := sqlx.Open("postgres", u.String())
+	return u.String()
+}
+
+// Open knows how to open a database connection based on the configuration.
+func Open(cfg Config) (*sqlx.DB, error) {
+	db, err := sqlx.Open("postgres", ConnString(cfg))
 	if err != nil {
 		return nil, err
 	}

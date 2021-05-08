@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/schema"
@@ -56,16 +57,42 @@ func NewUnit(t *testing.T, ctr Container) (*log.Logger, *sqlx.DB, func()) {
 	db, err := database.Open(cfg)
 
 	if err != nil {
+		docker.DumpContainerLogs(t, c.ID)
+		docker.StopContainer(t, c.ID)
 		t.Fatalf("Opening database connection: %v", err)
 	}
 
 	t.Log("Waiting for database to be ready ...")
 
 	// Wait for the database to be ready.
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	tick := time.NewTicker(1 * time.Second)
+	defer tick.Stop()
+	timeout := time.NewTimer(10 * time.Second)
+	defer timeout.Stop()
+outer:
+	for {
+		select {
+		case <-tick.C:
+			if err := db.Ping(); err == nil {
+				break outer
+			}
+		case <-timeout.C:
+			docker.DumpContainerLogs(t, c.ID)
+			docker.StopContainer(t, c.ID)
+			t.Fatalf("Docker: Container not ready, timeout for %v.\n", timeout)
+		}
+	}
 
-	if err := schema.Migrate(ctx, db); err != nil {
+	var conf postgres.Config
+	conf.StatementTimeout = 10 * time.Second
+	driver, err := postgres.WithInstance(db.DB, &conf)
+	if err != nil {
+		docker.DumpContainerLogs(t, c.ID)
+		docker.StopContainer(t, c.ID)
+		t.Fatalf("Constructing migration driver: %v", err)
+	}
+
+	if err := schema.Migrate(driver); err != nil {
 		docker.DumpContainerLogs(t, c.ID)
 		docker.StopContainer(t, c.ID)
 		t.Fatalf("Migration error: %s", err)

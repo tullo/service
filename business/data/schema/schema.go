@@ -5,7 +5,7 @@
 package schema
 
 import (
-	_ "embed" // go1.16 content embedding
+	"embed" // go1.16 content embedding
 )
 
 var (
@@ -14,12 +14,13 @@ var (
 	//go:embed sql/delete.sql
 	deleteSQL string
 
-	// schemaSQL contains the queries needed to construct
-	// the database schema. Entries should never be removed
-	// from this file once they have been run in production.
+	// Migrations contains the migrations needed to construct
+	// the database schema. Migration file pairs (up/down)
+	// should never be removed from this directory once they
+	// have been run in production.
 	//
-	//go:embed sql/schema.sql
-	schemaSQL string
+	//go:embed migrations
+	migrations embed.FS
 
 	// seedSQL is a string containing all the queries needed
 	// to get the db seeded to a useful state for development.

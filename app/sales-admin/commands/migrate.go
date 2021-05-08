@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/foundation/database"
@@ -21,13 +21,18 @@ func Migrate(cfg database.Config) error {
 	}
 	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	var conf postgres.Config
+	conf.StatementTimeout = 10 * time.Second
+	driver, err := postgres.WithInstance(db.DB, &conf)
+	if err != nil {
+		return errors.Wrap(err, "migration driver construction")
+	}
 
-	if err := schema.Migrate(ctx, db); err != nil {
+	if err := schema.Migrate(driver); err != nil {
 		return errors.Wrap(err, "migrate database")
 	}
 
 	fmt.Println("migrations complete")
+
 	return nil
 }
