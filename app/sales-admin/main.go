@@ -1,4 +1,4 @@
-// This program performs administrative tasks for the garage sale service.
+// This program performs administrative tasks for the sales-api service.
 package main
 
 import (
