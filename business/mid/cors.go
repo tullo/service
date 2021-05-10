@@ -8,7 +8,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Cors sets the response headers needed for Cross-Origin Resource Sharing
+// Cors sets the response headers needed for Cross-Origin Resource Sharing.
+//
+// Should be applied at the route-level unless every single route needs these
+// headers.
+//
+// mid.Cors(corsOrigin)
+//
 func Cors(origin string) web.Middleware {
 
 	// This is the actual middleware function to be executed.

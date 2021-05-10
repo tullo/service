@@ -24,7 +24,8 @@ type CmdConfig struct {
 	}
 }
 
-// NewCmdConfig
+// NewCmdConfig constructs command configuration pre-populated with build
+// version and description.
 func NewCmdConfig(build, desc string) CmdConfig {
 	var cfg CmdConfig
 	cfg.Version.Version = build
@@ -41,6 +42,7 @@ type AppConfig struct {
 		ReadTimeout     time.Duration `conf:"default:5s"`
 		WriteTimeout    time.Duration `conf:"default:5s"`
 		ShutdownTimeout time.Duration `conf:"default:5s"`
+		//CorsOrigin    string        `conf:"default:https://MY_DOMAIN.COM,env:CORS_ORIGIN"`
 	}
 	DB struct {
 		User         string `conf:"default:postgres"`
@@ -64,7 +66,8 @@ type AppConfig struct {
 	}
 }
 
-// NewAppConfig
+// NewAppConfig constructs application configuration prepopulated with build
+// version and description.
 func NewAppConfig(build, desc string) AppConfig {
 	var cfg AppConfig
 	cfg.Version.Version = build
@@ -88,7 +91,7 @@ func Parse(cfg interface{}, prefix string, args []string) error {
 	return nil
 }
 
-// Usage ...
+// Usage displays the config usage on the command line.
 func Usage(cfg interface{}, prefix string) (string, error) {
 	var err error
 	var help string
@@ -106,7 +109,8 @@ func Usage(cfg interface{}, prefix string) (string, error) {
 	return help, nil
 }
 
-// VersionString ...
+// VersionString displays the application version and description on the command
+// line.
 func VersionString(cfg interface{}, prefix string) (string, error) {
 	var err error
 	var version string
