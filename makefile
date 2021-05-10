@@ -76,11 +76,11 @@ go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
-go-run-tokengen: PRIVATE_KEY_FILE=deployment/keys/development.pem
+go-run-tokengen: SIGNING_KEY_ID=deployment/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
 go-run-tokengen: ALGORITHM=RS256
 go-run-tokengen: go-run-migrate
 	@echo tokengen \(userID, privateKeyPEM, algorithm\)
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${PRIVATE_KEY_FILE} ${ALGORITHM}
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${SIGNING_KEY_ID} ${ALGORITHM}
 
 go-run-migrate: compose-db-up
 	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
