@@ -130,6 +130,12 @@ compose-seed: compose-migrate
 compose-status:
 	@docker-compose -f $(COMPOSE_FILE) ps --all
 
+compose-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
+compose-tokengen: PRIVATE_KEY_FILE=/service/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
+compose-tokengen: ALGORITHM=RS256
+compose-tokengen: compose-migrate
+	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin tokengen ${USERID} "${PRIVATE_KEY_FILE}" ${ALGORITHM}
+
 compose-up:
 	@docker-compose -f $(COMPOSE_FILE) up --detach --remove-orphans
 	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
