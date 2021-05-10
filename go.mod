@@ -16,7 +16,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/leodido/go-urn v1.2.1 // indirect
-	github.com/lib/pq v1.10.1
+	github.com/lib/pq v1.10.1 // indirect
 	github.com/ory/dockertest/v3 v3.6.5
 	github.com/pkg/errors v0.9.1
 	github.com/tullo/conf v1.3.7
@@ -30,5 +30,12 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
+
+// TODO: switch to pgx once it gets released
+// https://github.com/golang-migrate/migrate/tree/master/database/pgx
+// go mod why github.com/lib/pq
+// github.com/tullo/service/business/data/schema
+// github.com/golang-migrate/migrate/v4/database/postgres
+// github.com/lib/pq
 
 // replace github.com/golang-migrate/migrate/v4 => ../migrate/
