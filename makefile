@@ -82,8 +82,9 @@ go-run-tokengen: go-run-migrate
 	@echo tokengen \(userID, privateKeyPEM, algorithm\)
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${SIGNING_KEY_ID} ${ALGORITHM}
 
+go-run-migrate: CMD=/cockroach/cockroach node status --insecure
 go-run-migrate: compose-db-up
-	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 migrate
 
 go-run-seed: go-run-migrate
@@ -136,9 +137,10 @@ compose-tokengen: ALGORITHM=RS256
 compose-tokengen: compose-migrate
 	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin tokengen ${USERID} "${PRIVATE_KEY_FILE}" ${ALGORITHM}
 
+compose-up: CMD=/cockroach/cockroach node status --insecure
 compose-up:
 	@docker-compose -f $(COMPOSE_FILE) up --detach --remove-orphans
-	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 
 compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db

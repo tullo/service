@@ -11,6 +11,8 @@ github.com/Nvveen/Gotty
 github.com/alexedwards/argon2id
 # github.com/cenkalti/backoff/v4 v4.1.0
 github.com/cenkalti/backoff/v4
+# github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051
+github.com/cockroachdb/cockroach-go/crdb
 # github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6
 github.com/containerd/continuity/pathdriver
 # github.com/davecgh/go-spew v1.1.1
@@ -48,7 +50,7 @@ github.com/go-playground/validator/v10/translations/en
 ## explicit
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
-github.com/golang-migrate/migrate/v4/database/postgres
+github.com/golang-migrate/migrate/v4/database/cockroachdb
 github.com/golang-migrate/migrate/v4/internal/url
 github.com/golang-migrate/migrate/v4/source
 github.com/golang-migrate/migrate/v4/source/httpfs

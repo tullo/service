@@ -9,21 +9,22 @@ services:
 
   db:
     container_name: sales_db
-    environment:
-      POSTGRES_PASSWORD: postgres
+    image: cockroachdb/cockroach:v20.2.8
+    command: start-single-node --insecure --listen-addr=0.0.0.0
     healthcheck:
-      test:
-      - CMD-SHELL
-      - pg_isready -U postgres
+      test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
       interval: 10s
       retries: 5
       timeout: 5s
-    image: postgres:13.2-alpine
     networks:
       shared-network:
     ports:
-    - published: 5432
-      target: 5432
+    - published: 8080
+      target: 8080
+    - published: 26257
+      target: 26257
+    volumes:
+    - crdb_data:/cockroach/cockroach-data
 
   # Publishes metrics to the console by default.
   metrics:
@@ -52,7 +53,8 @@ services:
       #GODEBUG=gctrace: '1'
       POSTGRES_PASSWORD: postgres
       SALES_DB_DISABLE_TLS: '1' # Disabled for development.
-      SALES_DB_HOST: db
+      SALES_DB_HOST: 'db:26257'
+      SALES_DB_USER: 'admin'
       SALES_ZIPKIN_PROBABILITY: '1' # 100% recording and sampling
     healthcheck:
       test:
@@ -81,3 +83,6 @@ services:
     - published: 9411
       target: 9411
     user: '1000'
+
+volumes:
+  crdb_data: {}

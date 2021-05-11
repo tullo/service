@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"testing"
 	"time"
@@ -40,6 +41,25 @@ type ContainerSpec struct {
 	Tag        string
 	Port       string
 	Args       []string
+	Cmd        []string
+}
+
+func NewRoachDBSpec() ContainerSpec {
+	return ContainerSpec{
+		Repository: "cockroachdb/cockroach",
+		Tag:        "v20.2.8",
+		Port:       "26257/tcp",
+		Cmd:        []string{"start-single-node", "--insecure", "--listen-addr=0.0.0.0"},
+	}
+}
+
+func NewPostgresDBSpec() ContainerSpec {
+	return ContainerSpec{
+		Repository: "postgres",
+		Tag:        "13.2-alpine",
+		Port:       "5432/tcp",
+		Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
+	}
 }
 
 type Container struct {
@@ -47,7 +67,7 @@ type Container struct {
 	resource *dockertest.Resource
 }
 
-func NewContainer(pool, repository, tag string, env []string) (*Container, error) {
+func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, error) {
 	p, err := dockertest.NewPool(pool)
 	if err != nil {
 		return nil, fmt.Errorf("could not connect to docker: %w", err)
@@ -58,7 +78,7 @@ func NewContainer(pool, repository, tag string, env []string) (*Container, error
 		hc.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	}
 	r, err := p.RunWithOptions(
-		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env},
+		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env, Cmd: cmd},
 		hostConfig,
 	)
 	if err != nil {
@@ -128,17 +148,18 @@ func containerLog(t *testing.T, c *Container) {
 func NewUnit(t *testing.T, ctr ContainerSpec) (*log.Logger, *database.DB, func()) {
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Args)
+	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Cmd, ctr.Args)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	h := bytes.NewBufferString(c.resource.GetBoundIP(ctr.Port))
-	fmt.Fprintf(h, ":%s", c.resource.GetPort(ctr.Port))
+	host := net.JoinHostPort(
+		c.resource.GetBoundIP(ctr.Port),
+		c.resource.GetPort(ctr.Port))
 	cfg := database.Config{
-		User:       "postgres",
+		User:       "admin",
 		Password:   "postgres",
-		Host:       h.String(),
+		Host:       host,
 		Name:       "postgres",
 		DisableTLS: true,
 	}

@@ -35,12 +35,7 @@ type ProductTests struct {
 // should be its own Test* function.
 func TestProducts(t *testing.T) {
 	//  repository, tag string, env []string
-	test := tests.NewIntegration(t, tests.ContainerSpec{
-		Repository: "postgres",
-		Tag:        "13.2-alpine",
-		Port:       "5432/tcp",
-		Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
-	})
+	test := tests.NewIntegration(t, tests.NewRoachDBSpec())
 	t.Cleanup(test.Teardown)
 
 	shutdown := make(chan os.Signal, 1)

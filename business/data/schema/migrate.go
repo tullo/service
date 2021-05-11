@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/database/cockroachdb"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/pkg/errors"
 )
@@ -12,8 +12,8 @@ import (
 // Migrate attempts to bring the schema for the database up to date with the
 // migrations defined in this package.
 func Migrate(connString string) error {
-	var p postgres.Postgres
-	driver, err := p.Open(connString + "&x-statement-timeout=10000") // 10 seconds
+	var c cockroachdb.CockroachDb
+	driver, err := c.Open(connString + "&x-statement-timeout=10000") // 10 seconds
 	if err != nil {
 		return errors.Wrap(err, "migration driver construction")
 	}

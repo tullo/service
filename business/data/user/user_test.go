@@ -15,15 +15,8 @@ import (
 	"github.com/tullo/service/business/data/user"
 )
 
-var container = tests.ContainerSpec{
-	Repository: "postgres",
-	Tag:        "13.2-alpine",
-	Port:       "5432/tcp",
-	Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
-}
-
 func TestUser(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, container)
+	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)
@@ -164,7 +157,7 @@ func TestUser(t *testing.T) {
 }
 
 func TestUserPaging(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, container)
+	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
 	t.Cleanup(teardown)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -215,7 +208,7 @@ func TestUserPaging(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, container)
+	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)

@@ -69,9 +69,9 @@ func TestVersionString(t *testing.T) {
 var cmdConfigHelp string = `Usage: config.test [options] [arguments]
 
 OPTIONS
-  --db-user/$TEST_DB_USER                <string>  (default: postgres)
+  --db-user/$TEST_DB_USER                <string>  (default: admin)
   --db-password/$TEST_DB_PASSWORD        <string>  (default: postgres)
-  --db-host/$TEST_DB_HOST                <string>  (default: 0.0.0.0)
+  --db-host/$TEST_DB_HOST                <string>  (default: 0.0.0.0:26257)
   --db-name/$TEST_DB_NAME                <string>  (default: postgres)
   --db-disable-tls/$TEST_DB_DISABLE_TLS  <bool>    (default: false)
   --help/-h                              
@@ -88,9 +88,9 @@ OPTIONS
   --web-read-timeout/$TEST_WEB_READ_TIMEOUT          <duration>  (default: 5s)
   --web-write-timeout/$TEST_WEB_WRITE_TIMEOUT        <duration>  (default: 5s)
   --web-shutdown-timeout/$TEST_WEB_SHUTDOWN_TIMEOUT  <duration>  (default: 5s)
-  --db-user/$TEST_DB_USER                            <string>    (default: postgres)
+  --db-user/$TEST_DB_USER                            <string>    (default: admin)
   --db-password/$TEST_DB_PASSWORD                    <string>    (default: postgres)
-  --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0)
+  --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0:26257)
   --db-name/$TEST_DB_NAME                            <string>    (default: postgres)
   --db-disable-tls/$TEST_DB_DISABLE_TLS              <bool>      (default: false)
   --db-max-idle-conns/$TEST_DB_MAX_IDLE_CONNS        <int>       (default: 2)
@@ -152,9 +152,9 @@ func TestParse(t *testing.T) {
 --web-read-timeout=5s
 --web-write-timeout=5s
 --web-shutdown-timeout=5s
---db-user=postgres
+--db-user=admin
 --db-password=xxxxxx
---db-host=0.0.0.0
+--db-host=0.0.0.0:26257
 --db-name=postgres
 --db-disable-tls=false
 --db-max-idle-conns=2
