@@ -128,6 +128,12 @@ func TestUser(t *testing.T) {
 				t.Logf("\t%s\tTest %d:\tShould be able to see updates to Roles.", tests.Success, testID)
 			}
 
+			_, err = u.Create(ctx, traceID, nu, now)
+			if errors.Cause(err) != data.ErrDuplicateEmail {
+				t.Fatalf("\t%s\tShould not be able create user: %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould not be able to create user.", tests.Success)
+
 			if err := u.Delete(ctx, traceID, claims, "00000000-0000"); err == nil {
 				t.Fatalf("\t%s\tTest %d:\tShould not be able to delete user : %s.", tests.Failed, testID, err)
 			}
@@ -231,8 +237,6 @@ func TestAuthenticate(t *testing.T) {
 			}
 
 			usr, err := u.Create(ctx, traceID, nu, now)
-			t.Logf("____________ %+v\n", usr)
-
 			if err != nil {
 				t.Fatalf("\t%s\tTest %d:\tShould be able to create user : %s.", tests.Failed, testID, err)
 			}

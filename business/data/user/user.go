@@ -10,12 +10,16 @@ import (
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
+	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/foundation/database"
 	"go.opentelemetry.io/otel/trace"
 )
+
+// https://www.postgresql.org/docs/current/errcodes-appendix.html
+const uniqueViolation = "23505"
 
 // Store manages the set of API's for user access.
 type Store struct {
@@ -64,6 +68,13 @@ func (s Store) Create(ctx context.Context, traceID string, nu NewUser, now time.
 		($1, $2, $3, $4, $5, $6, $7)`
 
 	if _, err := conn.Exec(ctx, q, usr.ID, usr.Name, usr.Email, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == uniqueViolation {
+				// violates unique constraint "users_email_key"
+				return Info{}, data.ErrDuplicateEmail
+			}
+		}
 		return Info{}, errors.Wrap(err, "inserting user")
 	}
 

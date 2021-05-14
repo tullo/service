@@ -17,4 +17,8 @@ var (
 	// ErrAuthenticationFailure occurs when a user attempts
 	// to authenticate but anything goes wrong.
 	ErrAuthenticationFailure = errors.New("authentication failed")
+
+	// ErrDuplicateEmail occurs when user creation failed
+	// b/c of an email address that's already in use.
+	ErrDuplicateEmail = errors.New("duplicate email")
 )
