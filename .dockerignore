@@ -3,6 +3,7 @@
 .github
 .gitgnore
 .idea
+.vscode
 CONTRIBUTORS
 deployment/
 k8s
