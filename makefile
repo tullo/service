@@ -33,7 +33,7 @@ down: compose-down
 run: compose-up compose-seed compose-status
 
 staticcheck:
-	$$(go env GOPATH)/bin/staticcheck -go 1.16 -tests \
+	$$(go env GOPATH)/bin/staticcheck -go 'module' -tests \
 		./app/... ./business/... ./foundation/...
 
 staticcheck-install: GO111MODULE := on
