@@ -41,6 +41,9 @@ staticcheck-install:
 	@go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
 	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
+go-install-latest:
+	sudo ./go-install.sh 1.19
+
 go-deps-list:
 	go list -mod=mod all
 
