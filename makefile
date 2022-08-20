@@ -214,3 +214,6 @@ docker-prune-system:
 	
 docker-prune-build-cache:
 	@docker buildx prune -f
+
+docker-buildx-install:
+	./buildx-install.sh
