@@ -1,6 +1,6 @@
 module github.com/tullo/service
 
-go 1.18
+go 1.19
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387

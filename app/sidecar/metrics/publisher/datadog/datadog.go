@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -155,7 +155,7 @@ func send(d *Datadog, data []byte) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusAccepted {
-		out, err := ioutil.ReadAll(resp.Body)
+		out, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("status[%d] : %s", resp.StatusCode, out)
 		}

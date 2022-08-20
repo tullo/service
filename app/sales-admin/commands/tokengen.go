@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/rsa"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
@@ -48,7 +48,7 @@ func TokenGen(traceID string, log *log.Logger, cfg database.Config, userID strin
 		return errors.Wrap(err, "retrieve user")
 	}
 
-	privatePEM, err := ioutil.ReadFile(privateKeyFile)
+	privatePEM, err := os.ReadFile(privateKeyFile)
 	if err != nil {
 		return errors.Wrap(err, "reading PEM private key file")
 	}
