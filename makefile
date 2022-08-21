@@ -7,6 +7,13 @@ export VERSION = 1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
 export COMPOSE_FILE = deployment/docker/docker-compose.yaml
+export HOST ?= localhost
+# specify own value from the shell
+#   either on the make command line:
+#		1. make HOST=10.141.159.158 ...
+# 	or in their environment before running:
+#		1. export HOST=10.141.159.158
+#		2. make ...
 
 # ==============================================================================
 # Testing the running system: load, traces, metrics)
@@ -69,7 +76,7 @@ go-run-api:
 	@go run ./app/sales-api \
 		--db-disable-tls=1 \
 		--auth-keys-folder=deployment/keys \
-		--zipkin-reporter-uri=http://0.0.0.0:9411/api/v2/spans \
+		--zipkin-reporter-uri=http://${HOST}:9411/api/v2/spans \
 		--zipkin-probability=1
 
 go-run-config:
@@ -100,13 +107,13 @@ go-run-users: go-run-migrate
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 users 1 50
 
 go-pprof-browser:
-	@firefox http://localhost:4000/debug/pprof
+	@firefox http://${HOST}:4000/debug/pprof
 
 go-pprof-heap:
-	@go tool pprof http://localhost:4000/debug/pprof/heap
+	@go tool pprof http://${HOST}:4000/debug/pprof/heap
 
 go-pprof-profile:
-	@go tool pprof http://localhost:4000/debug/pprof/profile?seconds=30
+	@go tool pprof http://${HOST}:4000/debug/pprof/profile?seconds=30
 #   (pprof) top10 -cum
 
 go-test: staticcheck
@@ -153,35 +160,35 @@ compose-db-shell: compose-db-up
 	@docker-compose -f $(COMPOSE_FILE) exec db psql --username=${USER} --dbname=${USER}
 
 curl-readiness-check:
-	@curl -i --silent --show-error http://0.0.0.0:4000/debug/readiness
+	@curl -i --silent --show-error http://${HOST}:4000/debug/readiness
 	@echo
 
 curl-liveness-check:
-	@curl -i --silent --show-error http://0.0.0.0:4000/debug/liveness
+	@curl -i --silent --show-error http://${HOST}:4000/debug/liveness
 	@echo
 
 curl-jwt-token:
 	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	curl --no-progress-meter --user "admin@example.com:gophers" http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq
+	curl --no-progress-meter --user "admin@example.com:gophers" http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq
 
 curl-users:
 	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
-	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/users/1/50 | jq
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
+	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://${HOST}:3000/v1/users/1/50 | jq
 
 curl-products:
 	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://localhost:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
-	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://0.0.0.0:3000/v1/products/1/50 | jq
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
+	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://${HOST}:3000/v1/products/1/50 | jq
 
 .PHONY: generate-load
 generate-load: export SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 generate-load: export TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' \
-	http://localhost:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token')
+	http://${HOST}:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token')
 generate-load:
-	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50 | jq
+	@wget -q -O - --header "Authorization: Bearer $(TOKEN)" http://${HOST}:3000/v1/products/1/50 | jq
 	@echo "Running 'hey' tool: sending 100'000 requests via 50 concurrent workers."
-	@$$(go env GOPATH)/bin/hey -c 50 -n 100000 -H "Authorization: Bearer $(TOKEN)" http://localhost:3000/v1/products/1/50
+	@$$(go env GOPATH)/bin/hey -c 50 -n 100000 -H "Authorization: Bearer $(TOKEN)" http://${HOST}:3000/v1/products/1/50
 
 # https://www.gnu.org/software/make/manual/make.html#Target_002dspecific
 
