@@ -16,7 +16,7 @@ diff:
 	kubectl diff -f deploy-sales-api.yaml
 
 dry-run:
-	kubectl apply --dry-run -f deploy-sales-api.yaml -o yaml
+	kubectl apply --dry-run=client -f deploy-sales-api.yaml -o yaml
 
 deployment:
 	kubectl apply -f deploy-sales-api.yaml -f deploy-search.yaml
