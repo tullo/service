@@ -18,8 +18,8 @@ github.com/cenkalti/backoff/v4
 # github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051
 ## explicit
 github.com/cockroachdb/cockroach-go/crdb
-# github.com/containerd/containerd v1.4.12
-## explicit
+# github.com/containerd/containerd v1.5.13
+## explicit; go 1.17
 # github.com/containerd/continuity v0.3.0
 ## explicit; go 1.17
 github.com/containerd/continuity/pathdriver
@@ -274,8 +274,6 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# google.golang.org/grpc v1.33.2
-## explicit; go 1.11
 # gopkg.in/go-playground/assert.v1 v1.2.1
 ## explicit
 # gopkg.in/go-playground/validator.v9 v9.31.0
