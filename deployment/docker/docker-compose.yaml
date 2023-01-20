@@ -9,7 +9,7 @@ services:
 
   db:
     container_name: sales_db
-    image: cockroachdb/cockroach:v20.2.8
+    image: cockroachdb/cockroach:v20.2.19
     command: start-single-node --insecure --listen-addr=0.0.0.0
     healthcheck:
       test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
