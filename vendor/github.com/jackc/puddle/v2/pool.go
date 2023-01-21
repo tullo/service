@@ -5,6 +5,10 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	"github.com/jackc/puddle/v2/internal/genstack"
+	"go.uber.org/atomic"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -112,11 +116,21 @@ func (res *Resource[T]) IdleDuration() time.Duration {
 
 // Pool is a concurrency-safe resource pool.
 type Pool[T any] struct {
-	cond       *sync.Cond
-	destructWG *sync.WaitGroup
+	// mux is the pool internal lock. Any modification of shared state of
+	// the pool (but Acquires of acquireSem) must be performed only by
+	// holder of the lock. Long running operations are not allowed when mux
+	// is held.
+	mux sync.Mutex
+	// acquireSem provides an allowance to acquire a resource.
+	//
+	// Releases are allowed only when caller holds mux. Acquires have to
+	// happen before mux is locked (doesn't apply to semaphore.TryAcquire in
+	// AcquireAllIdle).
+	acquireSem *semaphore.Weighted
+	destructWG sync.WaitGroup
 
-	allResources  []*Resource[T]
-	idleResources []*Resource[T]
+	allResources  resList[T]
+	idleResources *genstack.GenStack[*Resource[T]]
 
 	constructor Constructor[T]
 	destructor  Destructor[T]
@@ -125,12 +139,12 @@ type Pool[T any] struct {
 	acquireCount         int64
 	acquireDuration      time.Duration
 	emptyAcquireCount    int64
-	canceledAcquireCount int64
+	canceledAcquireCount atomic.Int64
 
 	resetCount int
 
 	baseAcquireCtx       context.Context
-	cancelBaseAcquireCtx func()
+	cancelBaseAcquireCtx context.CancelFunc
 	closed               bool
 }
 
@@ -149,8 +163,8 @@ func NewPool[T any](config *Config[T]) (*Pool[T], error) {
 	baseAcquireCtx, cancelBaseAcquireCtx := context.WithCancel(context.Background())
 
 	return &Pool[T]{
-		cond:                 sync.NewCond(new(sync.Mutex)),
-		destructWG:           &sync.WaitGroup{},
+		acquireSem:           semaphore.NewWeighted(int64(config.MaxSize)),
+		idleResources:        genstack.NewGenStack[*Resource[T]](),
 		maxSize:              config.MaxSize,
 		constructor:          config.Constructor,
 		destructor:           config.Destructor,
@@ -162,25 +176,21 @@ func NewPool[T any](config *Config[T]) (*Pool[T], error) {
 // Close destroys all resources in the pool and rejects future Acquire calls.
 // Blocks until all resources are returned to pool and destroyed.
 func (p *Pool[T]) Close() {
-	p.cond.L.Lock()
+	defer p.destructWG.Wait()
+
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
 	if p.closed {
-		p.cond.L.Unlock()
 		return
 	}
 	p.closed = true
 	p.cancelBaseAcquireCtx()
 
-	for _, res := range p.idleResources {
-		p.allResources = removeResource(p.allResources, res)
+	for res, ok := p.idleResources.Pop(); ok; res, ok = p.idleResources.Pop() {
+		p.allResources.remove(res)
 		go p.destructResourceValue(res.value)
 	}
-	p.idleResources = nil
-	p.cond.L.Unlock()
-
-	// Wake up all go routines waiting for a resource to be returned so they can terminate.
-	p.cond.Broadcast()
-
-	p.destructWG.Wait()
 }
 
 // Stat is a snapshot of Pool statistics.
@@ -249,12 +259,14 @@ func (s *Stat) CanceledAcquireCount() int64 {
 
 // Stat returns the current pool statistics.
 func (p *Pool[T]) Stat() *Stat {
-	p.cond.L.Lock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
 	s := &Stat{
 		maxResources:         p.maxSize,
 		acquireCount:         p.acquireCount,
 		emptyAcquireCount:    p.emptyAcquireCount,
-		canceledAcquireCount: p.canceledAcquireCount,
+		canceledAcquireCount: p.canceledAcquireCount.Load(),
 		acquireDuration:      p.acquireDuration,
 	}
 
@@ -269,20 +281,42 @@ func (p *Pool[T]) Stat() *Stat {
 		}
 	}
 
-	p.cond.L.Unlock()
 	return s
 }
 
-// valueCancelCtx combines two contexts into one. One context is used for values and the other is used for cancellation.
-type valueCancelCtx struct {
-	valueCtx  context.Context
-	cancelCtx context.Context
+// tryAcquireIdleResource checks if there is any idle resource. If there is
+// some, this method removes it from idle list and returns it. If the idle pool
+// is empty, this method returns nil and doesn't modify the idleResources slice.
+//
+// WARNING: Caller of this method must hold the pool mutex!
+func (p *Pool[T]) tryAcquireIdleResource() *Resource[T] {
+	res, ok := p.idleResources.Pop()
+	if !ok {
+		return nil
+	}
+
+	res.status = resourceStatusAcquired
+	return res
 }
 
-func (ctx *valueCancelCtx) Deadline() (time.Time, bool) { return ctx.cancelCtx.Deadline() }
-func (ctx *valueCancelCtx) Done() <-chan struct{}       { return ctx.cancelCtx.Done() }
-func (ctx *valueCancelCtx) Err() error                  { return ctx.cancelCtx.Err() }
-func (ctx *valueCancelCtx) Value(key any) any           { return ctx.valueCtx.Value(key) }
+// createNewResource creates a new resource and inserts it into list of pool
+// resources.
+//
+// WARNING: Caller of this method must hold the pool mutex!
+func (p *Pool[T]) createNewResource() *Resource[T] {
+	res := &Resource[T]{
+		pool:           p,
+		creationTime:   time.Now(),
+		lastUsedNano:   nanotime(),
+		poolResetCount: p.resetCount,
+		status:         resourceStatusConstructing,
+	}
+
+	p.allResources.append(res)
+	p.destructWG.Add(1)
+
+	return res
+}
 
 // Acquire gets a resource from the pool. If no resources are available and the pool is not at maximum capacity it will
 // create a new resource. If the pool is at maximum capacity it will block until a resource is available. ctx can be
@@ -292,131 +326,131 @@ func (ctx *valueCancelCtx) Value(key any) any           { return ctx.valueCtx.Va
 // ctx. Canceling ctx will cause Acquire to return immediately but it will not cancel the resource creation. This avoids
 // the problem of it being impossible to create resources when the time to create a resource is greater than any one
 // caller of Acquire is willing to wait.
-func (p *Pool[T]) Acquire(ctx context.Context) (*Resource[T], error) {
+func (p *Pool[T]) Acquire(ctx context.Context) (_ *Resource[T], err error) {
+	select {
+	case <-ctx.Done():
+		p.canceledAcquireCount.Add(1)
+		return nil, ctx.Err()
+	default:
+	}
+
+	return p.acquire(ctx)
+}
+
+// acquire is a continuation of Acquire function that doesn't check context
+// validity.
+//
+// This function exists solely only for benchmarking purposes.
+func (p *Pool[T]) acquire(ctx context.Context) (*Resource[T], error) {
 	startNano := nanotime()
-	if doneChan := ctx.Done(); doneChan != nil {
-		select {
-		case <-ctx.Done():
-			p.cond.L.Lock()
-			p.canceledAcquireCount += 1
-			p.cond.L.Unlock()
-			return nil, ctx.Err()
-		default:
+
+	var waitedForLock bool
+	if !p.acquireSem.TryAcquire(1) {
+		waitedForLock = true
+		err := p.acquireSem.Acquire(ctx, 1)
+		if err != nil {
+			p.canceledAcquireCount.Add(1)
+			return nil, err
 		}
 	}
 
-	p.cond.L.Lock()
+	p.mux.Lock()
+	if p.closed {
+		p.acquireSem.Release(1)
+		p.mux.Unlock()
+		return nil, ErrClosedPool
+	}
 
-	emptyAcquire := false
-
-	for {
-		if p.closed {
-			p.cond.L.Unlock()
-			return nil, ErrClosedPool
+	// If a resource is available in the pool.
+	if res := p.tryAcquireIdleResource(); res != nil {
+		if waitedForLock {
+			p.emptyAcquireCount += 1
 		}
+		p.acquireCount += 1
+		p.acquireDuration += time.Duration(nanotime() - startNano)
+		p.mux.Unlock()
+		return res, nil
+	}
 
-		// If a resource is available now
-		if len(p.idleResources) > 0 {
-			res := p.idleResources[len(p.idleResources)-1]
-			p.idleResources[len(p.idleResources)-1] = nil // Avoid memory leak
-			p.idleResources = p.idleResources[:len(p.idleResources)-1]
-			res.status = resourceStatusAcquired
-			if emptyAcquire {
-				p.emptyAcquireCount += 1
-			}
-			p.acquireCount += 1
-			p.acquireDuration += time.Duration(nanotime() - startNano)
-			p.cond.L.Unlock()
-			return res, nil
-		}
+	if len(p.allResources) >= int(p.maxSize) {
+		// Unreachable code.
+		panic("bug: semaphore allowed more acquires than pool allows")
+	}
 
-		emptyAcquire = true
+	// The resource is not idle, but there is enough space to create one.
+	res := p.createNewResource()
+	p.mux.Unlock()
 
-		// If there is room to create a resource do so
-		if len(p.allResources) < int(p.maxSize) {
-			res := &Resource[T]{pool: p, creationTime: time.Now(), lastUsedNano: nanotime(), poolResetCount: p.resetCount, status: resourceStatusConstructing}
-			p.allResources = append(p.allResources, res)
-			p.destructWG.Add(1)
-			p.cond.L.Unlock()
+	res, err := p.initResourceValue(ctx, res)
+	if err != nil {
+		return nil, err
+	}
 
-			// Create the resource in a goroutine to immediately return from Acquire if ctx is canceled without also canceling
-			// the constructor. See: https://github.com/jackc/pgx/issues/1287 and https://github.com/jackc/pgx/issues/1259
-			constructErrCh := make(chan error)
-			go func() {
-				constructorCtx := &valueCancelCtx{valueCtx: ctx, cancelCtx: p.baseAcquireCtx}
-				value, err := p.constructResourceValue(constructorCtx)
-				p.cond.L.Lock()
-				if err != nil {
-					p.allResources = removeResource(p.allResources, res)
-					p.destructWG.Done()
+	p.mux.Lock()
+	defer p.mux.Unlock()
 
-					constructErrCh <- err
+	p.emptyAcquireCount += 1
+	p.acquireCount += 1
+	p.acquireDuration += time.Duration(nanotime() - startNano)
 
-					p.cond.L.Unlock()
-					p.cond.Signal()
-					return
-				}
+	return res, nil
+}
 
-				res.value = value
-				res.status = resourceStatusAcquired
+func (p *Pool[T]) initResourceValue(ctx context.Context, res *Resource[T]) (*Resource[T], error) {
+	// Create the resource in a goroutine to immediately return from Acquire
+	// if ctx is canceled without also canceling the constructor.
+	//
+	// See:
+	// - https://github.com/jackc/pgx/issues/1287
+	// - https://github.com/jackc/pgx/issues/1259
+	constructErrChan := make(chan error)
+	go func() {
+		constructorCtx := newValueCancelCtx(ctx, p.baseAcquireCtx)
+		value, err := p.constructor(constructorCtx)
+		if err != nil {
+			p.mux.Lock()
+			p.allResources.remove(res)
+			p.destructWG.Done()
 
-				select {
-				case constructErrCh <- nil:
-					p.emptyAcquireCount += 1
-					p.acquireCount += 1
-					p.acquireDuration += time.Duration(nanotime() - startNano)
-					p.cond.L.Unlock()
-					// No need to call Signal as this new resource was immediately acquired and did not change availability for
-					// any waiting Acquire calls.
-				case <-ctx.Done():
-					p.cond.L.Unlock()
-					p.releaseAcquiredResource(res, res.lastUsedNano)
-				}
-			}()
+			// The resource won't be acquired because its
+			// construction failed. We have to allow someone else to
+			// take that resouce.
+			p.acquireSem.Release(1)
+			p.mux.Unlock()
 
 			select {
+			case constructErrChan <- err:
 			case <-ctx.Done():
-				p.cond.L.Lock()
-				p.canceledAcquireCount += 1
-				p.cond.L.Unlock()
-				return nil, ctx.Err()
-			case err := <-constructErrCh:
-				if err != nil {
-					return nil, err
-				}
-				// we don't call signal here because we didn't change the resource pools
-				// at all so waking anything else up won't help
-				return res, nil
+				// The caller is cancelled, so no-one awaits the
+				// error. This branch avoid goroutine leak.
 			}
+			return
 		}
 
-		if ctx.Done() == nil {
-			p.cond.Wait()
-		} else {
-			// Convert p.cond.Wait into a channel
-			waitChan := make(chan struct{}, 1)
-			go func() {
-				p.cond.Wait()
-				waitChan <- struct{}{}
-			}()
+		// The resource is already in p.allResources where it might be read. So we need to acquire the lock to update its
+		// status.
+		p.mux.Lock()
+		res.value = value
+		res.status = resourceStatusAcquired
+		p.mux.Unlock()
 
-			select {
-			case <-ctx.Done():
-				// Allow goroutine waiting for signal to exit. Re-signal since we couldn't
-				// do anything with it. Another goroutine might be waiting.
-				go func() {
-					<-waitChan
-					p.cond.L.Unlock()
-					p.cond.Signal()
-				}()
-
-				p.cond.L.Lock()
-				p.canceledAcquireCount += 1
-				p.cond.L.Unlock()
-				return nil, ctx.Err()
-			case <-waitChan:
-			}
+		// This select works because the channel is unbuffered.
+		select {
+		case constructErrChan <- nil:
+		case <-ctx.Done():
+			p.releaseAcquiredResource(res, res.lastUsedNano)
 		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		p.canceledAcquireCount.Add(1)
+		return nil, ctx.Err()
+	case err := <-constructErrChan:
+		if err != nil {
+			return nil, err
+		}
+		return res, nil
 	}
 }
 
@@ -424,82 +458,151 @@ func (p *Pool[T]) Acquire(ctx context.Context) (*Resource[T], error) {
 // resources are available but the pool has room to grow, a resource will be created in the background. ctx is only
 // used to cancel the background creation.
 func (p *Pool[T]) TryAcquire(ctx context.Context) (*Resource[T], error) {
-	p.cond.L.Lock()
-	defer p.cond.L.Unlock()
+	if !p.acquireSem.TryAcquire(1) {
+		return nil, ErrNotAvailable
+	}
+
+	p.mux.Lock()
+	defer p.mux.Unlock()
 
 	if p.closed {
+		p.acquireSem.Release(1)
 		return nil, ErrClosedPool
 	}
 
 	// If a resource is available now
-	if len(p.idleResources) > 0 {
-		res := p.idleResources[len(p.idleResources)-1]
-		p.idleResources[len(p.idleResources)-1] = nil // Avoid memory leak
-		p.idleResources = p.idleResources[:len(p.idleResources)-1]
+	if res := p.tryAcquireIdleResource(); res != nil {
 		p.acquireCount += 1
-		res.status = resourceStatusAcquired
 		return res, nil
 	}
 
-	if len(p.allResources) < int(p.maxSize) {
-		res := &Resource[T]{pool: p, creationTime: time.Now(), lastUsedNano: nanotime(), poolResetCount: p.resetCount, status: resourceStatusConstructing}
-		p.allResources = append(p.allResources, res)
-		p.destructWG.Add(1)
-
-		go func() {
-			value, err := p.constructResourceValue(ctx)
-			defer p.cond.Signal()
-			p.cond.L.Lock()
-			defer p.cond.L.Unlock()
-
-			if err != nil {
-				p.allResources = removeResource(p.allResources, res)
-				p.destructWG.Done()
-				return
-			}
-
-			res.value = value
-			res.status = resourceStatusIdle
-			p.idleResources = append(p.idleResources, res)
-		}()
+	if len(p.allResources) >= int(p.maxSize) {
+		// Unreachable code.
+		panic("bug: semaphore allowed more acquires than pool allows")
 	}
+
+	res := p.createNewResource()
+	go func() {
+		value, err := p.constructor(ctx)
+
+		p.mux.Lock()
+		defer p.mux.Unlock()
+		// We have to create the resource and only then release the
+		// semaphore - For the time being there is no resource that
+		// someone could acquire.
+		defer p.acquireSem.Release(1)
+
+		if err != nil {
+			p.allResources.remove(res)
+			p.destructWG.Done()
+			return
+		}
+
+		res.value = value
+		res.status = resourceStatusIdle
+		p.idleResources.Push(res)
+	}()
 
 	return nil, ErrNotAvailable
 }
 
-// AcquireAllIdle atomically acquires all currently idle resources. Its intended
-// use is for health check and keep-alive functionality. It does not update pool
+// acquireSemAll tries to acquire num free tokens from sem. This function is
+// guaranteed to acquire at least the lowest number of tokens that has been
+// available in the semaphore during runtime of this function.
+//
+// For the time being, semaphore doesn't allow to acquire all tokens atomically
+// (see https://github.com/golang/sync/pull/19). We simulate this by trying all
+// powers of 2 that are less or equal to num.
+//
+// For example, let's immagine we have 19 free tokens in the semaphore which in
+// total has 24 tokens (i.e. the maxSize of the pool is 24 resources). Then if
+// num is 24, the log2Uint(24) is 4 and we try to acquire 16, 8, 4, 2 and 1
+// tokens. Out of those, the acquire of 16, 2 and 1 tokens will succeed.
+//
+// Naturally, Acquires and Releases of the semaphore might take place
+// concurrently. For this reason, it's not guaranteed that absolutely all free
+// tokens in the semaphore will be acquired. But it's guaranteed that at least
+// the minimal number of tokens that has been present over the whole process
+// will be acquired. This is sufficient for the use-case we have in this
+// package.
+//
+// TODO: Replace this with acquireSem.TryAcquireAll() if it gets to
+// upstream. https://github.com/golang/sync/pull/19
+func acquireSemAll(sem *semaphore.Weighted, num int) int {
+	if sem.TryAcquire(int64(num)) {
+		return num
+	}
+
+	var acquired int
+	for i := int(log2Int(num)); i >= 0; i-- {
+		val := 1 << i
+		if sem.TryAcquire(int64(val)) {
+			acquired += val
+		}
+	}
+
+	return acquired
+}
+
+// AcquireAllIdle acquires all currently idle resources. Its intended use is for
+// health check and keep-alive functionality. It does not update pool
 // statistics.
 func (p *Pool[T]) AcquireAllIdle() []*Resource[T] {
-	p.cond.L.Lock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
 	if p.closed {
-		p.cond.L.Unlock()
 		return nil
 	}
 
-	for _, res := range p.idleResources {
-		res.status = resourceStatusAcquired
+	numIdle := p.idleResources.Len()
+	if numIdle == 0 {
+		return nil
 	}
-	resources := p.idleResources // Swap out current slice
-	p.idleResources = nil
 
-	p.cond.L.Unlock()
-	return resources
+	// In acquireSemAll we use only TryAcquire and not Acquire. Because
+	// TryAcquire cannot block, the fact that we hold mutex locked and try
+	// to acquire semaphore cannot result in dead-lock.
+	//
+	// Because the mutex is locked, no parallel Release can run. This
+	// implies that the number of tokens can only decrease because some
+	// Acquire/TryAcquire call can consume the semaphore token. Consequently
+	// acquired is always less or equal to numIdle. Moreover if acquired <
+	// numIdle, then there are some parallel Acquire/TryAcquire calls that
+	// will take the remaining idle connections.
+	acquired := acquireSemAll(p.acquireSem, numIdle)
+
+	idle := make([]*Resource[T], acquired)
+	for i := range idle {
+		res, _ := p.idleResources.Pop()
+		res.status = resourceStatusAcquired
+		idle[i] = res
+	}
+
+	// We have to bump the generation to ensure that Acquire/TryAcquire
+	// calls running in parallel (those which caused acquired < numIdle)
+	// will consume old connections and not freshly released connections
+	// instead.
+	p.idleResources.NextGen()
+
+	return idle
 }
 
 // CreateResource constructs a new resource without acquiring it.
 // It goes straight in the IdlePool. It does not check against maxSize.
 // It can be useful to maintain warm resources under little load.
 func (p *Pool[T]) CreateResource(ctx context.Context) error {
-	p.cond.L.Lock()
+	p.mux.Lock()
 	if p.closed {
-		p.cond.L.Unlock()
+		p.mux.Unlock()
 		return ErrClosedPool
 	}
-	p.cond.L.Unlock()
+	p.destructWG.Add(1)
+	p.mux.Unlock()
 
-	value, err := p.constructResourceValue(ctx)
+	value, err := p.constructor(ctx)
 	if err != nil {
+		p.destructWG.Done()
 		return err
 	}
 
@@ -511,18 +614,17 @@ func (p *Pool[T]) CreateResource(ctx context.Context) error {
 		lastUsedNano:   nanotime(),
 		poolResetCount: p.resetCount,
 	}
-	p.destructWG.Add(1)
 
-	p.cond.L.Lock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
+
 	// If closed while constructing resource then destroy it and return an error
 	if p.closed {
 		go p.destructResourceValue(res.value)
-		p.cond.L.Unlock()
 		return ErrClosedPool
 	}
-	p.allResources = append(p.allResources, res)
-	p.idleResources = append(p.idleResources, res)
-	p.cond.L.Unlock()
+	p.allResources.append(res)
+	p.idleResources.Push(res)
 
 	return nil
 }
@@ -533,71 +635,53 @@ func (p *Pool[T]) CreateResource(ctx context.Context) error {
 // It is safe to reset a pool while resources are checked out. Those resources will be destroyed when they are returned
 // to the pool.
 func (p *Pool[T]) Reset() {
-	p.cond.L.Lock()
-	defer p.cond.L.Unlock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
 
 	p.resetCount++
 
-	for i := range p.idleResources {
-		p.allResources = removeResource(p.allResources, p.idleResources[i])
-		go p.destructResourceValue(p.idleResources[i].value)
-		p.idleResources[i] = nil
+	for res, ok := p.idleResources.Pop(); ok; res, ok = p.idleResources.Pop() {
+		p.allResources.remove(res)
+		go p.destructResourceValue(res.value)
 	}
-	p.idleResources = p.idleResources[0:0]
 }
 
 // releaseAcquiredResource returns res to the the pool.
 func (p *Pool[T]) releaseAcquiredResource(res *Resource[T], lastUsedNano int64) {
-	p.cond.L.Lock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
+	defer p.acquireSem.Release(1)
 
 	if p.closed || res.poolResetCount != p.resetCount {
-		p.allResources = removeResource(p.allResources, res)
+		p.allResources.remove(res)
 		go p.destructResourceValue(res.value)
 	} else {
 		res.lastUsedNano = lastUsedNano
 		res.status = resourceStatusIdle
-		p.idleResources = append(p.idleResources, res)
+		p.idleResources.Push(res)
 	}
-
-	p.cond.L.Unlock()
-	p.cond.Signal()
 }
 
 // Remove removes res from the pool and closes it. If res is not part of the
 // pool Remove will panic.
 func (p *Pool[T]) destroyAcquiredResource(res *Resource[T]) {
 	p.destructResourceValue(res.value)
-	p.cond.L.Lock()
-	p.allResources = removeResource(p.allResources, res)
-	p.cond.L.Unlock()
-	p.cond.Signal()
+
+	p.mux.Lock()
+	defer p.mux.Unlock()
+	defer p.acquireSem.Release(1)
+
+	p.allResources.remove(res)
 }
 
 func (p *Pool[T]) hijackAcquiredResource(res *Resource[T]) {
-	p.cond.L.Lock()
+	p.mux.Lock()
+	defer p.mux.Unlock()
+	defer p.acquireSem.Release(1)
 
-	p.allResources = removeResource(p.allResources, res)
+	p.allResources.remove(res)
 	res.status = resourceStatusHijacked
 	p.destructWG.Done() // not responsible for destructing hijacked resources
-
-	p.cond.L.Unlock()
-	p.cond.Signal()
-}
-
-func removeResource[T any](slice []*Resource[T], res *Resource[T]) []*Resource[T] {
-	for i := range slice {
-		if slice[i] == res {
-			slice[i] = slice[len(slice)-1]
-			slice[len(slice)-1] = nil // Avoid memory leak
-			return slice[:len(slice)-1]
-		}
-	}
-
-	panic("BUG: removeResource could not find res in slice")
-}
-
-func (p *Pool[T]) constructResourceValue(ctx context.Context) (T, error) {
-	return p.constructor(ctx)
 }
 
 func (p *Pool[T]) destructResourceValue(value T) {

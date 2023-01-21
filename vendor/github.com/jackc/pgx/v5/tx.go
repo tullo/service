@@ -1,11 +1,11 @@
 package pgx
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -52,16 +52,22 @@ func (txOptions TxOptions) beginSQL() string {
 	if txOptions == emptyTxOptions {
 		return "begin"
 	}
-	buf := &bytes.Buffer{}
+
+	var buf strings.Builder
+	buf.Grow(64) // 64 - maximum length of string with available options
 	buf.WriteString("begin")
+
 	if txOptions.IsoLevel != "" {
-		fmt.Fprintf(buf, " isolation level %s", txOptions.IsoLevel)
+		buf.WriteString(" isolation level ")
+		buf.WriteString(string(txOptions.IsoLevel))
 	}
 	if txOptions.AccessMode != "" {
-		fmt.Fprintf(buf, " %s", txOptions.AccessMode)
+		buf.WriteByte(' ')
+		buf.WriteString(string(txOptions.AccessMode))
 	}
 	if txOptions.DeferrableMode != "" {
-		fmt.Fprintf(buf, " %s", txOptions.DeferrableMode)
+		buf.WriteByte(' ')
+		buf.WriteString(string(txOptions.DeferrableMode))
 	}
 
 	return buf.String()
@@ -201,6 +207,10 @@ func (tx *dbTx) Rollback(ctx context.Context) error {
 
 // Exec delegates to the underlying *Conn
 func (tx *dbTx) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
+	if tx.closed {
+		return pgconn.CommandTag{}, ErrTxClosed
+	}
+
 	return tx.conn.Exec(ctx, sql, arguments...)
 }
 
