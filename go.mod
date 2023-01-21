@@ -22,7 +22,7 @@ require (
 	go.opentelemetry.io/otel v0.16.0
 	go.opentelemetry.io/otel/exporters/trace/zipkin v0.16.0
 	go.opentelemetry.io/otel/sdk v0.16.0
-	gopkg.in/go-playground/validator.v9 v9.31.0
+	gopkg.in/go-playground/validator.v10 v10.11.1
 )
 
 require (
