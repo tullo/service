@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/georgysavva/scany/pgxscan"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"

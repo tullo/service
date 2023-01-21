@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -28,7 +28,7 @@ type Config struct {
 
 // Connect establishes a database connection based on the configuration.
 func Connect(ctx context.Context, cfg Config) (*DB, error) {
-	pool, err := pgxpool.Connect(ctx, ConnString(cfg))
+	pool, err := pgxpool.New(ctx, ConnString(cfg))
 	if err != nil {
 		return nil, fmt.Errorf("database connection error: %w", err)
 	}

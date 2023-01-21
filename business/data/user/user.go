@@ -8,7 +8,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/dgrijalva/jwt-go/v4"
-	"github.com/georgysavva/scany/pgxscan"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
