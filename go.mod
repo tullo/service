@@ -19,9 +19,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/tullo/conf v1.3.7
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.16.0
-	go.opentelemetry.io/otel v0.16.0
-	go.opentelemetry.io/otel/exporters/trace/zipkin v0.16.0
-	go.opentelemetry.io/otel/sdk v0.16.0
+	go.opentelemetry.io/otel v0.20.0
+	go.opentelemetry.io/otel/exporters/trace/zipkin v0.20.0
+	go.opentelemetry.io/otel/sdk v0.20.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
 )
 
