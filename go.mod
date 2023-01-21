@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
-	github.com/georgysavva/scany v1.1.0
+	github.com/georgysavva/scany v1.2.1
 	github.com/go-chi/chi v1.5.4
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.0
