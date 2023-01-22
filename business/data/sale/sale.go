@@ -9,8 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/tullo/service/foundation/database"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
+
+const name = "sale"
 
 // Store manages the set of API's for sales access.
 type Store struct {
@@ -28,7 +30,7 @@ func NewStore(log *log.Logger, db *database.DB) Store {
 
 // AddSale records a sales transaction for a single Product.
 func (s Store) AddSale(ctx context.Context, traceID string, ns NewSale, productID string, now time.Time) (Info, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.add")
+	ctx, span := otel.Tracer(name).Start(ctx, "business.data.sale.add")
 	defer span.End()
 
 	conn, err := s.db.Acquire(ctx)
@@ -58,7 +60,7 @@ func (s Store) AddSale(ctx context.Context, traceID string, ns NewSale, productI
 
 // List gets all Sales from the database.
 func (s Store) List(ctx context.Context, traceID string, productID string) ([]Info, error) {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.data.sale.list")
+	ctx, span := otel.Tracer(name).Start(ctx, "business.data.sale.list")
 	defer span.End()
 
 	conn, err := s.db.Acquire(ctx)

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 type DB struct {
@@ -63,7 +63,7 @@ func ConnString(cfg Config) string {
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
 func StatusCheck(ctx context.Context, db *DB) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "foundation.database.statuscheck")
+	ctx, span := otel.Tracer("database").Start(ctx, "foundation.database.statuscheck")
 	defer span.End()
 
 	// First check we can ping the database.

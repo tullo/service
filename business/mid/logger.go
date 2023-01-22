@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // Logger writes some information about the request to the logs in the
@@ -20,7 +20,7 @@ func Logger(log *log.Logger) web.Middleware {
 		// Create the handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.logger")
+			ctx, span := otel.Tracer(name).Start(ctx, "business.mid.logger")
 			defer span.End()
 
 			// If the context is missing this value, request the service

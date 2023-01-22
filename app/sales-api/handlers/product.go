@@ -13,7 +13,7 @@ import (
 	"github.com/tullo/service/business/data/product"
 	"github.com/tullo/service/business/data/sale"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // productGroup represents the Product API method handler set.
@@ -24,7 +24,7 @@ type productGroup struct {
 
 // Query gets all existing products in the system.
 func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.query")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.query")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -54,7 +54,7 @@ func (pg productGroup) query(ctx context.Context, w http.ResponseWriter, r *http
 // QueryByID returns the specified product from the system.
 func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.queryByID")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.queryByID")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -82,7 +82,7 @@ func (pg productGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *
 // product with populatd fields is sent back in the response.
 func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.create")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -112,7 +112,7 @@ func (pg productGroup) create(ctx context.Context, w http.ResponseWriter, r *htt
 // of the product is part of the request URL.
 func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.update")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -150,7 +150,7 @@ func (pg productGroup) update(ctx context.Context, w http.ResponseWriter, r *htt
 // Delete removes a single product identified by an ID in the request URL.
 func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.delete")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.delete")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -180,7 +180,7 @@ func (pg productGroup) delete(ctx context.Context, w http.ResponseWriter, r *htt
 // object in the request body. The full model is returned to the caller.
 func (pg productGroup) addSale(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.addsale")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.addSale")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -205,7 +205,7 @@ func (pg productGroup) addSale(ctx context.Context, w http.ResponseWriter, r *ht
 // QuerySales gets all sales for a particular product.
 func (pg productGroup) querySales(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.productGroup.querysales")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.product.querySales")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)

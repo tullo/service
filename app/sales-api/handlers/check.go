@@ -9,8 +9,8 @@ import (
 
 	"github.com/tullo/service/foundation/database"
 	"github.com/tullo/service/foundation/web"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Check provides support for orchestration health checks.
@@ -25,7 +25,7 @@ type checkGroup struct {
 // Do not respond by just returning an error because further up in the call
 // stack it will interpret that as a non-trusted error.
 func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.check.readiness")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.check.readiness")
 	defer span.End()
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
@@ -56,7 +56,7 @@ func (cg checkGroup) readiness(ctx context.Context, w http.ResponseWriter, r *ht
 // namespace details via the Downward API. The Kubernetes environment variables
 // need to be set within your Pod/Deployment manifest.
 func (cg checkGroup) liveness(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.check.liveness")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.check.liveness")
 	defer span.End()
 
 	host, err := os.Hostname()

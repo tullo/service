@@ -11,7 +11,7 @@ import (
 	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/user"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // userGroup represents the User API method handler set.
@@ -22,7 +22,7 @@ type userGroup struct {
 
 // Query returns all the existing users in the system.
 func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.query")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.query")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -51,7 +51,7 @@ func (ug userGroup) query(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 // QueryByID returns the specified user from the system.
 func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.queryByID")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.queryByID")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -85,7 +85,7 @@ func (ug userGroup) queryByID(ctx context.Context, w http.ResponseWriter, r *htt
 // Create inserts a new user into the system.
 func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.create")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.create")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -109,7 +109,7 @@ func (ug userGroup) create(ctx context.Context, w http.ResponseWriter, r *http.R
 // Update updates the specified user in the system.
 func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.update")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.update")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -148,7 +148,7 @@ func (ug userGroup) update(ctx context.Context, w http.ResponseWriter, r *http.R
 // Delete removes the specified user from the system.
 func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.delete")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.delete")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)
@@ -183,7 +183,7 @@ func (ug userGroup) delete(ctx context.Context, w http.ResponseWriter, r *http.R
 // Basic Auth with a user's email and password. It responds with a JWT.
 func (ug userGroup) token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "handlers.userGroup.token")
+	ctx, span := otel.Tracer(name).Start(ctx, "handlers.user.token")
 	defer span.End()
 
 	v, ok := ctx.Value(web.KeyValues).(*web.Values)

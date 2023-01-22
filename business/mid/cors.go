@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // Cors sets the response headers needed for Cross-Origin Resource Sharing.
@@ -14,7 +14,6 @@ import (
 // headers.
 //
 // mid.Cors(corsOrigin)
-//
 func Cors(origin string) web.Middleware {
 
 	// This is the actual middleware function to be executed.
@@ -22,7 +21,7 @@ func Cors(origin string) web.Middleware {
 
 		// Create the handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.cors")
+			ctx, span := otel.Tracer(name).Start(ctx, "business.mid.cors")
 			defer span.End()
 
 			// Set the CORS headers on the response.

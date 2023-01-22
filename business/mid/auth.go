@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // Authenticate validates a JWT from the `Authorization` header.
@@ -20,7 +20,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 
 		// Handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.authenticate")
+			ctx, span := otel.Tracer(name).Start(ctx, "business.mid.authenticate")
 			defer span.End()
 
 			// Expecting header format `Bearer <token>`.
@@ -60,7 +60,7 @@ func Authorize(roles ...string) web.Middleware {
 		// Handler that will be attached in the middleware chain.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.authorize")
+			ctx, span := otel.Tracer(name).Start(ctx, "business.mid.authorize")
 			defer span.End()
 
 			// If the context is missing this value return failure.

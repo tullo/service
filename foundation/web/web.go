@@ -10,8 +10,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
+
+const name = "web"
 
 // ctxKey represents the type of value for the context key.
 type ctxKey int
@@ -115,14 +117,13 @@ func (a *App) handle(debug bool, verb string, path string, handler Handler, mw .
 	h := func(w http.ResponseWriter, r *http.Request) {
 
 		// Start or expand a distributed trace.
-		ctx := r.Context()
-		ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, r.URL.Path)
+		ctx, span := otel.Tracer(name).Start(r.Context(), r.URL.Path)
 		defer span.End()
 
 		// Set the context with the required values to
 		// process the request.
 		v := Values{
-			TraceID: span.SpanContext().TraceID.String(),
+			TraceID: span.SpanContext().TraceID().String(),
 			Now:     time.Now(),
 		}
 		ctx = context.WithValue(ctx, KeyValues, &v)

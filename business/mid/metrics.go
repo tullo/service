@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/tullo/service/foundation/web"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel"
 )
 
 // m contains the global program counters for the application.
@@ -31,7 +31,7 @@ func Metrics() web.Middleware {
 		// Wrap this handler around the next one provided.
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-			ctx, span := trace.SpanFromContext(ctx).Tracer().Start(ctx, "business.mid.metrics")
+			ctx, span := otel.Tracer(name).Start(ctx, "business.mid.metrics")
 			defer span.End()
 
 			// Don't count anything on /debug routes towards metrics.

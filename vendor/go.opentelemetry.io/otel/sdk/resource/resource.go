@@ -15,7 +15,13 @@
 package resource // import "go.opentelemetry.io/otel/sdk/resource"
 
 import (
-	"go.opentelemetry.io/otel/label"
+	"context"
+	"errors"
+	"fmt"
+	"sync"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // Resource describes an entity about which identifying information
@@ -26,18 +32,69 @@ import (
 // (`*resource.Resource`).  The `nil` value is equivalent to an empty
 // Resource.
 type Resource struct {
-	labels label.Set
+	attrs     attribute.Set
+	schemaURL string
 }
 
-var emptyResource Resource
+var (
+	emptyResource       Resource
+	defaultResource     *Resource
+	defaultResourceOnce sync.Once
+)
 
-// NewWithAttributes creates a resource from a set of attributes.  If there are
-// duplicate keys present in the list of attributes, then the last
-// value found for the key is preserved.
-func NewWithAttributes(kvs ...label.KeyValue) *Resource {
-	return &Resource{
-		labels: label.NewSet(kvs...),
+var errMergeConflictSchemaURL = errors.New("cannot merge resource due to conflicting Schema URL")
+
+// New returns a Resource combined from the user-provided detectors.
+func New(ctx context.Context, opts ...Option) (*Resource, error) {
+	cfg := config{}
+	for _, opt := range opts {
+		cfg = opt.apply(cfg)
 	}
+
+	resource, err := Detect(ctx, cfg.detectors...)
+
+	var err2 error
+	resource, err2 = Merge(resource, &Resource{schemaURL: cfg.schemaURL})
+	if err == nil {
+		err = err2
+	} else if err2 != nil {
+		err = fmt.Errorf("detecting resources: %s", []string{err.Error(), err2.Error()})
+	}
+
+	return resource, err
+}
+
+// NewWithAttributes creates a resource from attrs and associates the resource with a
+// schema URL. If attrs contains duplicate keys, the last value will be used. If attrs
+// contains any invalid items those items will be dropped. The attrs are assumed to be
+// in a schema identified by schemaURL.
+func NewWithAttributes(schemaURL string, attrs ...attribute.KeyValue) *Resource {
+	resource := NewSchemaless(attrs...)
+	resource.schemaURL = schemaURL
+	return resource
+}
+
+// NewSchemaless creates a resource from attrs. If attrs contains duplicate keys,
+// the last value will be used. If attrs contains any invalid items those items will
+// be dropped. The resource will not be associated with a schema URL. If the schema
+// of the attrs is known use NewWithAttributes instead.
+func NewSchemaless(attrs ...attribute.KeyValue) *Resource {
+	if len(attrs) == 0 {
+		return &emptyResource
+	}
+
+	// Ensure attributes comply with the specification:
+	// https://github.com/open-telemetry/opentelemetry-specification/blob/v1.0.1/specification/common/common.md#attributes
+	s, _ := attribute.NewSetWithFiltered(attrs, func(kv attribute.KeyValue) bool {
+		return kv.Valid()
+	})
+
+	// If attrs only contains invalid entries do not allocate a new resource.
+	if s.Len() == 0 {
+		return &emptyResource
+	}
+
+	return &Resource{attrs: s} //nolint
 }
 
 // String implements the Stringer interface and provides a
@@ -49,25 +106,44 @@ func (r *Resource) String() string {
 	if r == nil {
 		return ""
 	}
-	return r.labels.Encoded(label.DefaultEncoder())
+	return r.attrs.Encoded(attribute.DefaultEncoder())
+}
+
+// MarshalLog is the marshaling function used by the logging system to represent this exporter.
+func (r *Resource) MarshalLog() interface{} {
+	return struct {
+		Attributes attribute.Set
+		SchemaURL  string
+	}{
+		Attributes: r.attrs,
+		SchemaURL:  r.schemaURL,
+	}
 }
 
 // Attributes returns a copy of attributes from the resource in a sorted order.
 // To avoid allocating a new slice, use an iterator.
-func (r *Resource) Attributes() []label.KeyValue {
+func (r *Resource) Attributes() []attribute.KeyValue {
 	if r == nil {
 		r = Empty()
 	}
-	return r.labels.ToSlice()
+	return r.attrs.ToSlice()
 }
 
-// Iter returns an interator of the Resource attributes.
+// SchemaURL returns the schema URL associated with Resource r.
+func (r *Resource) SchemaURL() string {
+	if r == nil {
+		return ""
+	}
+	return r.schemaURL
+}
+
+// Iter returns an iterator of the Resource attributes.
 // This is ideal to use if you do not want a copy of the attributes.
-func (r *Resource) Iter() label.Iterator {
+func (r *Resource) Iter() attribute.Iterator {
 	if r == nil {
 		r = Empty()
 	}
-	return r.labels.Iter()
+	return r.attrs.Iter()
 }
 
 // Equal returns true when a Resource is equivalent to this Resource.
@@ -84,56 +160,109 @@ func (r *Resource) Equal(eq *Resource) bool {
 // Merge creates a new resource by combining resource a and b.
 //
 // If there are common keys between resource a and b, then the value
-// from resource a is preserved.
-func Merge(a, b *Resource) *Resource {
+// from resource b will overwrite the value from resource a, even
+// if resource b's value is empty.
+//
+// The SchemaURL of the resources will be merged according to the spec rules:
+// https://github.com/open-telemetry/opentelemetry-specification/blob/bad49c714a62da5493f2d1d9bafd7ebe8c8ce7eb/specification/resource/sdk.md#merge
+// If the resources have different non-empty schemaURL an empty resource and an error
+// will be returned.
+func Merge(a, b *Resource) (*Resource, error) {
 	if a == nil && b == nil {
-		return Empty()
+		return Empty(), nil
 	}
 	if a == nil {
-		return b
+		return b, nil
 	}
 	if b == nil {
-		return a
+		return a, nil
 	}
 
-	// Note: 'a' labels will overwrite 'b' with last-value-wins in label.Key()
-	// Meaning this is equivalent to: append(b.Attributes(), a.Attributes()...)
-	mi := label.NewMergeIterator(a.LabelSet(), b.LabelSet())
-	combine := make([]label.KeyValue, 0, a.Len()+b.Len())
-	for mi.Next() {
-		combine = append(combine, mi.Label())
+	// Merge the schema URL.
+	var schemaURL string
+	switch true {
+	case a.schemaURL == "":
+		schemaURL = b.schemaURL
+	case b.schemaURL == "":
+		schemaURL = a.schemaURL
+	case a.schemaURL == b.schemaURL:
+		schemaURL = a.schemaURL
+	default:
+		return Empty(), errMergeConflictSchemaURL
 	}
-	return NewWithAttributes(combine...)
+
+	// Note: 'b' attributes will overwrite 'a' with last-value-wins in attribute.Key()
+	// Meaning this is equivalent to: append(a.Attributes(), b.Attributes()...)
+	mi := attribute.NewMergeIterator(b.Set(), a.Set())
+	combine := make([]attribute.KeyValue, 0, a.Len()+b.Len())
+	for mi.Next() {
+		combine = append(combine, mi.Attribute())
+	}
+	merged := NewWithAttributes(schemaURL, combine...)
+	return merged, nil
 }
 
-// Empty returns an instance of Resource with no attributes.  It is
+// Empty returns an instance of Resource with no attributes. It is
 // equivalent to a `nil` Resource.
 func Empty() *Resource {
 	return &emptyResource
 }
 
-// Equivalent returns an object that can be compared for equality
-// between two resources.  This value is suitable for use as a key in
-// a map.
-func (r *Resource) Equivalent() label.Distinct {
-	return r.LabelSet().Equivalent()
+// Default returns an instance of Resource with a default
+// "service.name" and OpenTelemetrySDK attributes.
+func Default() *Resource {
+	defaultResourceOnce.Do(func() {
+		var err error
+		defaultResource, err = Detect(
+			context.Background(),
+			defaultServiceNameDetector{},
+			fromEnv{},
+			telemetrySDK{},
+		)
+		if err != nil {
+			otel.Handle(err)
+		}
+		// If Detect did not return a valid resource, fall back to emptyResource.
+		if defaultResource == nil {
+			defaultResource = &emptyResource
+		}
+	})
+	return defaultResource
 }
 
-// LabelSet returns the equivalent *label.Set.
-func (r *Resource) LabelSet() *label.Set {
+// Environment returns an instance of Resource with attributes
+// extracted from the OTEL_RESOURCE_ATTRIBUTES environment variable.
+func Environment() *Resource {
+	detector := &fromEnv{}
+	resource, err := detector.Detect(context.Background())
+	if err != nil {
+		otel.Handle(err)
+	}
+	return resource
+}
+
+// Equivalent returns an object that can be compared for equality
+// between two resources. This value is suitable for use as a key in
+// a map.
+func (r *Resource) Equivalent() attribute.Distinct {
+	return r.Set().Equivalent()
+}
+
+// Set returns the equivalent *attribute.Set of this resource's attributes.
+func (r *Resource) Set() *attribute.Set {
 	if r == nil {
 		r = Empty()
 	}
-	return &r.labels
+	return &r.attrs
 }
 
-// MarshalJSON encodes labels as a JSON list of { "Key": "...", "Value": ... }
-// pairs in order sorted by key.
+// MarshalJSON encodes the resource attributes as a JSON list of { "Key":
+// "...", "Value": ... } pairs in order sorted by key.
 func (r *Resource) MarshalJSON() ([]byte, error) {
 	if r == nil {
 		r = Empty()
 	}
-	return r.labels.MarshalJSON()
+	return r.attrs.MarshalJSON()
 }
 
 // Len returns the number of unique key-values in this Resource.
@@ -141,15 +270,13 @@ func (r *Resource) Len() int {
 	if r == nil {
 		return 0
 	}
-	return r.labels.Len()
+	return r.attrs.Len()
 }
 
-// Encoded returns an encoded representation of the resource by
-// applying a label encoder.  The result is cached by the underlying
-// label set.
-func (r *Resource) Encoded(enc label.Encoder) string {
+// Encoded returns an encoded representation of the resource.
+func (r *Resource) Encoded(enc attribute.Encoder) string {
 	if r == nil {
 		return ""
 	}
-	return r.labels.Encoded(enc)
+	return r.attrs.Encoded(enc)
 }

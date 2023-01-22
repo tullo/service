@@ -15,51 +15,62 @@
 package trace // import "go.opentelemetry.io/otel/sdk/trace"
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 
-	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // Sampler decides whether a trace should be sampled and exported.
 type Sampler interface {
+	// DO NOT CHANGE: any modification will not be backwards compatible and
+	// must never be done outside of a new major release.
+
+	// ShouldSample returns a SamplingResult based on a decision made from the
+	// passed parameters.
 	ShouldSample(parameters SamplingParameters) SamplingResult
+	// DO NOT CHANGE: any modification will not be backwards compatible and
+	// must never be done outside of a new major release.
+
+	// Description returns information describing the Sampler.
 	Description() string
+	// DO NOT CHANGE: any modification will not be backwards compatible and
+	// must never be done outside of a new major release.
 }
 
 // SamplingParameters contains the values passed to a Sampler.
 type SamplingParameters struct {
-	ParentContext   trace.SpanContext
-	TraceID         trace.TraceID
-	Name            string
-	HasRemoteParent bool
-	Kind            trace.SpanKind
-	Attributes      []label.KeyValue
-	Links           []trace.Link
+	ParentContext context.Context
+	TraceID       trace.TraceID
+	Name          string
+	Kind          trace.SpanKind
+	Attributes    []attribute.KeyValue
+	Links         []trace.Link
 }
 
 // SamplingDecision indicates whether a span is dropped, recorded and/or sampled.
 type SamplingDecision uint8
 
-// Valid sampling decisions
+// Valid sampling decisions.
 const (
-	// Drop will not record the span and all attributes/events will be dropped
+	// Drop will not record the span and all attributes/events will be dropped.
 	Drop SamplingDecision = iota
 
 	// Record indicates the span's `IsRecording() == true`, but `Sampled` flag
-	// *must not* be set
+	// *must not* be set.
 	RecordOnly
 
 	// RecordAndSample has span's `IsRecording() == true` and `Sampled` flag
-	// *must* be set
+	// *must* be set.
 	RecordAndSample
 )
 
 // SamplingResult conveys a SamplingDecision, set of Attributes and a Tracestate.
 type SamplingResult struct {
 	Decision   SamplingDecision
-	Attributes []label.KeyValue
+	Attributes []attribute.KeyValue
 	Tracestate trace.TraceState
 }
 
@@ -69,16 +80,17 @@ type traceIDRatioSampler struct {
 }
 
 func (ts traceIDRatioSampler) ShouldSample(p SamplingParameters) SamplingResult {
+	psc := trace.SpanContextFromContext(p.ParentContext)
 	x := binary.BigEndian.Uint64(p.TraceID[0:8]) >> 1
 	if x < ts.traceIDUpperBound {
 		return SamplingResult{
 			Decision:   RecordAndSample,
-			Tracestate: p.ParentContext.TraceState,
+			Tracestate: psc.TraceState(),
 		}
 	}
 	return SamplingResult{
 		Decision:   Drop,
-		Tracestate: p.ParentContext.TraceState,
+		Tracestate: psc.TraceState(),
 	}
 }
 
@@ -90,7 +102,8 @@ func (ts traceIDRatioSampler) Description() string {
 // always sample. Fractions < 0 are treated as zero. To respect the
 // parent trace's `SampledFlag`, the `TraceIDRatioBased` sampler should be used
 // as a delegate of a `Parent` sampler.
-//nolint:golint // golint complains about stutter of `trace.TraceIDRatioBased`
+//
+//nolint:revive // revive complains about stutter of `trace.TraceIDRatioBased`
 func TraceIDRatioBased(fraction float64) Sampler {
 	if fraction >= 1 {
 		return AlwaysSample()
@@ -111,7 +124,7 @@ type alwaysOnSampler struct{}
 func (as alwaysOnSampler) ShouldSample(p SamplingParameters) SamplingResult {
 	return SamplingResult{
 		Decision:   RecordAndSample,
-		Tracestate: p.ParentContext.TraceState,
+		Tracestate: trace.SpanContextFromContext(p.ParentContext).TraceState(),
 	}
 }
 
@@ -132,7 +145,7 @@ type alwaysOffSampler struct{}
 func (as alwaysOffSampler) ShouldSample(p SamplingParameters) SamplingResult {
 	return SamplingResult{
 		Decision:   Drop,
-		Tracestate: p.ParentContext.TraceState,
+		Tracestate: trace.SpanContextFromContext(p.ParentContext).TraceState(),
 	}
 }
 
@@ -163,11 +176,11 @@ func ParentBased(root Sampler, samplers ...ParentBasedSamplerOption) Sampler {
 
 type parentBased struct {
 	root   Sampler
-	config config
+	config samplerConfig
 }
 
-func configureSamplersForParentBased(samplers []ParentBasedSamplerOption) config {
-	c := config{
+func configureSamplersForParentBased(samplers []ParentBasedSamplerOption) samplerConfig {
+	c := samplerConfig{
 		remoteParentSampled:    AlwaysSample(),
 		remoteParentNotSampled: NeverSample(),
 		localParentSampled:     AlwaysSample(),
@@ -175,21 +188,21 @@ func configureSamplersForParentBased(samplers []ParentBasedSamplerOption) config
 	}
 
 	for _, so := range samplers {
-		so.Apply(&c)
+		c = so.apply(c)
 	}
 
 	return c
 }
 
-// config is a group of options for parentBased sampler.
-type config struct {
+// samplerConfig is a group of options for parentBased sampler.
+type samplerConfig struct {
 	remoteParentSampled, remoteParentNotSampled Sampler
 	localParentSampled, localParentNotSampled   Sampler
 }
 
 // ParentBasedSamplerOption configures the sampler for a particular sampling case.
 type ParentBasedSamplerOption interface {
-	Apply(*config)
+	apply(samplerConfig) samplerConfig
 }
 
 // WithRemoteParentSampled sets the sampler for the case of sampled remote parent.
@@ -201,8 +214,9 @@ type remoteParentSampledOption struct {
 	s Sampler
 }
 
-func (o remoteParentSampledOption) Apply(config *config) {
+func (o remoteParentSampledOption) apply(config samplerConfig) samplerConfig {
 	config.remoteParentSampled = o.s
+	return config
 }
 
 // WithRemoteParentNotSampled sets the sampler for the case of remote parent
@@ -215,8 +229,9 @@ type remoteParentNotSampledOption struct {
 	s Sampler
 }
 
-func (o remoteParentNotSampledOption) Apply(config *config) {
+func (o remoteParentNotSampledOption) apply(config samplerConfig) samplerConfig {
 	config.remoteParentNotSampled = o.s
+	return config
 }
 
 // WithLocalParentSampled sets the sampler for the case of sampled local parent.
@@ -228,8 +243,9 @@ type localParentSampledOption struct {
 	s Sampler
 }
 
-func (o localParentSampledOption) Apply(config *config) {
+func (o localParentSampledOption) apply(config samplerConfig) samplerConfig {
 	config.localParentSampled = o.s
+	return config
 }
 
 // WithLocalParentNotSampled sets the sampler for the case of local parent
@@ -242,20 +258,22 @@ type localParentNotSampledOption struct {
 	s Sampler
 }
 
-func (o localParentNotSampledOption) Apply(config *config) {
+func (o localParentNotSampledOption) apply(config samplerConfig) samplerConfig {
 	config.localParentNotSampled = o.s
+	return config
 }
 
 func (pb parentBased) ShouldSample(p SamplingParameters) SamplingResult {
-	if p.ParentContext.IsValid() {
-		if p.HasRemoteParent {
-			if p.ParentContext.IsSampled() {
+	psc := trace.SpanContextFromContext(p.ParentContext)
+	if psc.IsValid() {
+		if psc.IsRemote() {
+			if psc.IsSampled() {
 				return pb.config.remoteParentSampled.ShouldSample(p)
 			}
 			return pb.config.remoteParentNotSampled.ShouldSample(p)
 		}
 
-		if p.ParentContext.IsSampled() {
+		if psc.IsSampled() {
 			return pb.config.localParentSampled.ShouldSample(p)
 		}
 		return pb.config.localParentNotSampled.ShouldSample(p)

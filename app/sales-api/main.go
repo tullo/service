@@ -118,6 +118,7 @@ func run(log *log.Logger) error {
 	if err != nil {
 		return errors.Wrap(err, "connecting to db")
 	}
+
 	defer func() {
 		log.Printf("main: Database Stopping : %s", cfg.DB.Host)
 		db.Close()
@@ -133,9 +134,17 @@ func run(log *log.Logger) error {
 		ReporterURI: cfg.Zipkin.ReporterURI,
 		Probability: cfg.Zipkin.Probability,
 	}
-	if err = tracer.Init(log, &tr); err != nil {
+	shutdownTP, err := tracer.Init(log, &tr)
+	if err != nil {
 		return errors.Wrap(err, "starting tracer")
 	}
+
+	defer func() {
+		log.Printf("main: TracerProvider Stopping")
+		if err = shutdownTP(context.Background()); err != nil {
+			log.Fatal("failed to shutdown TracerProvider: %w", err)
+		}
+	}()
 
 	// =========================================================================
 	// Start Debug Service
