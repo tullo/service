@@ -69,10 +69,10 @@ func TestVersionString(t *testing.T) {
 var cmdConfigHelp string = `Usage: config.test [options] [arguments]
 
 OPTIONS
-  --db-user/$TEST_DB_USER                <string>  (default: admin)
-  --db-password/$TEST_DB_PASSWORD        <string>  (default: postgres)
+  --db-user/$TEST_DB_USER                <string>  (default: root)
+  --db-password/$TEST_DB_PASSWORD        <string>  
   --db-host/$TEST_DB_HOST                <string>  (default: 0.0.0.0:26257)
-  --db-name/$TEST_DB_NAME                <string>  (default: postgres)
+  --db-name/$TEST_DB_NAME                <string>  (default: defaultdb)
   --db-disable-tls/$TEST_DB_DISABLE_TLS  <bool>    (default: false)
   --help/-h                              
   display this help message
@@ -88,10 +88,10 @@ OPTIONS
   --web-read-timeout/$TEST_WEB_READ_TIMEOUT          <duration>  (default: 5s)
   --web-write-timeout/$TEST_WEB_WRITE_TIMEOUT        <duration>  (default: 5s)
   --web-shutdown-timeout/$TEST_WEB_SHUTDOWN_TIMEOUT  <duration>  (default: 5s)
-  --db-user/$TEST_DB_USER                            <string>    (default: admin)
-  --db-password/$TEST_DB_PASSWORD                    <string>    (default: postgres)
+  --db-user/$TEST_DB_USER                            <string>    (default: root)
+  --db-password/$TEST_DB_PASSWORD                    <string>    
   --db-host/$TEST_DB_HOST                            <string>    (default: 0.0.0.0:26257)
-  --db-name/$TEST_DB_NAME                            <string>    (default: postgres)
+  --db-name/$TEST_DB_NAME                            <string>    (default: defaultdb)
   --db-disable-tls/$TEST_DB_DISABLE_TLS              <bool>      (default: false)
   --db-max-idle-conns/$TEST_DB_MAX_IDLE_CONNS        <int>       (default: 2)
   --db-max-open-conns/$TEST_DB_MAX_OPEN_CONNS        <int>       (default: 0)
@@ -152,10 +152,10 @@ func TestParse(t *testing.T) {
 --web-read-timeout=5s
 --web-write-timeout=5s
 --web-shutdown-timeout=5s
---db-user=admin
+--db-user=root
 --db-password=xxxxxx
 --db-host=0.0.0.0:26257
---db-name=postgres
+--db-name=defaultdb
 --db-disable-tls=false
 --db-max-idle-conns=2
 --db-max-open-conns=0
