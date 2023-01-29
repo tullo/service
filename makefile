@@ -14,6 +14,7 @@ export HOST ?= localhost
 # 	or in their environment before running:
 #		1. export HOST=10.141.159.158
 #		2. make ...
+export SIGNING_KEY_ID = 54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 
 # ==============================================================================
 # Testing the running system: load, traces, metrics)
@@ -49,7 +50,7 @@ staticcheck-install:
 	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-install-latest:
-	sudo ./go-install.sh 1.19.4
+	sudo ./go-install.sh 1.19.5
 
 go-deps-list:
 	go list -mod=mod all
@@ -86,11 +87,11 @@ go-run-keygen:
 	@go run ./app/sales-admin/main.go keygen
 
 go-run-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
-go-run-tokengen: SIGNING_KEY_ID=deployment/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
+go-run-tokengen: PRIVATE_KEY_FILE=deployment/keys/${SIGNING_KEY_ID}.pem
 go-run-tokengen: ALGORITHM=RS256
 go-run-tokengen: go-run-migrate
 	@echo tokengen \(userID, privateKeyPEM, algorithm\)
-	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${SIGNING_KEY_ID} ${ALGORITHM}
+	@go run ./app/sales-admin/main.go --db-disable-tls=1 tokengen ${USERID} ${PRIVATE_KEY_FILE} ${ALGORITHM}
 
 go-run-migrate: CMD=/cockroach/cockroach node status --insecure
 go-run-migrate: compose-db-up
@@ -118,7 +119,7 @@ go-pprof-profile:
 
 go-test: staticcheck
 	@go vet ./app/... ./business/... ./foundation/...
-	@go test ./... -count=1
+	@go test ./... -count=1 -short
 #	@go test -v ./... -count=1
 #	@go test -v -run TestProducts ./app/sales-api/tests/ -count=1
 #	@go test -v -run TestProducts/crudProductUser ./app/sales-api/tests/ -count=1
@@ -142,7 +143,7 @@ compose-status:
 	@docker-compose -f $(COMPOSE_FILE) ps --all
 
 compose-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
-compose-tokengen: PRIVATE_KEY_FILE=/service/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
+compose-tokengen: PRIVATE_KEY_FILE=/service/keys/${SIGNING_KEY_ID}.pem
 compose-tokengen: ALGORITHM=RS256
 compose-tokengen: compose-migrate
 	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin tokengen ${USERID} "${PRIVATE_KEY_FILE}" ${ALGORITHM}
@@ -155,9 +156,10 @@ compose-up:
 compose-db-up:
 	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
-compose-db-shell: USER=postgres
+compose-db-shell: DB=defaultdb
+compose-db-shell: USER=root
 compose-db-shell: compose-db-up
-	@docker-compose -f $(COMPOSE_FILE) exec db psql --username=${USER} --dbname=${USER}
+	@docker-compose -f $(COMPOSE_FILE) exec db cockroach sql --database=${DB} --user=${USER} --insecure 
 
 curl-readiness-check:
 	@curl -i --silent --show-error http://${HOST}:4000/debug/readiness
@@ -168,21 +170,17 @@ curl-liveness-check:
 	@echo
 
 curl-jwt-token:
-	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	curl --no-progress-meter --user "admin@example.com:gophers" http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq
+	curl --no-progress-meter --user "admin@example.com:gophers" http://${HOST}:3000/v1/users/token/${SIGNING_KEY_ID} | jq
 
 curl-users:
-	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token'); \
 	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://${HOST}:3000/v1/users/1/50 | jq
 
 curl-products:
-	SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1; \
-	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/$${SIGNING_KEY_ID} | jq -r '.token'); \
+	TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' http://${HOST}:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token'); \
 	curl --no-progress-meter -H "Authorization: Bearer $${TOKEN}" http://${HOST}:3000/v1/products/1/50 | jq
 
 .PHONY: generate-load
-generate-load: export SIGNING_KEY_ID=54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 generate-load: export TOKEN=$$(curl --no-progress-meter --user 'admin@example.com:gophers' \
 	http://${HOST}:3000/v1/users/token/${SIGNING_KEY_ID} | jq -r '.token')
 generate-load:
