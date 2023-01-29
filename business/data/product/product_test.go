@@ -16,7 +16,10 @@ import (
 )
 
 func TestProduct(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
 	t.Cleanup(teardown)
 
 	p := product.NewStore(log, db)
@@ -139,11 +142,11 @@ func TestProductPaging(t *testing.T) {
 	// https://golang.testcontainers.org/quickstart/
 	// https://github.com/testcontainers/testcontainers-go/blob/main/examples/cockroachdb/cockroachdb_test.go
 
-	log, db, teardown := tests.NewUnit(t, context.TODO())
-	t.Cleanup(teardown)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
+	t.Cleanup(teardown)
 
 	schema.Seed(ctx, db)
 

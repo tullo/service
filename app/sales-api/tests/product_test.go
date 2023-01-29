@@ -2,12 +2,14 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -34,8 +36,11 @@ type ProductTests struct {
 // subtest needs a fresh instance of the application it can make it or it
 // should be its own Test* function.
 func TestProducts(t *testing.T) {
-	//  repository, tag string, env []string
-	test := tests.NewIntegration(t, tests.NewRoachDBSpec())
+	//test := tests.NewIntegration(t, tests.NewRoachDBSpec())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	test := tests.NewIntegration(t, ctx)
 	t.Cleanup(test.Teardown)
 
 	shutdown := make(chan os.Signal, 1)

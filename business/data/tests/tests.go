@@ -1,14 +1,12 @@
 package tests
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"os"
 	"testing"
 	"time"
@@ -121,6 +119,7 @@ func (c *Container) TailLogs(ctx context.Context, w io.Writer, follow bool) erro
 	return c.pool.Client.Logs(opts)
 }
 
+/*
 // Remove container and linked volumes from docker.
 func removeContainer(t *testing.T, c *Container) {
 	if err := c.pool.Purge(c.resource); err != nil {
@@ -147,6 +146,7 @@ func connect(c *Container, cfg database.Config) (*database.DB, error) {
 
 	return db, nil
 }
+*/
 
 type cockroachDBContainer struct {
 	testcontainers.Container
@@ -212,19 +212,19 @@ func NewUnit(t *testing.T, ctx context.Context) (*log.Logger, *database.DB, func
 	// log.SetFlags(0) // For completely disabling logs
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	container, err := NewCockroachContainer(context.Background())
+	c, err := NewCockroachContainer(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	teardown := func() {
 		t.Helper()
-		if err := container.Terminate(ctx); err != nil {
+		if err := c.Terminate(ctx); err != nil {
 			t.Fatalf("failed to terminate container: %s", err)
 		}
 	}
 
-	db, err := database.ConnectWithURI(ctx, container.URI+"/garagesales")
+	db, err := database.ConnectWithURI(ctx, c.URI+"/garagesales")
 	if err != nil {
 		t.Fatal(fmt.Errorf("database connection error: %w", err))
 	}
@@ -234,7 +234,7 @@ func NewUnit(t *testing.T, ctx context.Context) (*log.Logger, *database.DB, func
 		t.Fatal(fmt.Errorf("database creation error: %w", err))
 	}
 
-	err = schema.Migrate(container.URI + "/garagesales?sslmode=disable")
+	err = schema.Migrate(c.URI + "/garagesales?sslmode=disable")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,15 +242,18 @@ func NewUnit(t *testing.T, ctx context.Context) (*log.Logger, *database.DB, func
 	return log, db, teardown
 }
 
+/*
 func containerLog(t *testing.T, c *Container) {
 	var buf bytes.Buffer
 	c.TailLogs(context.Background(), &buf, false)
 	t.Log(buf.String())
 }
+*/
 
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty. It returns
 // the database to use as well as a function to call at the end of the test.
+/*
 func NewUnit_Depricated(t *testing.T, ctr ContainerSpec) (*log.Logger, *database.DB, func()) {
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
@@ -293,6 +296,7 @@ func NewUnit_Depricated(t *testing.T, ctr ContainerSpec) (*log.Logger, *database
 
 	return log, db, teardown
 }
+*/
 
 // Test owns state for running and shutting down tests.
 type Test struct {
@@ -306,13 +310,13 @@ type Test struct {
 }
 
 // NewIntegration creates a database, seeds it, constructs an authenticator.
-func NewIntegration(t *testing.T, ctr ContainerSpec) *Test {
+func NewIntegration(t *testing.T, ctx context.Context) *Test {
+	// func NewIntegration(t *testing.T, ctr ContainerSpec) *Test {
+	//ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	//defer cancel()
 
 	// Initialize and seed database. Store the cleanup function call later.
-	log, db, teardown := NewUnit_Depricated(t, ctr)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	log, db, teardown := NewUnit(t, ctx)
 
 	if err := schema.Seed(ctx, db); err != nil {
 		t.Fatal(err)

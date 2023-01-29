@@ -20,7 +20,10 @@ import (
 func TestUser(t *testing.T) {
 	//log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
 	//t.Cleanup(teardown)
-	log, db, teardown := tests.NewUnit(t, context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)
@@ -167,11 +170,11 @@ func TestUser(t *testing.T) {
 }
 
 func TestUserPaging(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, context.TODO())
-	t.Cleanup(teardown)
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
+	t.Cleanup(teardown)
 
 	schema.Seed(ctx, db)
 
@@ -218,7 +221,10 @@ func TestUserPaging(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)

@@ -13,7 +13,10 @@ import (
 )
 
 func Test_Sales(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, context.TODO())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
+	log, db, teardown := tests.NewUnit(t, ctx)
 	defer teardown()
 
 	p := product.NewStore(log, db)
@@ -22,8 +25,6 @@ func Test_Sales(t *testing.T) {
 	t.Log("Given the need to work with product Sales records.")
 
 	now := time.Date(2019, time.January, 1, 0, 0, 0, 0, time.UTC)
-
-	ctx := context.Background()
 
 	claims := auth.Claims{
 		StandardClaims: jwt.StandardClaims{

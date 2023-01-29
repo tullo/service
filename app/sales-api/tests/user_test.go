@@ -2,12 +2,14 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -30,7 +32,9 @@ type UserTests struct {
 
 // TestUsers is the entry point for testing user management functions.
 func TestUsers(t *testing.T) {
-	test := tests.NewIntegration(t, tests.NewRoachDBSpec())
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+	test := tests.NewIntegration(t, ctx)
 	t.Cleanup(test.Teardown)
 
 	shutdown := make(chan os.Signal, 1)
