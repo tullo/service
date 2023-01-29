@@ -7,8 +7,11 @@ import (
 	"net/url"
 	"time"
 
+	zapadapter "github.com/jackc/pgx-zap"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/tracelog"
 	"go.opentelemetry.io/otel"
+	"go.uber.org/zap"
 )
 
 type DB struct {
@@ -32,6 +35,41 @@ func Connect(ctx context.Context, cfg Config) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("database connection error: %w", err)
 	}
+	db := DB{pool}
+
+	return &db, nil
+}
+
+func traceLogConfig(pool *pgxpool.Pool) (*pgxpool.Config, error) {
+	logger, err := zap.NewDevelopmentConfig().Build()
+	if err != nil {
+		return nil, fmt.Errorf("zap logger error: %w", err)
+	}
+	conf := pool.Config()
+	conf.ConnConfig.Tracer = &tracelog.TraceLog{
+		Logger:   zapadapter.NewLogger(logger),
+		LogLevel: tracelog.LogLevelDebug,
+	}
+
+	return conf, nil
+
+}
+func ConnectWithURI(ctx context.Context, uri string) (*DB, error) {
+	pool, err := pgxpool.New(ctx, uri)
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
+
+	conf, err := traceLogConfig(pool)
+	if err != nil {
+		return nil, fmt.Errorf("database config error: %w", err)
+	}
+
+	pool, err = pgxpool.NewWithConfig(ctx, conf)
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
+
 	db := DB{pool}
 
 	return &db, nil
