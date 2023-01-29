@@ -8,6 +8,8 @@ import (
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+
+	// _ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data"
 	"github.com/tullo/service/business/data/schema"
@@ -16,7 +18,9 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	//log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	//t.Cleanup(teardown)
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)
@@ -163,7 +167,7 @@ func TestUser(t *testing.T) {
 }
 
 func TestUserPaging(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	t.Cleanup(teardown)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -214,7 +218,7 @@ func TestUserPaging(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	t.Cleanup(teardown)
 
 	u := user.NewStore(log, db)
