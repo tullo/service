@@ -10,7 +10,7 @@ services:
   db:
     container_name: sales_db
     image: cockroachdb/cockroach:v22.2.2
-    command: start-single-node --insecure --listen-addr=0.0.0.0
+    command: start-single-node --advertise-addr 'localhost' --insecure
     healthcheck:
       test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
       interval: 10s
