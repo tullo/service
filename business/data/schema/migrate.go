@@ -23,7 +23,7 @@ func Migrate(connString string) error {
 		return errors.Wrap(err, "create migrate source driver")
 	}
 
-	mig, err := migrate.NewWithInstance("httpfs", src, "postgres", driver)
+	mig, err := migrate.NewWithInstance("httpfs", src, "defaultdb", driver)
 	if err != nil {
 		return errors.Wrap(err, "create migrate instance")
 	}

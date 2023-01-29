@@ -16,10 +16,10 @@ type CmdConfig struct {
 	conf.Version
 	Args conf.Args
 	DB   struct {
-		User       string `conf:"default:admin"`
-		Password   string `conf:"default:postgres,mask"`
+		User       string `conf:"default:root"`
+		Password   string `conf:"mask"`
 		Host       string `conf:"default:0.0.0.0:26257"`
-		Name       string `conf:"default:postgres"`
+		Name       string `conf:"default:defaultdb"`
 		DisableTLS bool   `conf:"default:false"`
 	}
 }
@@ -45,10 +45,10 @@ type AppConfig struct {
 		//CorsOrigin    string        `conf:"default:https://MY_DOMAIN.COM,env:CORS_ORIGIN"`
 	}
 	DB struct {
-		User         string `conf:"default:admin"`
-		Password     string `conf:"default:postgres,mask"`
+		User         string `conf:"default:root"`
+		Password     string `conf:"mask"`
 		Host         string `conf:"default:0.0.0.0:26257"`
-		Name         string `conf:"default:postgres"`
+		Name         string `conf:"default:defaultdb"`
 		DisableTLS   bool   `conf:"default:false"`
 		MaxIdleConns int    `conf:"default:2"`
 		MaxOpenConns int    `conf:"default:0"`
