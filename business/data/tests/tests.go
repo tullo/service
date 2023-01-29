@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/testcontainers/testcontainers-go"
@@ -185,6 +184,7 @@ func NewCockroachContainer(ctx context.Context) (*cockroachDBContainer, error) {
 	return &cockroachDBContainer{Container: container, URI: uri}, nil
 }
 
+/*
 func initCockroachDB(ctx context.Context, pool *pgxpool.Pool) error {
 	// Actual SQL for initializing the database should probably live elsewhere
 	const query = `CREATE DATABASE garagesales;
@@ -198,6 +198,7 @@ func initCockroachDB(ctx context.Context, pool *pgxpool.Pool) error {
 
 	return err
 }
+*/
 
 func createDatabase(ctx context.Context, pool *database.DB) error {
 	const query = `CREATE DATABASE garagesales;`
