@@ -13,8 +13,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"github.com/tullo/service/business/auth"
 	"github.com/tullo/service/business/data/schema"
 	"github.com/tullo/service/business/data/user"
@@ -73,10 +76,17 @@ func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, 
 		return nil, fmt.Errorf("could not connect to docker: %w", err)
 	}
 
+	// uses pool to try to connect to Docker
+	err = p.Client.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to Docker: %s", err)
+	}
+
 	hostConfig := func(hc *docker.HostConfig) {
 		hc.AutoRemove = true // Auto remove stopped container.
 		hc.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	}
+	// starts a docker container
 	r, err := p.RunWithOptions(
 		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env, Cmd: cmd},
 		hostConfig,
@@ -84,6 +94,9 @@ func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, 
 	if err != nil {
 		return nil, fmt.Errorf("could not start docker container %w", err)
 	}
+
+	// Let docker to hard kill the container in 60 seconds
+	r.Expire(60)
 
 	return &Container{
 		pool:     p,
@@ -136,6 +149,98 @@ func connect(c *Container, cfg database.Config) (*database.DB, error) {
 	return db, nil
 }
 
+type cockroachDBContainer struct {
+	testcontainers.Container
+	URI string
+}
+
+func NewCockroachContainer(ctx context.Context) (*cockroachDBContainer, error) {
+	req := testcontainers.ContainerRequest{
+		Image:        "cockroachdb/cockroach:latest-v22.2",
+		ExposedPorts: []string{"26257/tcp", "8080/tcp"},
+		WaitingFor:   wait.ForHTTP("/health").WithPort("8080"),
+		Cmd:          []string{"start-single-node", "--insecure"},
+	}
+	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	mappedPort, err := container.MappedPort(ctx, "26257")
+	if err != nil {
+		return nil, err
+	}
+
+	hostIP, err := container.Host(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	uri := fmt.Sprintf("postgres://root@%s:%s", hostIP, mappedPort.Port())
+	// postgresql://root@localhost:26257/defaultdb?sslmode=disable
+
+	return &cockroachDBContainer{Container: container, URI: uri}, nil
+}
+
+func initCockroachDB(ctx context.Context, pool *pgxpool.Pool) error {
+	// Actual SQL for initializing the database should probably live elsewhere
+	const query = `CREATE DATABASE garagesales;
+		CREATE TABLE garagesales.task(
+			id uuid primary key not null,
+			description varchar(255) not null,
+			date_due timestamp with time zone,
+			date_created timestamp with time zone not null,
+			date_updated timestamp with time zone not null);`
+	_, err := pool.Exec(ctx, query)
+
+	return err
+}
+
+func createDatabase(ctx context.Context, pool *database.DB) error {
+	const query = `CREATE DATABASE garagesales;`
+	_, err := pool.Exec(ctx, query)
+
+	return err
+}
+
+func NewUnit(t *testing.T, ctx context.Context) (*log.Logger, *database.DB, func()) {
+	// log := log.New(io.Discard, "", log.LstdFlags)
+	// log.SetFlags(0) // For completely disabling logs
+	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
+	container, err := NewCockroachContainer(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	teardown := func() {
+		t.Helper()
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatalf("failed to terminate container: %s", err)
+		}
+	}
+
+	db, err := database.ConnectWithURI(ctx, container.URI+"/garagesales")
+	if err != nil {
+		t.Fatal(fmt.Errorf("database connection error: %w", err))
+	}
+
+	err = createDatabase(ctx, db)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database creation error: %w", err))
+	}
+
+	err = schema.Migrate(container.URI + "/garagesales?sslmode=disable")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return log, db, teardown
+}
+
 func containerLog(t *testing.T, c *Container) {
 	var buf bytes.Buffer
 	c.TailLogs(context.Background(), &buf, false)
@@ -145,7 +250,7 @@ func containerLog(t *testing.T, c *Container) {
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty. It returns
 // the database to use as well as a function to call at the end of the test.
-func NewUnit(t *testing.T, ctr ContainerSpec) (*log.Logger, *database.DB, func()) {
+func NewUnit_Depricated(t *testing.T, ctr ContainerSpec) (*log.Logger, *database.DB, func()) {
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
 	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Cmd, ctr.Args)
@@ -203,7 +308,7 @@ type Test struct {
 func NewIntegration(t *testing.T, ctr ContainerSpec) *Test {
 
 	// Initialize and seed database. Store the cleanup function call later.
-	log, db, teardown := NewUnit(t, ctr)
+	log, db, teardown := NewUnit_Depricated(t, ctr)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
