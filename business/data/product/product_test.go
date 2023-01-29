@@ -16,7 +16,7 @@ import (
 )
 
 func TestProduct(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	t.Cleanup(teardown)
 
 	p := product.NewStore(log, db)
@@ -131,7 +131,15 @@ func TestProduct(t *testing.T) {
 }
 
 func TestProductPaging(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	if testing.Short() {
+		t.Skip()
+	}
+	// TODO: Paginate Results using "Keyset pagination"
+	// https://www.cockroachlabs.com/docs/stable/pagination.html
+	// https://golang.testcontainers.org/quickstart/
+	// https://github.com/testcontainers/testcontainers-go/blob/main/examples/cockroachdb/cockroachdb_test.go
+
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	t.Cleanup(teardown)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
