@@ -13,7 +13,7 @@ import (
 )
 
 func Test_Sales(t *testing.T) {
-	log, db, teardown := tests.NewUnit(t, tests.NewRoachDBSpec())
+	log, db, teardown := tests.NewUnit(t, context.TODO())
 	defer teardown()
 
 	p := product.NewStore(log, db)
