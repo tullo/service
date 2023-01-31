@@ -86,9 +86,9 @@ github.com/felixge/httpsnoop
 ## explicit; go 1.18
 github.com/georgysavva/scany/v2/dbscan
 github.com/georgysavva/scany/v2/pgxscan
-# github.com/go-chi/chi v1.5.4
-## explicit; go 1.16
-github.com/go-chi/chi
+# github.com/go-chi/chi/v5 v5.0.8
+## explicit; go 1.14
+github.com/go-chi/chi/v5
 # github.com/go-logr/logr v1.2.3
 ## explicit; go 1.16
 github.com/go-logr/logr
