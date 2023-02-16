@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -246,6 +247,7 @@ func (info *FileInfo) path() string {
 }
 
 func (info *FileInfo) addChanges(oldInfo *FileInfo, changes *[]Change) {
+
 	sizeAtEntry := len(*changes)
 
 	if oldInfo == nil {
@@ -318,6 +320,7 @@ func (info *FileInfo) addChanges(oldInfo *FileInfo, changes *[]Change) {
 		copy((*changes)[sizeAtEntry+1:], (*changes)[sizeAtEntry:])
 		(*changes)[sizeAtEntry] = change
 	}
+
 }
 
 // Changes add changes to file information.
@@ -345,7 +348,7 @@ func ChangesDirs(newDir, oldDir string) ([]Change, error) {
 		oldRoot, newRoot *FileInfo
 	)
 	if oldDir == "" {
-		emptyDir, err := os.MkdirTemp("", "empty")
+		emptyDir, err := ioutil.TempDir("", "empty")
 		if err != nil {
 			return nil, err
 		}
@@ -392,10 +395,10 @@ func ChangesSize(newDir string, changes []Change) int64 {
 }
 
 // ExportChanges produces an Archive from the provided changes, relative to dir.
-func ExportChanges(dir string, changes []Change, idMap idtools.IdentityMapping) (io.ReadCloser, error) {
+func ExportChanges(dir string, changes []Change, uidMaps, gidMaps []idtools.IDMap) (io.ReadCloser, error) {
 	reader, writer := io.Pipe()
 	go func() {
-		ta := newTarAppender(idMap, writer, nil)
+		ta := newTarAppender(idtools.NewIDMappingsFromMaps(uidMaps, gidMaps), writer, nil)
 
 		// this buffer is needed for the duration of this piped stream
 		defer pools.BufioWriter32KPool.Put(ta.Buffer)

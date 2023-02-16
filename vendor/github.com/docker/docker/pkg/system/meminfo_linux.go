@@ -6,6 +6,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	units "github.com/docker/go-units"
 )
 
 // ReadMemInfo retrieves memory statistics of the host system and returns a
@@ -40,8 +42,7 @@ func parseMemInfo(reader io.Reader) (*MemInfo, error) {
 		if err != nil {
 			continue
 		}
-		// Convert to KiB
-		bytes := int64(size) * 1024
+		bytes := int64(size) * units.KiB
 
 		switch parts[0] {
 		case "MemTotal:":
@@ -55,6 +56,7 @@ func parseMemInfo(reader io.Reader) (*MemInfo, error) {
 		case "SwapFree:":
 			meminfo.SwapFree = bytes
 		}
+
 	}
 	if memAvailable != -1 {
 		meminfo.MemFree = memAvailable
