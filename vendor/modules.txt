@@ -19,7 +19,7 @@ github.com/cenkalti/backoff/v4
 # github.com/cockroachdb/cockroach-go/v2 v2.2.20
 ## explicit; go 1.13
 github.com/cockroachdb/cockroach-go/v2/crdb
-# github.com/containerd/containerd v1.6.12
+# github.com/containerd/containerd v1.6.17
 ## explicit; go 1.17
 github.com/containerd/containerd/errdefs
 github.com/containerd/containerd/log
@@ -43,7 +43,7 @@ github.com/docker/cli/opts
 ## explicit
 github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
-# github.com/docker/docker v20.10.23+incompatible => github.com/docker/docker v20.10.3-0.20221013203545-33ab36d6b304+incompatible
+# github.com/docker/docker v23.0.0+incompatible => github.com/docker/docker v20.10.3-0.20221013203545-33ab36d6b304+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
@@ -257,10 +257,13 @@ github.com/pkg/errors
 # github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/testcontainers/testcontainers-go v0.17.0
+# github.com/testcontainers/testcontainers-go v0.18.0
 ## explicit; go 1.18
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
+github.com/testcontainers/testcontainers-go/internal
+github.com/testcontainers/testcontainers-go/internal/testcontainersdocker
+github.com/testcontainers/testcontainers-go/internal/testcontainerssession
 github.com/testcontainers/testcontainers-go/wait
 # github.com/tullo/conf v1.3.7
 ## explicit; go 1.15
