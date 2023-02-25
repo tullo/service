@@ -24,18 +24,16 @@ import (
 // wait request or in getting the response. This allows the caller to
 // synchronize ContainerWait with other calls, such as specifying a
 // "next-exit" condition before issuing a ContainerStart request.
-func (cli *Client) ContainerWait(ctx context.Context, containerID string, condition container.WaitCondition) (<-chan container.WaitResponse, <-chan error) {
+func (cli *Client) ContainerWait(ctx context.Context, containerID string, condition container.WaitCondition) (<-chan container.ContainerWaitOKBody, <-chan error) {
 	if versions.LessThan(cli.ClientVersion(), "1.30") {
 		return cli.legacyContainerWait(ctx, containerID)
 	}
 
-	resultC := make(chan container.WaitResponse)
+	resultC := make(chan container.ContainerWaitOKBody)
 	errC := make(chan error, 1)
 
 	query := url.Values{}
-	if condition != "" {
-		query.Set("condition", string(condition))
-	}
+	query.Set("condition", string(condition))
 
 	resp, err := cli.post(ctx, "/containers/"+containerID+"/wait", query, nil, nil)
 	if err != nil {
@@ -46,7 +44,7 @@ func (cli *Client) ContainerWait(ctx context.Context, containerID string, condit
 
 	go func() {
 		defer ensureReaderClosed(resp)
-		var res container.WaitResponse
+		var res container.ContainerWaitOKBody
 		if err := json.NewDecoder(resp.body).Decode(&res); err != nil {
 			errC <- err
 			return
@@ -60,8 +58,8 @@ func (cli *Client) ContainerWait(ctx context.Context, containerID string, condit
 
 // legacyContainerWait returns immediately and doesn't have an option to wait
 // until the container is removed.
-func (cli *Client) legacyContainerWait(ctx context.Context, containerID string) (<-chan container.WaitResponse, <-chan error) {
-	resultC := make(chan container.WaitResponse)
+func (cli *Client) legacyContainerWait(ctx context.Context, containerID string) (<-chan container.ContainerWaitOKBody, <-chan error) {
+	resultC := make(chan container.ContainerWaitOKBody)
 	errC := make(chan error)
 
 	go func() {
@@ -72,7 +70,7 @@ func (cli *Client) legacyContainerWait(ctx context.Context, containerID string) 
 		}
 		defer ensureReaderClosed(resp)
 
-		var res container.WaitResponse
+		var res container.ContainerWaitOKBody
 		if err := json.NewDecoder(resp.body).Decode(&res); err != nil {
 			errC <- err
 			return
