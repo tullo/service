@@ -30,10 +30,6 @@ func mkdirAs(path string, mode os.FileMode, owner Identity, mkAll, chownExisting
 	// chown the full directory path if it exists
 
 	var paths []string
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
 
 	stat, err := system.Stat(path)
 	if err == nil {
@@ -213,6 +209,7 @@ func callGetent(database, key string) (io.Reader, error) {
 		default:
 			return nil, err
 		}
+
 	}
 	return bytes.NewReader(out), nil
 }
@@ -243,37 +240,24 @@ func setPermissions(p string, mode os.FileMode, uid, gid int, stat *system.StatT
 // NewIdentityMapping takes a requested username and
 // using the data from /etc/sub{uid,gid} ranges, creates the
 // proper uid and gid remapping ranges for that user/group pair
-//
-// Deprecated: Use LoadIdentityMapping.
 func NewIdentityMapping(name string) (*IdentityMapping, error) {
-	m, err := LoadIdentityMapping(name)
-	if err != nil {
-		return nil, err
-	}
-	return &m, err
-}
-
-// LoadIdentityMapping takes a requested username and
-// using the data from /etc/sub{uid,gid} ranges, creates the
-// proper uid and gid remapping ranges for that user/group pair
-func LoadIdentityMapping(name string) (IdentityMapping, error) {
 	usr, err := LookupUser(name)
 	if err != nil {
-		return IdentityMapping{}, fmt.Errorf("Could not get user for username %s: %v", name, err)
+		return nil, fmt.Errorf("Could not get user for username %s: %v", name, err)
 	}
 
 	subuidRanges, err := lookupSubUIDRanges(usr)
 	if err != nil {
-		return IdentityMapping{}, err
+		return nil, err
 	}
 	subgidRanges, err := lookupSubGIDRanges(usr)
 	if err != nil {
-		return IdentityMapping{}, err
+		return nil, err
 	}
 
-	return IdentityMapping{
-		UIDMaps: subuidRanges,
-		GIDMaps: subgidRanges,
+	return &IdentityMapping{
+		uids: subuidRanges,
+		gids: subgidRanges,
 	}, nil
 }
 
