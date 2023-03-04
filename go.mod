@@ -4,7 +4,7 @@ go 1.19
 
 // fixes: FAIL - undefined container.StopOptions
 // followed the instructions at https://golang.testcontainers.org/quickstart/#2-install-testcontainers-for-go
-replace github.com/docker/docker => github.com/docker/docker v20.10.3-0.20221013203545-33ab36d6b304+incompatible // 22.06 branch
+replace github.com/docker/docker/v23 => github.com/docker/docker v23.0.1+incompatible // 22.06 branch
 
 require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
