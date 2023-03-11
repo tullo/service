@@ -21,7 +21,7 @@ require (
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/pkg/errors v0.9.1
-	github.com/testcontainers/testcontainers-go v0.18.0
+	github.com/testcontainers/testcontainers-go v0.19.0
 	github.com/tullo/conf v1.3.7
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.40.0
 	go.opentelemetry.io/otel v1.14.0
@@ -36,11 +36,12 @@ require (
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cockroachdb/cockroach-go/v2 v2.2.20 // indirect
-	github.com/containerd/containerd v1.6.18 // indirect
+	github.com/containerd/containerd v1.6.19 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/docker/cli v20.10.23+incompatible // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
-	github.com/docker/docker v23.0.0+incompatible // indirect
+	github.com/docker/docker v23.0.1+incompatible // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
