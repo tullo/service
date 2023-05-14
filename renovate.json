@@ -6,7 +6,7 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["alpine", "docker.elastic.co/apm/apm-server"],
+      "matchPackageNames": ["alpine", "golang"],
       "automerge": true
     }
   ],
