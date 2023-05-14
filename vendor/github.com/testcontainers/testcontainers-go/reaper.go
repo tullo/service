@@ -11,7 +11,6 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
-
 	"github.com/testcontainers/testcontainers-go/internal"
 	"github.com/testcontainers/testcontainers-go/internal/testcontainersdocker"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -25,7 +24,7 @@ const (
 	// Deprecated: it has been replaced by the internal testcontainersdocker.LabelReaper
 	TestcontainerLabelIsReaper = TestcontainerLabel + ".reaper"
 
-	ReaperDefaultImage = "docker.io/testcontainers/ryuk:0.3.4"
+	ReaperDefaultImage = "docker.io/testcontainers/ryuk:0.4.0"
 )
 
 var (
@@ -37,7 +36,7 @@ var (
 // The ContainerProvider interface should usually satisfy this as well, so it is pluggable
 type ReaperProvider interface {
 	RunContainer(ctx context.Context, req ContainerRequest) (Container, error)
-	Config() TestContainersConfig
+	Config() TestcontainersConfig
 }
 
 // NewReaper creates a Reaper with a sessionID to identify containers and a provider to use
@@ -97,7 +96,6 @@ func newReaper(ctx context.Context, sessionID string, provider ReaperProvider, o
 			TestcontainerLabelIsReaper:       "true",
 			testcontainersdocker.LabelReaper: "true",
 		},
-		SkipReaper:    true,
 		Mounts:        Mounts(BindMount(dockerHost, "/var/run/docker.sock")),
 		Privileged:    tcConfig.RyukPrivileged,
 		WaitingFor:    wait.ForListeningPort(listeningPort),
