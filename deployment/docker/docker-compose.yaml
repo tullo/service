@@ -9,7 +9,7 @@ services:
 
   db:
     container_name: sales_db
-    image: cockroachdb/cockroach:v22.2.9
+    image: cockroachdb/cockroach:v23.1.1
     command: start-single-node --advertise-addr 'localhost' --insecure
     healthcheck:
       test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
