@@ -1,17 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
-  ],
-  "packageRules": [
-    {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["alpine", "golang"],
-      "automerge": true
-    }
-  ],
+  "extends": ["config:base"],
   "automerge": true,
-  "automergeType": "branch",
-  "automergeStrategy": "rebase",
-  "commitBodyTable": true  
+  "ignoreTests": true,
+  "postUpdateOptions": ["gomodTidy"],
+  "constraints": {"go": "1.20"}
 }
