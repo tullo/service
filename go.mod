@@ -10,7 +10,7 @@ require (
 	github.com/alexedwards/argon2id v0.0.0-20230305115115-4b3c3280a736
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.0.0
-	github.com/go-chi/chi/v5 v5.0.8
+	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.14.1
