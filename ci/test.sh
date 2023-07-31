@@ -2,7 +2,7 @@
 set -e
 echo "" > coverprofile.cov
 
-go test -short -mod=vendor -failfast -test.timeout=90s \
+go test -mod=vendor -failfast -short -test.timeout=90s \
     -covermode=count -coverprofile=coverprofile.cov -run="^Test" \
     -coverpkg=$(go list -mod=vendor ./... | grep -v "/test" | tr '\n' ',') \
     ./...
