@@ -18,7 +18,7 @@ github.com/alexedwards/argon2id
 # github.com/cenkalti/backoff/v4 v4.2.0
 ## explicit; go 1.18
 github.com/cenkalti/backoff/v4
-# github.com/cockroachdb/cockroach-go/v2 v2.2.20
+# github.com/cockroachdb/cockroach-go/v2 v2.2.0
 ## explicit; go 1.13
 github.com/cockroachdb/cockroach-go/v2/crdb
 # github.com/containerd/containerd v1.6.19
@@ -36,7 +36,7 @@ github.com/cpuguy83/dockercfg
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit; go 1.12
 github.com/dgrijalva/jwt-go/v4
-# github.com/docker/cli v20.10.23+incompatible
+# github.com/docker/cli v20.10.17+incompatible
 ## explicit
 github.com/docker/cli/cli/compose/interpolation
 github.com/docker/cli/cli/compose/loader
@@ -200,7 +200,7 @@ github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/leodido/go-urn v1.2.4
 ## explicit; go 1.16
 github.com/leodido/go-urn
-# github.com/lib/pq v1.10.7
+# github.com/lib/pq v1.10.2
 ## explicit; go 1.13
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -208,7 +208,7 @@ github.com/lib/pq/scram
 # github.com/magiconair/properties v1.8.7
 ## explicit; go 1.19
 github.com/magiconair/properties
-# github.com/mitchellh/mapstructure v1.5.0
+# github.com/mitchellh/mapstructure v1.4.1
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
 # github.com/moby/patternmatcher v0.5.0
@@ -280,7 +280,7 @@ github.com/testcontainers/testcontainers-go/wait
 # github.com/tullo/conf v1.3.7
 ## explicit; go 1.15
 github.com/tullo/conf
-# github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb
+# github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 ## explicit
 github.com/xeipuuv/gojsonpointer
 # github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415

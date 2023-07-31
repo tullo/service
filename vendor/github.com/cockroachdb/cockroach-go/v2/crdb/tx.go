@@ -19,7 +19,8 @@ package crdb
 import (
 	"context"
 	"database/sql"
-	"errors"
+
+	"github.com/lib/pq"
 )
 
 // Execute runs fn and retries it as needed. It is used to add retry handling to
@@ -98,26 +99,6 @@ func Execute(fn func() error) (err error) {
 			return err
 		}
 	}
-}
-
-type txConfigKey struct{}
-
-// WithMaxRetries configures context so that ExecuteTx retries tx specified
-// number of times when encountering retryable errors.
-// Setting retries to 0 will retry indefinitely.
-func WithMaxRetries(ctx context.Context, retries int) context.Context {
-	return context.WithValue(ctx, txConfigKey{}, retries)
-}
-
-const defaultRetries = 50
-
-func numRetriesFromContext(ctx context.Context) int {
-	if v := ctx.Value(txConfigKey{}); v != nil {
-		if retries, ok := v.(int); ok && retries >= 0 {
-			return retries
-		}
-	}
-	return defaultRetries
 }
 
 // ExecuteTx runs fn inside a transaction and retries it as needed. On
@@ -212,15 +193,21 @@ func errIsRetryable(err error) bool {
 }
 
 func errCode(err error) string {
-	var sqlErr errWithSQLState
-	if errors.As(err, &sqlErr) {
-		return sqlErr.SQLState()
-	}
+	switch t := errorCause(err).(type) {
+	case *pq.Error:
+		return string(t.Code)
 
-	return ""
+	case errWithSQLState:
+		return t.SQLState()
+
+	default:
+		return ""
+	}
 }
 
-// errWithSQLState is implemented by pgx (pgconn.PgError) and lib/pq
+// errWithSQLState is implemented by pgx (pgconn.PgError).
+//
+// TODO(andrei): Add this method to pq.Error and stop depending on lib/pq.
 type errWithSQLState interface {
 	SQLState() string
 }

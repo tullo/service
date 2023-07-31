@@ -14,7 +14,9 @@
 
 package crdb
 
-import "context"
+import (
+	"context"
+)
 
 // Tx abstracts the operations needed by ExecuteInTx so that different
 // frameworks (e.g. go's sql package, pgx, gorm) can be used with ExecuteInTx.
@@ -37,57 +39,49 @@ type Tx interface {
 // fn is subject to the same restrictions as the fn passed to ExecuteTx.
 func ExecuteInTx(ctx context.Context, tx Tx, fn func() error) (err error) {
 	defer func() {
-		r := recover()
-
-		if r == nil && err == nil {
+		if err == nil {
 			// Ignore commit errors. The tx has already been committed by RELEASE.
 			_ = tx.Commit(ctx)
-			return
-		}
-
-		// We always need to execute a Rollback() so sql.DB releases the
-		// connection.
-		_ = tx.Rollback(ctx)
-
-		if r != nil {
-			panic(r)
+		} else {
+			// We always need to execute a Rollback() so sql.DB releases the
+			// connection.
+			_ = tx.Rollback(ctx)
 		}
 	}()
-
 	// Specify that we intend to retry this txn in case of CockroachDB retryable
 	// errors.
 	if err = tx.Exec(ctx, "SAVEPOINT cockroach_restart"); err != nil {
 		return err
 	}
 
-	maxRetries := numRetriesFromContext(ctx)
+	// TODO(rafi): make the maxRetryCount configurable. Maybe pass it in the context?)
+	const maxRetries = 50
 	retryCount := 0
 	for {
-		releaseFailed := false
+		released := false
 		err = fn()
 		if err == nil {
 			// RELEASE acts like COMMIT in CockroachDB. We use it since it gives us an
 			// opportunity to react to retryable errors, whereas tx.Commit() doesn't.
+			released = true
 			if err = tx.Exec(ctx, "RELEASE SAVEPOINT cockroach_restart"); err == nil {
 				return nil
 			}
-			releaseFailed = true
 		}
-
 		// We got an error; let's see if it's a retryable one and, if so, restart.
 		if !errIsRetryable(err) {
-			if releaseFailed {
+			if released {
 				err = newAmbiguousCommitError(err)
 			}
 			return err
 		}
 
-		if rollbackErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT cockroach_restart"); rollbackErr != nil {
-			return newTxnRestartError(rollbackErr, err)
+		if retryErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT cockroach_restart"); retryErr != nil {
+			return newTxnRestartError(retryErr, err)
 		}
 
 		retryCount++
-		if maxRetries > 0 && retryCount > maxRetries {
+		if retryCount > maxRetries {
 			return newMaxRetriesExceededError(err, maxRetries)
 		}
 	}

@@ -16,6 +16,23 @@ package crdb
 
 import "fmt"
 
+// errorCause returns the original cause of the error, if possible. An
+// error has a proximate cause if it's type is compatible with Go's
+// errors.Unwrap() or pkg/errors' Cause(); the original cause is the
+// end of the causal chain.
+func errorCause(err error) error {
+	for err != nil {
+		if c, ok := err.(interface{ Cause() error }); ok {
+			err = c.Cause()
+		} else if c, ok := err.(interface{ Unwrap() error }); ok {
+			err = c.Unwrap()
+		} else {
+			break
+		}
+	}
+	return err
+}
+
 type txError struct {
 	cause error
 }
@@ -53,9 +70,6 @@ func newMaxRetriesExceededError(err error, maxRetries int) *MaxRetriesExceededEr
 		msg:     fmt.Sprintf(msgPattern, maxRetries, err),
 	}
 }
-
-// Error implements the error interface.
-func (e *MaxRetriesExceededError) Error() string { return e.msg }
 
 // TxnRestartError represents an error when restarting a transaction. `cause` is
 // the error from restarting the txn and `retryCause` is the original error which
