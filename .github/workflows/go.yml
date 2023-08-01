@@ -9,7 +9,21 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    container: golang:1.20.6-alpine
+    
+    services: # service containers to run with test job
+      cockroachdb: # label used to access the service container
+        image: cockroachdb/cockroach:v23.1.7
+        env:
+          COCKROACH_ARGS: start-single-node --insecure
+        # set health checks to wait until cockroach has started
+        options: >-
+          --health-cmd cockroach node status --insecure
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
 
     - name: Set up Go 1.20.x
@@ -35,8 +49,9 @@ jobs:
 
     - name: Run tests
       run: |
-        docker image pull cockroachdb/cockroach:v23.1.6
         bash ./ci/test.sh
+      env:
+        DATABASE_URL: postgresql://root@cockroachdb:26257/garagesales?sslmode=disable
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
