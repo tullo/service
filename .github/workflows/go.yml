@@ -37,6 +37,7 @@ jobs:
         go build -v -mod=vendor ./...
 
     - name: Run tests
+      shell: bash
       run: |
         ./ci/test.sh
       env:
