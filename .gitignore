@@ -16,3 +16,4 @@ public.pem
 
 # cloud sql proxy binary
 cloud_sql_proxy
+coverprofile.cov
