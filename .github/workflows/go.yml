@@ -4,16 +4,16 @@ on:
   push:
     branches: 
       - master
-
-defaults:
-  run:
-    shell: bash
     
 jobs:
 
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
     container: golang:1.20.7-alpine
     
     services: # service containers to run with test job
