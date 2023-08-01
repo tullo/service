@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -179,7 +181,6 @@ func NewCockroachContainer(ctx context.Context) (*cockroachDBContainer, error) {
 	}
 
 	uri := fmt.Sprintf("postgres://root@%s:%s", hostIP, mappedPort.Port())
-	// postgresql://root@localhost:26257/defaultdb?sslmode=disable
 
 	return &cockroachDBContainer{Container: container, URI: uri}, nil
 }
@@ -200,9 +201,19 @@ func initCockroachDB(ctx context.Context, pool *pgxpool.Pool) error {
 }
 */
 
-func createDatabase(ctx context.Context, pool *database.DB) error {
-	const query = `CREATE DATABASE garagesales;`
-	_, err := pool.Exec(ctx, query)
+// dropDatabase drops the specific database.
+func dropDatabase(ctx context.Context, pool *database.DB, name string) error {
+	_, err := pool.Exec(ctx, `DROP DATABASE `+database.SanitizeDatabaseName(name)+`;`)
+	return err
+}
+
+func createDatabase(ctx context.Context, pool *database.DB, name string) error {
+	_, err := pool.Exec(ctx, `CREATE DATABASE `+database.SanitizeDatabaseName(name)+`;`)
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return nil
+		}
+	}
 
 	return err
 }
@@ -212,31 +223,48 @@ func NewUnit(t *testing.T, ctx context.Context) (*log.Logger, *database.DB, func
 	// log.SetFlags(0) // For completely disabling logs
 	log := log.New(os.Stdout, "TEST : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
-	c, err := NewCockroachContainer(context.Background())
+	dbaddr, ok := os.LookupEnv("DATABASE_URL")
+	if !ok {
+		t.Fatal("database url not defined")
+	}
+	maindb, err := database.ConnectWithURI(ctx, dbaddr)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database connection error: %w", err))
+	}
+
+	// Create a unique database name so that our parallel tests don't clash.
+	var id [8]byte
+	rand.Read(id[:])
+	uniqueName := t.Name() + "/" + hex.EncodeToString(id[:])
+
+	err = createDatabase(ctx, maindb, uniqueName)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database creation error: %w", err))
+	}
+
+	// Modify the connection string to use a different database.
+	connstr, err := database.ConnstrWithDatabase(dbaddr, uniqueName)
+	if err != nil {
+		t.Fatal(fmt.Errorf("failed to modify connnection string: %w", err))
+	}
+
+	db, err := database.ConnectWithURI(ctx, connstr)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database connection error: %w", err))
+	}
+
+	err = schema.Migrate(connstr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	teardown := func() {
 		t.Helper()
-		if err := c.Terminate(ctx); err != nil {
-			t.Fatalf("failed to terminate container: %s", err)
+		err = dropDatabase(context.TODO(), maindb, uniqueName)
+		if err != nil {
+			t.Fatal(fmt.Errorf("database deletetion error: %w", err))
 		}
-	}
-
-	db, err := database.ConnectWithURI(ctx, c.URI+"/garagesales")
-	if err != nil {
-		t.Fatal(fmt.Errorf("database connection error: %w", err))
-	}
-
-	err = createDatabase(ctx, db)
-	if err != nil {
-		t.Fatal(fmt.Errorf("database creation error: %w", err))
-	}
-
-	err = schema.Migrate(c.URI + "/garagesales?sslmode=disable")
-	if err != nil {
-		t.Fatal(err)
+		db.Close()
 	}
 
 	return log, db, teardown

@@ -14,6 +14,7 @@ export HOST ?= localhost
 # 	or in their environment before running:
 #		1. export HOST=10.141.159.158
 #		2. make ...
+export DATABASE_URL ?= postgresql://root@0.0.0.0:26257/garagesales?sslmode=disable
 export SIGNING_KEY_ID = 54bb2165-71e1-41a6-af3e-7da4a0e1e2c1
 
 # ==============================================================================
@@ -95,7 +96,7 @@ go-run-tokengen: go-run-migrate
 
 go-run-migrate: CMD=/cockroach/cockroach node status --insecure
 go-run-migrate: compose-db-up
-	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
+	@docker compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 	@go run ./app/sales-admin/main.go --db-disable-tls=1 migrate
 
 go-run-seed: go-run-migrate
@@ -125,41 +126,41 @@ go-test: staticcheck
 #	@go test -v -run TestProducts/crudProductUser ./app/sales-api/tests/ -count=1
 
 compose-config:
-	@docker-compose -f $(COMPOSE_FILE) config
+	@docker compose -f $(COMPOSE_FILE) config
 
 compose-down:
-	@docker-compose -f $(COMPOSE_FILE) down --remove-orphans --volumes
+	@docker compose -f $(COMPOSE_FILE) down --remove-orphans --volumes
 
 compose-logs:
-	@docker-compose -f $(COMPOSE_FILE) logs -f --tail="30"
+	@docker compose -f $(COMPOSE_FILE) logs -f --tail="30"
 
 compose-migrate:
-	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin migrate
+	@docker compose -f $(COMPOSE_FILE) exec sales-api /service/admin migrate
 
 compose-seed: compose-migrate
-	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin seed
+	@docker compose -f $(COMPOSE_FILE) exec sales-api /service/admin seed
 
 compose-status:
-	@docker-compose -f $(COMPOSE_FILE) ps --all
+	@docker compose -f $(COMPOSE_FILE) ps --all
 
 compose-tokengen: USERID=5cf37266-3473-4006-984f-9325122678b7
 compose-tokengen: PRIVATE_KEY_FILE=/service/keys/${SIGNING_KEY_ID}.pem
 compose-tokengen: ALGORITHM=RS256
 compose-tokengen: compose-migrate
-	@docker-compose -f $(COMPOSE_FILE) exec sales-api /service/admin tokengen ${USERID} "${PRIVATE_KEY_FILE}" ${ALGORITHM}
+	@docker compose -f $(COMPOSE_FILE) exec sales-api /service/admin tokengen ${USERID} "${PRIVATE_KEY_FILE}" ${ALGORITHM}
 
 compose-up: CMD=/cockroach/cockroach node status --insecure
 compose-up:
-	@docker-compose -f $(COMPOSE_FILE) up --detach --remove-orphans
-	@docker-compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
+	@docker compose -f $(COMPOSE_FILE) up --detach --remove-orphans
+	@docker compose -f $(COMPOSE_FILE) exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 
 compose-db-up:
-	@docker-compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
+	@docker compose -f $(COMPOSE_FILE)  up --detach --remove-orphans db
 
 compose-db-shell: DB=defaultdb
 compose-db-shell: USER=root
 compose-db-shell: compose-db-up
-	@docker-compose -f $(COMPOSE_FILE) exec db cockroach sql --database=${DB} --user=${USER} --insecure 
+	@docker compose -f $(COMPOSE_FILE) exec db cockroach sql --database=${DB} --user=${USER} --insecure 
 
 curl-readiness-check:
 	@curl -i --silent --show-error http://${HOST}:4000/debug/readiness

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	zapadapter "github.com/jackc/pgx-zap"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
 	"go.opentelemetry.io/otel"
@@ -127,4 +128,19 @@ func StatusCheck(ctx context.Context, db *DB) error {
 	const q = `SELECT true`
 	var tmp bool
 	return db.QueryRow(ctx, q).Scan(&tmp)
+}
+
+// SanitizeDatabaseName ensures that the database name is a valid postgres identifier.
+func SanitizeDatabaseName(schema string) string {
+	return pgx.Identifier{schema}.Sanitize()
+}
+
+// ConnstrWithDatabase changes the main database in the connection string.
+func ConnstrWithDatabase(connstr, database string) (string, error) {
+	u, err := url.Parse(connstr)
+	if err != nil {
+		return "", fmt.Errorf("invalid connstr: %q", connstr)
+	}
+	u.Path = database
+	return u.String(), nil
 }
