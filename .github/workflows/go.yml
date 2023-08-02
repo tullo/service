@@ -41,7 +41,7 @@ jobs:
       run: |
         ./ci/test.sh
       env:
-        DATABASE_URL: postgresql://root@127.0.0.1:26257/garagesales?sslmode=disable
+        DATABASE_URL: postgresql://root@0.0.0.0:26257/garagesales?sslmode=disable
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
