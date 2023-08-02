@@ -14,8 +14,19 @@ jobs:
     container: golang:1.20.7-alpine
     
     services: # service containers to run with test job
-      cockroachdb: # label used to access the service container
-        image: cockroachdb/cockroach:v23.1.7
+      postgres: # label used to access the service container
+        image: postgres:latest
+        env: # service environment variables
+          POSTGRES_DB: postgres_db
+          POSTGRES_PASSWORD: postgres_password
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: postgres_user
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5  
 
     steps:
 
@@ -41,7 +52,7 @@ jobs:
       run: |
         ./ci/test.sh
       env:
-        DATABASE_URL: postgresql://root@0.0.0.0:26257/garagesales?sslmode=disable
+        DATABASE_URL: postgresql://postgres_user:postgres_password@postgres:5432/postgres_db?sslmode=disable
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
