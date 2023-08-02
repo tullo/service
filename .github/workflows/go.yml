@@ -34,7 +34,7 @@ jobs:
     - name: Start a single CockroachDB instance (v23.1.7) with docker
       run: |
         docker pull cockroachdb/cockroach:v23.1.7
-        docker run -p 26257:26257 cockroachdb/cockroach:v23.1.7 start-single-node --insecure --advertise-addr=localhost
+        docker run -d -p 26257:26257 cockroachdb/cockroach:v23.1.7 start-single-node --insecure --advertise-addr=localhost
         sudo apt update && sudo apt install wait-for-it -y
         wait-for-it -h localhost -p 26257
     
