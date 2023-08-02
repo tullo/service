@@ -19,23 +19,23 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
 
-#    - name: Run go vet & static checks
-#      run: |
-#        go vet ./app/... ./business/... ./foundation/...
-#        GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
-#        export PATH=$PATH:$(go env GOPATH)/bin
-#        staticcheck -debug.version
-#        staticcheck -go 'module' ./app/... ./business/... ./foundation/...
+    - name: Run go vet & static checks
+      run: |
+        go vet ./app/... ./business/... ./foundation/...
+#       go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
+#       export PATH=$PATH:$(go env GOPATH)/bin
+#       staticcheck -debug.version
+#       staticcheck -go 'module' ./app/... ./business/... ./foundation/...
 
-#    - name: Run builds
-#      run: |
-#        go build -v -mod=vendor ./...
+    - name: Run builds
+      run: |
+        go build -v -mod=vendor ./...
 
     - name: Start a single CockroachDB instance (v23.1.7) with docker
       run: |
         docker pull cockroachdb/cockroach:v23.1.7
         docker run -d -p 26257:26257 cockroachdb/cockroach:v23.1.7 start-single-node --insecure --advertise-addr=localhost
-        sudo apt update && sudo apt install wait-for-it -y
+        sudo apt-get update && sudo apt-get install wait-for-it --yes --no-show-upgraded
         wait-for-it -h localhost -p 26257
     
     - name: Run tests
@@ -48,4 +48,4 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: coverprofile.cov
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${ secrets.CODECOV_TOKEN }
