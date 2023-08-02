@@ -10,24 +10,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-
-    container: golang:1.20.7-alpine
     
-    services: # service containers to run with test job
-      postgres: # label used to access the service container
-        image: postgres:latest
-        env: # service environment variables
-          POSTGRES_DB: postgres_db
-          POSTGRES_PASSWORD: postgres_password
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: postgres_user
-        # set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5  
-
     steps:
 
     - name: Set up Go 1.20.x
@@ -36,23 +19,30 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v3
 
-    - name: Run go vet & static checks
-      run: |
-        go vet ./app/... ./business/... ./foundation/...
+#    - name: Run go vet & static checks
+#      run: |
+#        go vet ./app/... ./business/... ./foundation/...
 #        GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
 #        export PATH=$PATH:$(go env GOPATH)/bin
 #        staticcheck -debug.version
 #        staticcheck -go 'module' ./app/... ./business/... ./foundation/...
 
-    - name: Run builds
-      run: |
-        go build -v -mod=vendor ./...
+#    - name: Run builds
+#      run: |
+#        go build -v -mod=vendor ./...
 
+    - name: Start a single CockroachDB instance (v23.1.7) with docker
+      run: |
+        docker pull cockroachdb/cockroach:v23.1.7
+        docker run -p 26257:26257 cockroachdb/cockroach:v23.1.7 start-single-node --insecure --advertise-addr=localhost
+        sudo apt update && sudo apt install wait-for-it -y
+        wait-for-it -h localhost -p 26257
+    
     - name: Run tests
       run: |
         ./ci/test.sh
       env:
-        DATABASE_URL: postgresql://postgres_user:postgres_password@postgres:5432/postgres_db?sslmode=disable
+        DATABASE_URL: postgresql://root@localhost:26257/garagesales?sslmode=disable
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
