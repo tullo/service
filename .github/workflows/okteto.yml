@@ -42,7 +42,7 @@ jobs:
         buildargs: VCS_REF,BUILD_DATE
 
     - name: Get Kubeconfig
-      uses: okteto/actions/namespace@v3
+      uses: okteto/actions/namespace@2175898691ecd07f8dbb6c99403edd7e84cd6e5f # v3
       id: namespace
       with:
         token: ${{ secrets.OKTETO_TOKEN }}
