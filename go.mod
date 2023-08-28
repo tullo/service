@@ -23,7 +23,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/testcontainers/testcontainers-go v0.23.0
 	github.com/tullo/conf v1.3.7
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.43.0
 	go.opentelemetry.io/otel v1.17.0
 	go.opentelemetry.io/otel/exporters/zipkin v1.17.0
 	go.opentelemetry.io/otel/sdk v1.17.0
