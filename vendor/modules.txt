@@ -12,7 +12,7 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Microsoft/hcsshim v0.11.0
+# github.com/Microsoft/hcsshim v0.11.1
 ## explicit; go 1.18
 github.com/Microsoft/hcsshim/osversion
 # github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5
@@ -27,7 +27,7 @@ github.com/cenkalti/backoff/v4
 # github.com/cockroachdb/cockroach-go/v2 v2.2.0
 ## explicit; go 1.13
 github.com/cockroachdb/cockroach-go/v2/crdb
-# github.com/containerd/containerd v1.7.6
+# github.com/containerd/containerd v1.7.7
 ## explicit; go 1.19
 github.com/containerd/containerd/errdefs
 github.com/containerd/containerd/log
@@ -36,6 +36,9 @@ github.com/containerd/containerd/platforms
 # github.com/containerd/continuity v0.4.2
 ## explicit; go 1.19
 github.com/containerd/continuity/pathdriver
+# github.com/containerd/log v0.1.0
+## explicit; go 1.20
+github.com/containerd/log
 # github.com/cpuguy83/dockercfg v0.3.1
 ## explicit; go 1.13
 github.com/cpuguy83/dockercfg
@@ -226,9 +229,10 @@ github.com/magiconair/properties
 # github.com/mitchellh/mapstructure v1.4.1
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/moby/patternmatcher v0.5.0
+# github.com/moby/patternmatcher v0.6.0
 ## explicit; go 1.19
 github.com/moby/patternmatcher
+github.com/moby/patternmatcher/ignorefile
 # github.com/moby/sys/sequential v0.5.0
 ## explicit; go 1.17
 github.com/moby/sys/sequential
@@ -242,7 +246,7 @@ github.com/morikuni/aec
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.1.0-rc4
+# github.com/opencontainers/image-spec v1.1.0-rc5
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
@@ -283,7 +287,7 @@ github.com/pkg/errors
 # github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c
 ## explicit; go 1.14
 github.com/power-devops/perfstat
-# github.com/shirou/gopsutil/v3 v3.23.8
+# github.com/shirou/gopsutil/v3 v3.23.9
 ## explicit; go 1.15
 github.com/shirou/gopsutil/v3/common
 github.com/shirou/gopsutil/v3/cpu
@@ -294,10 +298,10 @@ github.com/shirou/gopsutil/v3/process
 # github.com/shoenig/go-m1cpu v0.1.6
 ## explicit; go 1.20
 github.com/shoenig/go-m1cpu
-# github.com/sirupsen/logrus v1.9.2
+# github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/testcontainers/testcontainers-go v0.25.0
+# github.com/testcontainers/testcontainers-go v0.26.0
 ## explicit; go 1.20
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
@@ -446,7 +450,7 @@ golang.org/x/tools/internal/typesinternal
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.57.0
+# google.golang.org/grpc v1.57.1
 ## explicit; go 1.17
 google.golang.org/grpc/attributes
 google.golang.org/grpc/codes
