@@ -23,8 +23,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/testcontainers/testcontainers-go v0.26.0
 	github.com/tullo/conf v1.3.7
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.0
-	go.opentelemetry.io/otel v1.20.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
+	go.opentelemetry.io/otel v1.21.0
 	go.opentelemetry.io/otel/exporters/zipkin v1.20.0
 	go.opentelemetry.io/otel/sdk v1.20.0
 	go.uber.org/zap v1.26.0
@@ -85,8 +85,8 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
-	go.opentelemetry.io/otel/metric v1.20.0 // indirect
-	go.opentelemetry.io/otel/trace v1.20.0 // indirect
+	go.opentelemetry.io/otel/metric v1.21.0 // indirect
+	go.opentelemetry.io/otel/trace v1.21.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
