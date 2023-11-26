@@ -47,11 +47,11 @@ staticcheck:
 
 staticcheck-install: GO111MODULE := on
 staticcheck-install:
-	@go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
 	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-install-latest:
-	sudo ./go-install.sh 1.21.1
+	sudo ./go-install.sh 1.21.4
 
 go-deps-list:
 	go list -mod=mod all
