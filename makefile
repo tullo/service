@@ -51,7 +51,7 @@ staticcheck-install:
 	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 go-install-latest:
-	sudo ./go-install.sh 1.21.4
+	sudo ./go-install.sh 1.21.5
 
 go-deps-list:
 	go list -mod=mod all
