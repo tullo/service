@@ -21,7 +21,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.1
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/testcontainers/testcontainers-go v0.26.0
+	github.com/testcontainers/testcontainers-go v0.27.0
 	github.com/tullo/conf v1.3.7
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.46.1
 	go.opentelemetry.io/otel v1.21.0

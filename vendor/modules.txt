@@ -304,7 +304,7 @@ github.com/shoenig/go-m1cpu
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/testcontainers/testcontainers-go v0.26.0
+# github.com/testcontainers/testcontainers-go v0.27.0
 ## explicit; go 1.20
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
