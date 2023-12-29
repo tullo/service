@@ -29,3 +29,4 @@ spec:
             memory: 1Gi
         securityContext:
           allowPrivilegeEscalation: false
+          runAsNonRoot: true
