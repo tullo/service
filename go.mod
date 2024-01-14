@@ -13,7 +13,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
-	github.com/go-playground/validator/v10 v10.16.0
+	github.com/go-playground/validator/v10 v10.17.0
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.5.0
