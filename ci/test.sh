@@ -1,9 +1,4 @@
 set -e
-echo "" > coverprofile.cov
 
-go test -mod=vendor -failfast -short -test.timeout=90s \
-    -covermode=count -coverprofile=coverprofile.cov -run="^Test" \
-    -coverpkg=$(go list -mod=vendor ./... | grep -v "/test" | tr '\n' ',') \
-    ./...
-# go tool cover -func=coverprofile.cov
-# go tool cover -html=coverprofile.cov
+go test -mod=vendor -failfast -short -test.timeout=90s -run="^Test"  \
+    ./app/... ./business/... ./foundation/...
