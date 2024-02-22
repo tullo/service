@@ -16,5 +16,5 @@
   "automergeType": "branch",
   "ignoreTests": false,
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
-  "constraints": {"go": "1.21"}
+  "constraints": {"go": "1.22"}
 }
