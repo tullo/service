@@ -226,3 +226,7 @@ docker-prune-build-cache:
 
 docker-buildx-install:
 	./buildx-install.sh
+
+cockroach-start-single-node:
+	@echo "cockroach-data/" >> .gitignore
+	@cockroach start-single-node --insecure --advertise-addr=localhost
