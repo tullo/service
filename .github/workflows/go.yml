@@ -34,10 +34,10 @@ jobs:
       run: |
         go build -v -mod=vendor ./...
 
-    - name: Start a single CockroachDB instance (v23.1.13) with docker
+    - name: Start a single CockroachDB instance (v23.2.1) with docker
       run: |
-        docker pull cockroachdb/cockroach:v23.1.13
-        docker run --name roach -d -p 26257:26257 cockroachdb/cockroach:v23.1.13 start-single-node --insecure --advertise-addr=localhost
+        docker pull cockroachdb/cockroach:v23.2.1
+        docker run --name roach -d -p 26257:26257 cockroachdb/cockroach:v23.2.1 start-single-node --insecure --advertise-addr=localhost
         sudo apt-get update && sudo apt-get install wait-for-it --yes --no-show-upgraded
         wait-for-it -h localhost -p 26257
         docker exec roach bash -c "echo 'CREATE DATABASE garagesales;' | cockroach sql --insecure"
