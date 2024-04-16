@@ -76,7 +76,7 @@ services:
   # Examination of traces.
   zipkin:
     container_name: zipkin
-    image: openzipkin/zipkin-slim:3.2
+    image: openzipkin/zipkin-slim:3.3
     networks:
       shared-network:
     ports:
