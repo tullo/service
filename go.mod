@@ -21,7 +21,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/pkg/errors v0.9.1
-	github.com/testcontainers/testcontainers-go v0.30.0
+	github.com/testcontainers/testcontainers-go v0.31.0
 	github.com/tullo/conf v1.3.7
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.51.0
 	go.opentelemetry.io/otel v1.26.0
@@ -38,7 +38,7 @@ require (
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cockroachdb/cockroach-go/v2 v2.3.6 // indirect
-	github.com/containerd/containerd v1.7.13 // indirect
+	github.com/containerd/containerd v1.7.15 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
@@ -53,7 +53,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -89,8 +89,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.21.0 // indirect
-	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
+	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/net v0.23.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect

@@ -27,8 +27,8 @@ github.com/cenkalti/backoff/v4
 # github.com/cockroachdb/cockroach-go/v2 v2.3.6
 ## explicit; go 1.18
 github.com/cockroachdb/cockroach-go/v2/crdb
-# github.com/containerd/containerd v1.7.13
-## explicit; go 1.19
+# github.com/containerd/containerd v1.7.15
+## explicit; go 1.21
 github.com/containerd/containerd/errdefs
 github.com/containerd/containerd/log
 github.com/containerd/containerd/pkg/userns
@@ -146,8 +146,8 @@ github.com/golang-migrate/migrate/v4/database/cockroachdb
 github.com/golang-migrate/migrate/v4/internal/url
 github.com/golang-migrate/migrate/v4/source
 github.com/golang-migrate/migrate/v4/source/httpfs
-# github.com/golang/protobuf v1.5.3
-## explicit; go 1.9
+# github.com/golang/protobuf v1.5.4
+## explicit; go 1.17
 github.com/golang/protobuf/proto
 # github.com/google/go-cmp v0.6.0
 ## explicit; go 1.13
@@ -299,13 +299,14 @@ github.com/shoenig/go-m1cpu
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/testcontainers/testcontainers-go v0.30.0
+# github.com/testcontainers/testcontainers-go v0.31.0
 ## explicit; go 1.21
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
 github.com/testcontainers/testcontainers-go/internal
 github.com/testcontainers/testcontainers-go/internal/config
 github.com/testcontainers/testcontainers-go/internal/core
+github.com/testcontainers/testcontainers-go/internal/core/network
 github.com/testcontainers/testcontainers-go/wait
 # github.com/tklauser/go-sysconf v0.3.13
 ## explicit; go 1.18
@@ -386,16 +387,20 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.21.0
+# golang.org/x/crypto v0.22.0
 ## explicit; go 1.18
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/sha3
-# golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
-## explicit; go 1.20
-golang.org/x/exp/constraints
-golang.org/x/exp/slices
+golang.org/x/crypto/ssh
+golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/mod v0.16.0
 ## explicit; go 1.18
 golang.org/x/mod/semver
