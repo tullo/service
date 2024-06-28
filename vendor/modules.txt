@@ -109,7 +109,7 @@ github.com/gabriel-vasile/mimetype/internal/magic
 ## explicit; go 1.18
 github.com/georgysavva/scany/v2/dbscan
 github.com/georgysavva/scany/v2/pgxscan
-# github.com/go-chi/chi/v5 v5.0.14
+# github.com/go-chi/chi/v5 v5.1.0
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
 # github.com/go-logr/logr v1.4.1
