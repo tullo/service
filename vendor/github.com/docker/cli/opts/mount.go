@@ -131,6 +131,8 @@ func (m *MountOpt) Set(value string) error {
 				return fmt.Errorf("invalid value for %s: %s (must be \"enabled\", \"disabled\", \"writable\", or \"readonly\")",
 					key, val)
 			}
+		case "volume-subpath":
+			volumeOptions().Subpath = val
 		case "volume-nocopy":
 			volumeOptions().NoCopy, err = strconv.ParseBool(val)
 			if err != nil {
@@ -163,11 +165,11 @@ func (m *MountOpt) Set(value string) error {
 	}
 
 	if mount.Type == "" {
-		return fmt.Errorf("type is required")
+		return errors.New("type is required")
 	}
 
 	if mount.Target == "" {
-		return fmt.Errorf("target is required")
+		return errors.New("target is required")
 	}
 
 	if mount.VolumeOptions != nil && mount.Type != mounttypes.TypeVolume {
