@@ -57,7 +57,7 @@ github.com/docker/cli/cli/compose/schema
 github.com/docker/cli/cli/compose/template
 github.com/docker/cli/cli/compose/types
 github.com/docker/cli/opts
-# github.com/docker/docker v27.0.3+incompatible
+# github.com/docker/docker v27.1.0+incompatible
 ## explicit
 github.com/docker/docker/api
 github.com/docker/docker/api/types
