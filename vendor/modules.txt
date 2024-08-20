@@ -12,9 +12,6 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/Microsoft/hcsshim v0.12.4
-## explicit; go 1.21
-github.com/Microsoft/hcsshim/osversion
 # github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5
 ## explicit
 github.com/Nvveen/Gotty
@@ -30,7 +27,6 @@ github.com/cockroachdb/cockroach-go/v2/crdb
 # github.com/containerd/containerd v1.7.19
 ## explicit; go 1.21
 github.com/containerd/containerd/pkg/userns
-github.com/containerd/containerd/platforms
 # github.com/containerd/continuity v0.4.3
 ## explicit; go 1.19
 github.com/containerd/continuity/pathdriver
@@ -298,7 +294,7 @@ github.com/shoenig/go-m1cpu
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/testcontainers/testcontainers-go v0.32.0
+# github.com/testcontainers/testcontainers-go v0.33.0
 ## explicit; go 1.21
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
