@@ -1,13 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     "helpers:pinGitHubActionDigests"
   ],
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "matchPackageNames": ["github.com/go-playground/validator/v10"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "matchPackageNames": [
+        "github.com/go-playground/validator/v10"
+      ],
       "automerge": true,
       "automergeType": "branch"
     }
@@ -15,6 +22,11 @@
   "automerge": true,
   "automergeType": "branch",
   "ignoreTests": false,
-  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
-  "constraints": {"go": "1.23"}
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "constraints": {
+    "go": "1.23"
+  }
 }
