@@ -2,6 +2,12 @@
 .idea
 .vscode
 
+bin/
+certs/
+cockroach-data/
+cockroach
+my-safe-directory/
+
 # env vars
 .env
 .env-db
@@ -17,4 +23,3 @@ public.pem
 # cloud sql proxy binary
 cloud_sql_proxy
 coverprofile.cov
-bin/

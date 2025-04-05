@@ -1,0 +1,91 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task run-checks
+      - task build
+    silent: true
+
+  run-checks:
+    cmds:
+      - go vet ./app/... ./business/... ./foundation/...
+      - staticcheck -go 'module' ./app/... ./business/... ./foundation/...
+    silent: false
+
+  build:
+    cmds:
+      - go mod vendor
+      - go build -v -mod=vendor ./...
+    silent: false
+
+  test:
+    deps: [clean-database-data, start-cockroach]
+    cmds:
+      - sh ./ci/test.sh
+      - defer: { task: stop-cockroach }
+    silent: false
+    
+  start-cockroach:
+    deps: [cockroach-binary, certs, clean-testcache]
+    desc: Starts the CockroachDB server in single-node mode
+    cmds:
+      # pgrep returns:
+      # 0 : One or more processes matched the criteria.
+      # 1 : No processes matched or none of them could be signalled
+      - >
+        PID=$(pgrep cockroach) || true &&
+        if [[ -n "$PID" ]]; then
+          echo "⚠️ CockroachDB server is already running (PID=$RESULT), Stop it first!"
+        else
+          echo "🚀 Starting the CockroachDB server!"
+          ${PWD}/cockroach start-single-node --certs-dir=certs --store=./cockroach-data --sql-addr=:26257 --listen-addr=:26258 --advertise-addr $(hostname) --http-addr=localhost:8080 --background
+          ${PWD}/cockroach node status --certs-dir=certs --host=$(hostname)
+        fi
+    requires:
+      vars: [DATABASE_URL]
+    silent: true
+
+  stop-cockroach:
+    desc: Stops the CockroachDB server
+    cmds:
+      - >
+        PID=$(pgrep cockroach) || true &&
+        if [[ -n "$PID" ]]; then
+          echo "⚠️ killing cockroach process $(pgrep cockroach)"
+          ${PWD}/cockroach node drain --certs-dir=certs --host=$(hostname):26258 --self --shutdown
+        fi
+      - defer: { task: clean-database-data }
+    requires:
+      vars: [DATABASE_URL]
+    silent: true
+
+  cockroach-binary:
+    cmds:
+      - wget https://binaries.cockroachdb.com/cockroach-v25.1.2.linux-amd64.tgz
+      - tar -xf cockroach-v25.1.2.linux-amd64.tgz cockroach-v25.1.2.linux-amd64/cockroach
+      - mv cockroach-v25.1.2.linux-amd64/cockroach cockroach
+      - rm -rf cockroach-v25.1.2.linux-amd64*
+    status:
+      - test -f cockroach
+  
+  clean-database-data:
+    cmds:
+      - rm -rf cockroach-data
+
+  clean-testcache:
+    cmds:
+      - go clean -testcache
+
+  certs:
+    cmds:
+      - mkdir certs my-safe-directory
+      - $PWD/cockroach cert create-ca --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach cert create-node localhost $(hostname) --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach cert create-client root --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach --certs-dir=certs cert list
+    status:
+      - test -d certs
+      - test -d my-safe-directory
