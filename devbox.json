@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
     "go@latest",
-    "go-task@latest",
+    "go-task@3.41.0",
     "direnv@latest",
     "postgresql@latest",
     "git@latest",
