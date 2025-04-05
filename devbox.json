@@ -1,0 +1,32 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
+  "packages": [
+    "go@latest",
+    "go-task@latest",
+    "direnv@latest",
+    "postgresql@latest",
+    "git@latest",
+    "nix-bash-completions@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "git config alias.s 'status -s'",
+      "git config alias.last 'log -1 HEAD'",
+      "git config alias.lg 'log --oneline --decorate --all --graph'",
+      "alias g='git'",
+      "alias t='task'",
+      "alias tl='task --list-all'",
+      "export GOBIN=$(git rev-parse --show-toplevel)/bin",
+      "export PATH=\"$GOBIN:$PATH\"",
+      "source ~/.nix-profile/share/bash-completion/completions/git-prompt.sh",
+      "export PS1='\\[\\e[32m\\][\\u@\\h \\W$(__git_ps1 \" (%s)\")]\\$\\[\\e[0m\\] '",
+      "go install honnef.co/go/tools/cmd/staticcheck@latest",
+      "direnv allow"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}
