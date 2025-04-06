@@ -50,6 +50,7 @@ tasks:
 
   stop-cockroach:
     desc: Stops the CockroachDB server
+    deps: [cockroach-binary]
     cmds:
       - >
         PID=$(pgrep cockroach) || true &&
@@ -80,6 +81,7 @@ tasks:
       - go clean -testcache
 
   certs:
+    deps: [cockroach-binary]
     cmds:
       - mkdir certs my-safe-directory
       - $PWD/cockroach cert create-ca --certs-dir=certs --ca-key=my-safe-directory/ca.key
