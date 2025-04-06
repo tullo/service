@@ -18,5 +18,8 @@ ENCODED_SSL_PARAMS=$(python3 -c "import urllib.parse; print('&'.join([f'{key}={u
 FINAL_URL="${BASE_URL}?${ENCODED_SSL_PARAMS}"
 
 # Write to the .envrc file
+echo "Adding export COCKROACH_URL to '.envrc'"
 printf 'export COCKROACH_URL="postgresql://root@localhost:26257"\n' > .envrc
+
+echo "Adding export DATABASE_URL to '.envrc'"
 printf 'export DATABASE_URL="%s"\n' "$FINAL_URL" >> .envrc
