@@ -60,6 +60,9 @@ jobs:
         ./envars.sh
         direnv allow
         eval "$(direnv export bash)"
+        task cockroach-binary
+        task certs
+        task start-cockroach
         task test
 #       ./ci/test.sh
       # env:
