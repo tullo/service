@@ -59,6 +59,7 @@ jobs:
       run: |
         ./envars.sh
         direnv allow
+        eval "$(direnv export bash)"
         task test
 #       ./ci/test.sh
       # env:
