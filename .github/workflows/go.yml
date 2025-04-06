@@ -29,11 +29,11 @@ jobs:
 
     - name: Run go vet & static checks
       run: |
+        go install honnef.co/go/tools/cmd/staticcheck@latest
+        export PATH=$PATH:$(go env GOPATH)/bin
+        staticcheck -debug.version
         task run-checks
 #       go vet ./app/... ./business/... ./foundation/...
-#       go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
-#       export PATH=$PATH:$(go env GOPATH)/bin
-#       staticcheck -debug.version
 #       staticcheck -go 'module' ./app/... ./business/... ./foundation/...
 
     - name: Run builds
