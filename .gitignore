@@ -19,6 +19,7 @@ public.pem
 # go build artifacts
 /app/sales-admin/sales-admin
 /app/sales-api/sales-api
+/app/sidecar/metrics/metrics
 
 # cloud sql proxy binary
 cloud_sql_proxy
