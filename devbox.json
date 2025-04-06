@@ -5,7 +5,7 @@
     "go-task@latest",
     "direnv@latest",
     "postgresql@latest",
-    "git@latest",
+    "git@2.48.1",
     "nix-bash-completions@latest"
   ],
   "shell": {
