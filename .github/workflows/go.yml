@@ -27,12 +27,8 @@ jobs:
       with:
         version: 3.x
 
-    - name: Install devbox
-      uses: jetify-com/devbox-install-action@v0.11.0
-
     - name: Run go vet & static checks
       run: |
-        devbox shell
         task run-checks
 #       go vet ./app/... ./business/... ./foundation/...
 #       go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
@@ -42,7 +38,6 @@ jobs:
 
     - name: Run builds
       run: |
-        devbox shell
         task build  
 #       go mod vendor
 #       go build -v -mod=vendor ./...
@@ -57,7 +52,8 @@ jobs:
     
     - name: Run tests
       run: |
-        devbox shell
+        ./envars.sh
+        direnv allow
         task test
 #       ./ci/test.sh
       # env:
