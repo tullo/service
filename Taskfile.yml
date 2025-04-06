@@ -3,6 +3,7 @@
 version: '3'
 
 tasks:
+
   default:
     cmds:
       - task run-checks
@@ -13,13 +14,46 @@ tasks:
     cmds:
       - go vet ./app/... ./business/... ./foundation/...
       - staticcheck -go 'module' ./app/... ./business/... ./foundation/...
-    silent: false
+    silent: true
 
   build:
     cmds:
       - go mod vendor
-      - go build -v -mod=vendor ./...
-    silent: false
+      - go build -race -mod=vendor ./...
+    silent: true
+
+  build-all:
+    cmds:
+      - go mod vendor
+      - go build -v -race -mod=vendor ./...
+      - task: build-sales-admin
+      - task: build-sales-api
+      - task: build-metrics
+    silent: true
+
+  build-sales-admin:
+    dir: app/sales-admin
+    cmds:
+      - go build -v -race -mod=vendor
+      - ls -lh | grep sales-admin
+      - rm sales-admin
+    silent: true
+
+  build-sales-api:
+    dir: app/sales-api
+    cmds:
+      - go build -v -race -mod=vendor
+      - ls -lh | grep sales-api
+      - rm sales-api
+    silent: true
+
+  build-metrics:
+    dir: app/sidecar/metrics
+    cmds:
+      - go build -v -race -mod=vendor
+      - ls -lh | grep metrics
+      - rm metrics
+    silent: true
 
   test:
     deps: [clean-database-data, start-cockroach]
@@ -91,3 +125,83 @@ tasks:
     status:
       - test -d certs
       - test -d my-safe-directory
+
+  go-deps-list:
+    cmds:
+      - go list -mod=mod all
+
+  go-deps-reset:
+    cmds:
+      - git checkout -- go.mod
+      - defer: { task: go-tidy }
+    silent: true
+
+  go-deps-clean-modcache:
+    cmds:
+      - go clean -modcache
+
+  go-deps-upgrade:
+    cmds:
+      - go get -u -t -v ./...
+      - defer: { task: go-tidy }
+
+  go-tidy:
+    cmds:
+      - go mod tidy
+      - go mod vendor
+    silent: true
+
+  go-api-config:
+    cmds:
+      - go run ./app/sales-api -h
+    silent: true
+
+  go-api-run:
+    cmds:
+      - |
+        go run ./app/sales-api \
+          --db-disable-tls=1 \
+          --auth-keys-folder=deployment/keys \
+          --zipkin-reporter-uri=http://$(hostname):9411/api/v2/spans \
+          --zipkin-probability=1
+    silent: true
+
+  go-metrics-run:
+    cmds:
+      - go run ./app/sidecar/metrics \
+          --collect-from=http://$(hostname):4000/debug/vars
+    silent: true
+
+  curl-endpoints:
+    cmds:
+      - task: curl-api-endpoint
+      - task: curl-api-debug-endpoint
+      - task: curl-api-expvar-endpoint
+      - task: curl-metrics-debug-endpoint
+      - task: curl-metrics-expvar-endpoint
+    silent: false
+
+  curl-api-endpoint:
+    cmds:
+      - curl -I http://$(hostname):3001/v1/health
+    silent: false
+
+  curl-api-debug-endpoint:
+    cmds:
+      - curl -I http://$(hostname):4000/debug/pprof/
+    silent: false
+
+  curl-api-expvar-endpoint:
+    cmds:
+      - curl -I http://$(hostname):4000/debug/vars
+    silent: false
+
+  curl-metrics-debug-endpoint:
+    cmds:
+      - curl -I http://$(hostname):4001/debug/pprof/
+    silent: false
+
+  curl-metrics-expvar-endpoint:
+    cmds:
+      - curl -I http://$(hostname):3001/metrics
+    silent: false
