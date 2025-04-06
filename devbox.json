@@ -1,12 +1,12 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
   "packages": [
-    "go@latest",
-    "go-task@latest",
-    "direnv@latest",
-    "postgresql@latest",
-    "git@latest",
-    "nix-bash-completions@latest"
+    "go@1.24.1",
+    "go-task@3.41.0",
+    "direnv@2.35.0",
+    "postgresql@17.4",
+    "git@2.48.1",
+    "nix-bash-completions@0.6.8"
   ],
   "shell": {
     "init_hook": [
