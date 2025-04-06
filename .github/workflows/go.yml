@@ -50,6 +50,11 @@ jobs:
     #     wait-for-it -h localhost -p 26257
     #     docker exec roach bash -c "echo 'CREATE DATABASE garagesales;' | cockroach sql --insecure"
     
+    - name: Install direnv
+      run: |
+        mkdir -p ~/.local/bin
+        curl -sfL https://direnv.net/install.sh | bash
+
     - name: Run tests
       run: |
         ./envars.sh
