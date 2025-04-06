@@ -33,6 +33,10 @@ func New(log *log.Logger, host string, route string, readTimeout, writeTimeout t
 		},
 	}
 
+	mux.MethodFunc(http.MethodHead, route, func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+	})
+
 	mux.MethodFunc(http.MethodGet, route, exp.handler)
 
 	go func() {
@@ -77,7 +81,7 @@ func (exp *Expvar) Publish(data map[string]interface{}) {
 // handler is what consumers call to get the raw stats.
 func (exp *Expvar) handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	//w.WriteHeader(http.StatusOK)
 
 	var data map[string]interface{}
 	exp.mu.Lock()
