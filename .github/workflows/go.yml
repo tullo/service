@@ -63,8 +63,7 @@ jobs:
         task cockroach-binary
         task certs
         task start-cockroach
-        task test
-#       ./ci/test.sh
+        ./ci/test.sh
       # env:
       #   DATABASE_URL: postgresql://root@localhost:26257/garagesales?sslmode=disable
 
