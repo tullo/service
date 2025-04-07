@@ -5,3 +5,5 @@
 The service starter kit is a starting point for building production grade scalable web service applications. The goal of this project is to provide a proven starting point that reduces the repetitive tasks required for a new project to be launched into production.
 
 Deployment manifests are versioned in a separate [repository](https://github.com/tullo/service-deployment).
+
+[![Built with Devbox](https://www.jetify.com/img/devbox/shield_galaxy.svg)](https://www.jetify.com/devbox/docs/contributor-quickstart/)
