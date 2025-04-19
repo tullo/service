@@ -1,7 +1,7 @@
 {
   "lockfile_version": "1",
   "packages": {
-    "direnv@latest": {
+    "direnv@2.36.0": {
       "last_modified": "2025-04-12T07:19:22Z",
       "resolved": "github:NixOS/nixpkgs/2349f9de17183971db12ae9e0123dab132023bd7#direnv",
       "source": "devbox-search",
