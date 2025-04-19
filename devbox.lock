@@ -153,7 +153,7 @@
         }
       }
     },
-    "go-task@latest": {
+    "go-task@3.41.0": {
       "last_modified": "2025-04-03T14:08:01Z",
       "resolved": "github:NixOS/nixpkgs/2bfc080955153be0be56724be6fa5477b4eefabb#go-task",
       "source": "devbox-search",
