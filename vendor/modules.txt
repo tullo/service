@@ -224,7 +224,7 @@ github.com/lib/pq/scram
 # github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35
 ## explicit; go 1.21
 github.com/lufia/plan9stats
-# github.com/magiconair/properties v1.8.9
+# github.com/magiconair/properties v1.8.10
 ## explicit; go 1.19
 github.com/magiconair/properties
 # github.com/moby/docker-image-spec v1.3.1
@@ -313,7 +313,7 @@ github.com/sirupsen/logrus
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/testcontainers/testcontainers-go v0.36.0
+# github.com/testcontainers/testcontainers-go v0.37.0
 ## explicit; go 1.23.0
 github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/exec
