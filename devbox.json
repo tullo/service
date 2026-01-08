@@ -4,7 +4,7 @@
     "postgresql@17.7",
     "direnv@2.37.1",
     "go@1.25.5",
-    "git@2.51.2",
+    "git@2.52.0",
     "nix-bash-completions@latest",
     "go-task@3.45.5"
   ],
