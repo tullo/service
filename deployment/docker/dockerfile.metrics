@@ -16,7 +16,7 @@ RUN go build -ldflags "-X main.build=${VCS_REF}" -mod=vendor
 
 
 # Build production image with Go binary based on Alpine.
-FROM alpine:3.23.2
+FROM alpine:3.23.3
 ARG BUILD_DATE
 ARG VCS_REF
 RUN apk --no-cache add ca-certificates
