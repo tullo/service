@@ -6,7 +6,7 @@
     "go@1.25.5",
     "git@2.52.0",
     "nix-bash-completions@latest",
-    "go-task@3.45.5"
+    "go-task@3.48.0"
   ],
   "shell": {
     "init_hook": [
