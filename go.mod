@@ -2,7 +2,7 @@ module github.com/tullo/service
 
 go 1.24.0
 
-toolchain go1.25.7
+toolchain go1.26.0
 
 // fixes: FAIL - undefined container.StopOptions
 // followed the instructions at https://golang.testcontainers.org/quickstart/#2-install-testcontainers-for-go
