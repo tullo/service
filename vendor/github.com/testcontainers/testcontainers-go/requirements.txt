@@ -3,3 +3,4 @@ mkdocs-codeinclude-plugin==0.3.1
 mkdocs-include-markdown-plugin==7.2.1
 mkdocs-material==9.5.18
 mkdocs-markdownextradata-plugin==0.2.6
+markdown>=3.8.1 # not directly required, pinned by Snyk to avoid a vulnerability
