@@ -27,7 +27,7 @@ require (
 	github.com/tullo/conf v1.3.7
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
 	go.opentelemetry.io/otel v1.42.0
-	go.opentelemetry.io/otel/exporters/zipkin v1.39.0
+	go.opentelemetry.io/otel/exporters/zipkin v1.42.0
 	go.opentelemetry.io/otel/sdk v1.42.0
 	go.uber.org/zap v1.27.1
 )
