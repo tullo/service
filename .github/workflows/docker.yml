@@ -24,7 +24,7 @@ jobs:
       run: echo "::set-output name=date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
     - name: Build & Publish to Docker-Github (sales-api)
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@8217e91c0369a5342a4ef2d612de87492410a666 # master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
         VCS_REF: ${{ github.sha }}
@@ -37,7 +37,7 @@ jobs:
         tags: latest,${{ env.VCS_REF }}
 
     - name: Build & Publish to Docker-Github (metrics)
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@8217e91c0369a5342a4ef2d612de87492410a666 # master
       env:
         BUILD_DATE: ${{ steps.date.outputs.date }}
         VCS_REF: ${{ github.sha }}

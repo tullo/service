@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@61b9e3751b92087fd0b06925ba6dd6314e06f089 # master
     
     - name: Generate "private.pem"
       run: |
@@ -49,7 +49,7 @@ jobs:
         namespace: ${{ secrets.OKTETO_NS }}
 
     - name: Deploy and Wait
-      uses: okteto/actions/deploy@master
+      uses: okteto/actions/deploy@3f63e7247ea764c7e2a2ac95b1ef971b29f79660 # master
       env:
         KUBECONFIG: ${{ steps.namespace.outputs.kubeconfig }}
       with:
@@ -65,7 +65,7 @@ jobs:
         ls -l
 
     - name: Deploy and Wait
-      uses: okteto/actions/deploy@master
+      uses: okteto/actions/deploy@3f63e7247ea764c7e2a2ac95b1ef971b29f79660 # master
       env:
         KUBECONFIG: ${{ steps.namespace.outputs.kubeconfig }}
       with:
@@ -75,12 +75,12 @@ jobs:
         registry: registry.cloud.okteto.net
 
     - name: Sleep for 10 seconds
-      uses: jakejarvis/wait-action@master
+      uses: jakejarvis/wait-action@919fc193e07906705e5b7a50f90ea9e74d20b2b0 # master
       with:
         time: '10s'
 
     - name: Verify
-      uses: srt32/uptime@master
+      uses: srt32/uptime@d70a4cf08a9cca45741947a45b15d7fdb091490b # master
       with:
         url-to-hit: "https://sales-api-tullo.cloud.okteto.net/v1/readiness"
         expected-statuses: "200"
