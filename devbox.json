@@ -3,7 +3,7 @@
   "packages": [
     "postgresql@17.9",
     "direnv@2.37.1",
-    "go@1.26.1",
+    "go@1.26.2",
     "git@2.53.0",
     "nix-bash-completions@latest",
     "go-task@3.48.0"
