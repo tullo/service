@@ -188,8 +188,8 @@ go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0 h1:CqXxU8V
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.68.0/go.mod h1:BuhAPThV8PBHBvg8ZzZ/Ok3idOdhWIodywz2xEcRbJo=
 go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
 go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
-go.opentelemetry.io/otel/exporters/zipkin v1.39.0 h1:zas8I6MeDWD5rxJmkXcCPRnpvNtZHkENiTkX/eJlycg=
-go.opentelemetry.io/otel/exporters/zipkin v1.39.0/go.mod h1:SmFF1H2pTNFFvD4NqRanxPP8W+8KjTgFJhJQi3C6Co0=
+go.opentelemetry.io/otel/exporters/zipkin v1.43.0 h1:EOCmLBQ5iUZQ8pK+cWObn6pBD/bFFcltwErVcf22TUU=
+go.opentelemetry.io/otel/exporters/zipkin v1.43.0/go.mod h1:GReAT1nAoWUpGpvDmWh1QawwJMnBkz9XdU7yW4i3XxM=
 go.opentelemetry.io/otel/metric v1.43.0 h1:d7638QeInOnuwOONPp4JAOGfbCEpYb+K6DVWvdxGzgM=
 go.opentelemetry.io/otel/metric v1.43.0/go.mod h1:RDnPtIxvqlgO8GRW18W6Z/4P462ldprJtfxHxyKd2PY=
 go.opentelemetry.io/otel/sdk v1.43.0 h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=
